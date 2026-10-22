@@ -8,6 +8,10 @@ import {
   useState,
 } from "react"
 
+import ReportIntake from "./ReportIntake"
+import { REPORT_TYPES, reportTypeLabel, nextReportId } from "./intakeModel"
+import type { IntakePayload, IntakeResult } from "./intakeModel"
+
 type Screen =
   | "dashboard"
   | "reports"
@@ -33,9 +37,6 @@ import {
 } from "./demoTime"
 import LinkGraph from "./LinkGraph"
 import { WorkflowBadge, workflowLabel } from "./workflow"
-
-const demoText =
-  "Tôi nhận được cuộc gọi của người tự xưng là nhân viên ngân hàng, yêu cầu truy cập xacminh-demo.example để xác minh tài khoản. Sau đó tôi chuyển 15.000.000 đồng vào tài khoản DEMO-TK-001 tại Ngân hàng mẫu A. Người liên hệ sử dụng số DEMO-SDT-001. Sau khi chuyển tiền, tôi không liên lạc được."
 
 const reportTemplates: Report[] = [
   {
@@ -397,7 +398,13 @@ function makeSampleData(now = new Date()) {
   }))
   const logs = logTemplates.map((item, index) => ({
     ...item,
-    time: item.target === "HS-001" ? cases[0].updated : item.action === "Tạo phản ánh" ? reports.find(report => report.id === item.target)?.receivedAt || seedTimestamp(1, 9, 24, now) : seedTimestamp(0, 10, 5, now),
+    time:
+      item.target === "HS-001"
+        ? cases[0].updated
+        : item.action === "Tạo phản ánh"
+          ? reports.find((report) => report.id === item.target)?.receivedAt ||
+            seedTimestamp(1, 9, 24, now)
+          : seedTimestamp(0, 10, 5, now),
   }))
   return { reports, cases, logs }
 }
@@ -744,8 +751,78 @@ export default function App() {
       },
       ...v,
     ])
+  const submitIntake = (payload: IntakePayload): IntakeResult => {
+    if (!citizen && !canEdit) return {ok:false, error:'Vai trò này chỉ được xem dữ liệu, không được tạo phản ánh.'}
+    let oldReports: string | null = null
+    let oldLogs: string | null = null
+    let wroteReports = false
+    try {
+      oldReports = localStorage.getItem("scamgraph-demo-reports")
+      oldLogs = localStorage.getItem("scamgraph-demo-logs")
+      const currentReports: Report[] = oldReports
+        ? JSON.parse(oldReports)
+        : reports
+      const currentLogs: LogItem[] = oldLogs ? JSON.parse(oldLogs) : logs
+      if (!Array.isArray(currentReports) || !Array.isArray(currentLogs))
+        return {
+          ok: false,
+          error:
+            "Dữ liệu lưu hiện có không hợp lệ. Chưa tạo phản ánh; hãy xuất/kiểm tra dữ liệu trước khi thử lại.",
+        }
+      if (payload.sample && currentReports.some((r) => r.id === "PA-013"))
+        return {
+          ok: false,
+          error:
+            "Tình huống mẫu đã được tạo. Mở PA-013 hoặc nhập phản ánh khác.",
+        }
+      const report: Report = {
+        ...payload.report,
+        id: payload.sample ? "PA-013" : nextReportId(currentReports),
+        submittedBy: actorForRole(role),
+      }
+      const nextReports = [report, ...currentReports]
+      const nextLogs: LogItem[] = [
+        {
+          time: nowISO(),
+          user: actorForRole(role),
+          role,
+          action: "Tạo phản ánh",
+          target: report.id,
+          result: "Thành công",
+          detail: `Loại ban đầu: ${report.behavior}${report.behaviorOther ? ": " + report.behaviorOther : ""}; số tiền ${report.amount} triệu. Chưa xác nhận liên kết.`,
+        },
+        ...currentLogs,
+      ]
+      localStorage.setItem(
+        "scamgraph-demo-reports",
+        JSON.stringify(nextReports),
+      )
+      wroteReports = true
+      localStorage.setItem("scamgraph-demo-logs", JSON.stringify(nextLogs))
+      setReports(nextReports)
+      setLogs(nextLogs)
+      return { ok: true, report }
+    } catch {
+      if (wroteReports) {
+        try {
+          if (oldReports !== null)
+            localStorage.setItem("scamgraph-demo-reports", oldReports)
+          else localStorage.removeItem("scamgraph-demo-reports")
+          if (oldLogs !== null)
+            localStorage.setItem("scamgraph-demo-logs", oldLogs)
+        } catch {
+          /* Original write may have failed due to browser storage policy. */
+        }
+      }
+      return {
+        ok: false,
+        error:
+          "Chưa lưu được phản ánh trên trình duyệt. Có thể bộ nhớ đầy hoặc localStorage bị chặn. Nội dung nhập vẫn được giữ; chưa thông báo thành công.",
+      }
+    }
+  }
   const go = (next: Screen) => {
-    if (citizen && !["new-report"].includes(next))
+    if (citizen && !["new-report", "reports"].includes(next))
       return notify("Người dân chỉ sử dụng cổng gửi phản ánh mô phỏng", "error")
     setScreen(next)
   }
@@ -830,7 +907,7 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell ${citizen ? "citizen-shell" : ""} ${
+      className={`app-shell ${screen === "new-report" ? "intake-shell" : ""} ${citizen ? "citizen-shell" : ""} ${
         admin ? "admin-shell" : ""
       }`}
     >
@@ -895,14 +972,20 @@ export default function App() {
         <header className="topbar">
           <div>
             <div className="top-title">
-              {citizen
-                ? "CỔNG PHẢN ÁNH · VNeID MÔ PHỎNG"
-                : admin
-                  ? "TRUNG TÂM QUẢN TRỊ"
-                  : pageTitle(screen)}
+              {screen === "new-report"
+                ? citizen
+                  ? "Gửi phản ánh"
+                  : "Tiếp nhận phản ánh"
+                : citizen
+                  ? "CỔNG PHẢN ÁNH · VNeID MÔ PHỎNG"
+                  : admin
+                    ? "TRUNG TÂM QUẢN TRỊ"
+                    : pageTitle(screen)}
             </div>
             <div className="top-desc">
-              Demo — dữ liệu giả lập · Phân quyền chỉ mô phỏng trên giao diện
+              {screen === "new-report"
+                ? "Tiếp nhận thông tin sự việc · Phân quyền mô phỏng"
+                : "Demo — dữ liệu giả lập · Phân quyền chỉ mô phỏng trên giao diện"}
             </div>
           </div>
           <div className="top-actions">
@@ -949,22 +1032,23 @@ export default function App() {
               xác nhận để tạo bộ mẫu theo ngày hôm nay.
             </div>
           )}
-          {["reports", "report-detail", "cases", "case-detail"].includes(
-            screen,
-          ) && (
-            <OperationsTabs
-              active={
-                screen === "reports" || screen === "report-detail"
-                  ? "reports"
-                  : screen === "case-detail"
-                    ? "detail"
-                    : "cases"
-              }
-              onReports={() => go("reports")}
-              onCases={() => go("cases")}
-              onDetail={() => openCase(selectedCase)}
-            />
-          )}
+          {!citizen &&
+            ["reports", "report-detail", "cases", "case-detail"].includes(
+              screen,
+            ) && (
+              <OperationsTabs
+                active={
+                  screen === "reports" || screen === "report-detail"
+                    ? "reports"
+                    : screen === "case-detail"
+                      ? "detail"
+                      : "cases"
+                }
+                onReports={() => go("reports")}
+                onCases={() => go("cases")}
+                onDetail={() => openCase(selectedCase)}
+              />
+            )}
           {screen === "dashboard" && (
             <Dashboard
               reports={reports}
@@ -986,7 +1070,14 @@ export default function App() {
           )}
           {screen === "reports" && (
             <Reports
-              reports={reports}
+              reports={
+                citizen
+                  ? reports.filter(
+                      (r) =>
+                        r.submittedBy === "cong.dan.demo" || r.id === "PA-013",
+                    )
+                  : reports
+              }
               onNew={() =>
                 canEdit || citizen
                   ? go("new-report")
@@ -996,31 +1087,24 @@ export default function App() {
             />
           )}
           {screen === "new-report" && (
-            <NewReport
+            <ReportIntake
               key={wizardVersion}
-              hasNew={hasNew}
+              citizen={citizen}
               reports={reports}
-              onCancel={() =>
-                citizen
-                  ? notify("Bạn đang ở cổng gửi phản ánh mô phỏng")
-                  : go("reports")
-              }
-              onSubmit={(report) => {
-                setReports((v) =>
-                  v.some((r) => r.id === report.id) ? v : [report, ...v],
-                )
-                addLog(
-                  "Tạo phản ánh",
-                  "PA-013",
-                  "Tạo từ biểu mẫu demo; chưa xác nhận liên kết.",
-                )
-                setSelectedReport("PA-013")
-                setScreen(citizen ? "new-report" : "report-detail")
-                notify("Tạo phản ánh PA-013 thành công")
-              }}
+              onSubmit={submitIntake}
+              onOpen={openReport}
+              onList={() => go("reports")}
             />
           )}
-          {screen === "report-detail" && (
+          {screen === "report-detail" && citizen && (
+            <CitizenReportView
+              report={
+                reports.find((r) => r.id === selectedReport) || reports[0]
+              }
+              onBack={() => go("reports")}
+            />
+          )}
+          {screen === "report-detail" && !citizen && (
             <ReportDetail
               key={selectedReport}
               reports={reports}
@@ -1480,7 +1564,10 @@ function Dashboard({
     }
   })
   const behaviorCount = (behavior: string) =>
-    reports.filter((report) => report.behavior === behavior).length
+    reports.filter(
+      (report) =>
+        reportTypeLabel(report.behavior) === reportTypeLabel(behavior),
+    ).length
   const [clock, setClock] = useState(() => new Date())
   useEffect(() => {
     const timer = window.setInterval(() => setClock(new Date()), 30000)
@@ -1717,7 +1804,7 @@ function Reports({
 }) {
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("Tất cả trạng thái")
-  const [behavior, setBehavior] = useState("Tất cả nhóm hành vi")
+  const [behavior, setBehavior] = useState("Tất cả loại phản ánh")
   const [source, setSource] = useState("")
   const [area, setArea] = useState("")
   const filtered = reports.filter(
@@ -1727,7 +1814,8 @@ function Reports({
         .includes(query.trim().toLowerCase()) &&
       (status.startsWith("Tất cả") ||
         reportWorkflowStatus(r.status) === status) &&
-      (behavior.startsWith("Tất cả") || r.behavior === behavior) &&
+      (behavior.startsWith("Tất cả") ||
+        reportTypeLabel(r.behavior) === behavior) &&
       (!source || r.source === source) &&
       (!area || r.area === area),
   )
@@ -1782,8 +1870,10 @@ function Reports({
           <option>Không hợp lệ</option>
         </select>
         <select value={behavior} onChange={(e) => setBehavior(e.target.value)}>
-          <option>Tất cả nhóm hành vi</option>
-          {Array.from(new Set(reports.map((r) => r.behavior))).map((x) => (
+          <option>Tất cả loại phản ánh</option>
+          {Array.from(
+            new Set(reports.map((r) => reportTypeLabel(r.behavior))),
+          ).map((x) => (
             <option key={x}>{x}</option>
           ))}
         </select>
@@ -1837,7 +1927,7 @@ function ReportTable({
           <tr>
             <th>Mã phản ánh</th>
             <th>Người gửi mẫu</th>
-            <th>Nội dung / Loại hành vi</th>
+            <th>Nội dung / Loại phản ánh</th>
             {!compact && (
               <>
                 <th>Nguồn</th>
@@ -1856,12 +1946,15 @@ function ReportTable({
                 <b className="id-link">{r.id}</b>
               </td>
               <td>
-                <b>Người gửi mẫu</b>
+                <b>{r.senderName || "Người gửi mẫu"}</b>
                 <span className="cell-sub">{r.area}</span>
               </td>
               <td>
                 <div className="cell-title">{r.title}</div>
-                <span className="cell-sub">{r.behavior}</span>
+                <span className="cell-sub">
+                  {reportTypeLabel(r.behavior)}
+                  {r.behaviorOther ? `: ${r.behaviorOther}` : ""}
+                </span>
               </td>
               {!compact && (
                 <>
@@ -1873,7 +1966,7 @@ function ReportTable({
                 <span className="cell-sub">Tiếp nhận · giờ Việt Nam</span>
               </td>
               <td>
-                <b>{r.amount ? `${r.amount} triệu` : "—"}</b>
+                <b>{r.transferStatus === 'Không' ? 'Không chuyển tiền' : r.transferStatus === 'Chưa rõ' ? 'Chưa rõ' : r.amount ? `${r.amount} triệu` : "—"}</b>
               </td>
               <td>
                 <WorkflowBadge value={r.status} />
@@ -1892,431 +1985,6 @@ function ReportTable({
       {reports.length === 0 && (
         <div className="empty">Không tìm thấy phản ánh phù hợp.</div>
       )}
-    </div>
-  )
-}
-
-function NewReport({
-  onCancel,
-  onSubmit,
-  hasNew,
-  reports,
-}: {
-  onCancel: () => void
-  onSubmit: (r: Report) => void
-  hasNew: boolean
-  reports: Report[]
-}) {
-  const [step, setStep] = useStoredState("scamgraph-demo-wizard-step", 1)
-  const [form, setForm] = useStoredState("scamgraph-demo-wizard-form", {
-    sender: "",
-    phone: "",
-    title: "",
-    content: "",
-    source: "",
-    area: "",
-    time: "",
-    amount: "",
-    attachment: false,
-  })
-  const [errors, setErrors] = useState<string[]>([])
-  const [submitted, setSubmitted] = useState(false)
-  const submittingRef = useRef(false)
-  const fill = () => {
-    setErrors([])
-    setForm({
-      sender: "Nguyễn Hoàng Minh",
-      phone: "0900 000 013",
-      title: "Yêu cầu xác minh tài khoản qua website đáng ngờ",
-      content: demoText,
-      source: "Cổng trực tuyến",
-      area: "Hà Nội",
-      time: vietnamInput(new Date(Date.now() - 30 * 60000)),
-      amount: "15000000",
-      attachment: form.attachment,
-    })
-  }
-  const submit = () => {
-    if (submittingRef.current) return
-    const missing = [
-      ["Tiêu đề", form.title],
-      ["Nội dung", form.content],
-      ["Nguồn tiếp nhận", form.source],
-      ["Địa bàn", form.area],
-      ["Thời gian phát sinh", form.time],
-    ]
-      .filter(([, v]) => !String(v).trim())
-      .map(([k]) => k)
-    if (!Number.isFinite(Number(form.amount)) || Number(form.amount) < 0)
-      missing.push("Số tiền phải là số không âm")
-    if (!fromVietnamInput(form.time))
-      missing.push("Thời gian phát sinh không hợp lệ")
-    if (missing.length) return setErrors(missing)
-    if (hasNew)
-      return setErrors([
-        "PA-013 đã tồn tại. Vui lòng đặt lại demo trước khi tạo lại",
-      ])
-    submittingRef.current = true
-    setSubmitted(true)
-    onSubmit({
-      id: "PA-013",
-      title: form.title.trim(),
-      content: form.content.trim(),
-      source: form.source,
-      area: form.area,
-      occurredAt: fromVietnamInput(form.time),
-      receivedAt: nowISO(),
-      updatedAt: nowISO(),
-      amount: Number(form.amount) / 1000000,
-      status: "Mới tiếp nhận",
-      behavior: "Giả danh ngân hàng",
-      account: "DEMO-TK-001",
-      bank: "Ngân hàng mẫu A",
-      phone: "DEMO-SDT-001",
-      website: "xacminh-demo.example",
-      extracted: false,
-      reviewed: false,
-      attachment: form.attachment,
-    })
-  }
-  return (
-    <div className="form-layout report-wizard">
-      <div className="form-main card">
-        <div className="wizard-steps">
-          {[
-            "Thông tin người gửi",
-            "Chi tiết vụ việc",
-            "Bằng chứng",
-            "Xác nhận",
-          ].map((label, index) => (
-            <button
-              key={label}
-              className={
-                step === index + 1 ? "active" : step > index + 1 ? "done" : ""
-              }
-              onClick={() => setStep(index + 1)}
-            >
-              <span>{index + 1}</span>
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="section-head">
-          <div>
-            <div className="section-title">
-              {
-                [
-                  "Thông tin người gửi",
-                  "Chi tiết vụ việc",
-                  "Bằng chứng",
-                  "Xác nhận",
-                ][step - 1]
-              }
-            </div>
-            <p>
-              Nhập nội dung do người phản ánh cung cấp. Các trường có dấu * là
-              bắt buộc.
-            </p>
-          </div>
-          <Button variant="secondary" onClick={fill}>
-            Dùng tình huống mẫu
-          </Button>
-        </div>
-        {errors.length > 0 && (
-          <div className="error-box">
-            <b>Chưa thể gửi phản ánh</b>
-            <span>Vui lòng kiểm tra: {errors.join(", ")}.</span>
-          </div>
-        )}
-        {step === 1 && (
-          <div className="form-grid sender-grid">
-            <Field label="Họ và tên mẫu">
-              <input
-                placeholder="Nhập tên người gửi mẫu"
-                value={form.sender}
-                onChange={(e) => setForm({ ...form, sender: e.target.value })}
-              />
-            </Field>
-            <Field label="Định danh mô phỏng">
-              <input value="DEMO-CCCD-013" readOnly />
-            </Field>
-            <Field label="Tỉnh / Thành phố mẫu">
-              <select
-                value={form.area}
-                onChange={(e) => setForm({ ...form, area: e.target.value })}
-              >
-                <option value="">Chọn địa bàn</option>
-                <option>Hà Nội</option>
-                <option>Đà Nẵng</option>
-                <option>TP. Hồ Chí Minh</option>
-              </select>
-            </Field>
-            <Field label="Số điện thoại liên hệ mẫu">
-              <input
-                placeholder="Không nhập số điện thoại thật"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </Field>
-            <div className="simulation-note">
-              Thông tin định danh trong màn hình này chỉ dùng để mô phỏng luồng
-              tiếp nhận. Không nhập dữ liệu cá nhân thật.
-            </div>
-          </div>
-        )}
-        {step === 2 && (
-          <div className="form-grid">
-            <Field
-              label="Tiêu đề"
-              required
-              error={
-                errors.includes("Tiêu đề")
-                  ? "Vui lòng nhập tiêu đề."
-                  : undefined
-              }
-            >
-              <input
-                placeholder="Nhập tiêu đề ngắn gọn"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-              />
-            </Field>
-            <Field
-              label="Nguồn tiếp nhận"
-              required
-              error={
-                errors.includes("Nguồn tiếp nhận")
-                  ? "Vui lòng chọn nguồn tiếp nhận."
-                  : undefined
-              }
-            >
-              <select
-                value={form.source}
-                onChange={(e) => setForm({ ...form, source: e.target.value })}
-              >
-                <option value="">Chọn nguồn</option>
-                <option>Cổng trực tuyến</option>
-                <option>Đường dây nóng</option>
-                <option>Ứng dụng di động</option>
-                <option>Tiếp nhận trực tiếp</option>
-              </select>
-            </Field>
-            <Field
-              label="Nội dung phản ánh"
-              required
-              error={
-                errors.includes("Nội dung")
-                  ? "Vui lòng nhập nội dung phản ánh."
-                  : undefined
-              }
-            >
-              <textarea
-                rows={7}
-                placeholder="Mô tả diễn biến, thông tin liên hệ và giao dịch..."
-                value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-              />
-            </Field>
-            <div className="split-fields">
-              <Field
-                label="Địa bàn"
-                required
-                error={
-                  errors.includes("Địa bàn")
-                    ? "Vui lòng chọn địa bàn."
-                    : undefined
-                }
-              >
-                <select
-                  value={form.area}
-                  onChange={(e) => setForm({ ...form, area: e.target.value })}
-                >
-                  <option value="">Chọn địa bàn</option>
-                  <option>Hà Nội</option>
-                  <option>Đà Nẵng</option>
-                  <option>TP. Hồ Chí Minh</option>
-                </select>
-              </Field>
-              <Field
-                label="Thời gian phát sinh"
-                required
-                error={
-                  errors.includes("Thời gian phát sinh")
-                    ? "Vui lòng chọn thời gian phát sinh."
-                    : undefined
-                }
-              >
-                <input
-                  type="datetime-local"
-                  value={form.time}
-                  onChange={(e) => setForm({ ...form, time: e.target.value })}
-                />
-              </Field>
-            </div>
-            <Field label="Số tiền được phản ánh" hint="Đơn vị: đồng">
-              <input
-                type="number"
-                placeholder="0"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              />
-            </Field>
-          </div>
-        )}
-        {step === 3 && (
-          <div className="evidence-step">
-            {form.attachment ? (
-              <div className="receipt-preview">
-                <div className="receipt-top">
-                  <span>NGÂN HÀNG MẪU A</span>
-                  <b>ẢNH XEM TRƯỚC</b>
-                </div>
-                <div className="receipt-amount">15.000.000 đ</div>
-                <div className="receipt-row">
-                  <span>Tài khoản nhận</span>
-                  <b>DEMO-TK-001</b>
-                </div>
-                <div className="watermark">TÀI LIỆU GIẢ LẬP</div>
-              </div>
-            ) : (
-              <div className="upload-empty">
-                <div className="upload-icon">↑</div>
-                <b>Chọn ảnh bằng chứng mẫu</b>
-                <span>Ảnh sẽ được xem trước trước khi gửi.</span>
-              </div>
-            )}
-            <Button
-              variant="secondary"
-              onClick={() => setForm({ ...form, attachment: true })}
-            >
-              Chọn ảnh chuyển khoản mẫu
-            </Button>
-          </div>
-        )}
-        {step === 4 && (
-          <div className="review-grid">
-            <DetailRows
-              rows={[
-                ["Người gửi mẫu", form.sender || "Chưa cung cấp"],
-                ["Tiêu đề", form.title || "Chưa nhập"],
-                ["Nguồn tiếp nhận", form.source || "Chưa chọn"],
-                ["Địa bàn", form.area || "Chưa chọn"],
-                [
-                  "Số tiền",
-                  form.amount
-                    ? `${Number(form.amount).toLocaleString("vi-VN")} đồng`
-                    : "0 đồng",
-                ],
-                ["Bằng chứng", form.attachment ? "01 ảnh giả lập" : "Chưa có"],
-              ]}
-            />
-            <p>{form.content || "Chưa nhập nội dung phản ánh."}</p>
-          </div>
-        )}
-        {hasNew && (
-          <div className="simulation-note">
-            PA-013 đã được tiếp nhận. Đổi sang vai trò cán bộ phân tích để tiếp
-            tục kiểm tra; đặt lại demo nếu muốn tạo lại.
-          </div>
-        )}
-        <div className="wizard-actions">
-          <Button
-            variant="secondary"
-            onClick={() => (step === 1 ? onCancel() : setStep(step - 1))}
-          >
-            {step === 1 ? "Hủy" : "Quay lại"}
-          </Button>
-          {step < 4 ? (
-            <Button onClick={() => setStep(step + 1)}>Tiếp tục →</Button>
-          ) : (
-            <Button onClick={submit} disabled={submitted || hasNew}>
-              {hasNew || submitted ? "Đã gửi PA-013" : "Gửi phản ánh"}
-            </Button>
-          )}
-        </div>
-      </div>
-      <div className="form-side">
-        <div className="card citizen-guide">
-          <CardHead
-            title="CẨM NANG AN TOÀN TRỰC TUYẾN"
-            sub="Thông tin hướng dẫn trong demo"
-          />
-          <ul>
-            <li>Không chuyển tiền theo cuộc gọi yêu cầu xác minh tài khoản.</li>
-            <li>Không cung cấp mật khẩu hoặc mã OTP cho người khác.</li>
-            <li>
-              Lưu lại nội dung và chứng từ để cơ quan có thẩm quyền xác minh.
-            </li>
-          </ul>
-          <p>
-            Chỉ nhập tình huống giả lập. Không tiếp nhận tố giác thật trên bản
-            demo này.
-          </p>
-        </div>
-        <div className="card upload-card">
-          <div className="section-title">Tài liệu đính kèm</div>
-          <p className="muted">Chỉ sử dụng tài liệu giả lập trong demo.</p>
-          {form.attachment ? (
-            <div className="receipt-preview">
-              <div className="receipt-top">
-                <span>NGÂN HÀNG MẪU A</span>
-                <b>GIAO DỊCH THÀNH CÔNG</b>
-              </div>
-              <div className="receipt-amount">15.000.000 đ</div>
-              <div className="receipt-row">
-                <span>Tài khoản nhận</span>
-                <b>DEMO-TK-001</b>
-              </div>
-              <div className="receipt-row">
-                <span>Thời gian</span>
-                <b>{formatDateTime(fromVietnamInput(form.time))}</b>
-              </div>
-              <div className="watermark">TÀI LIỆU GIẢ LẬP</div>
-            </div>
-          ) : (
-            <div className="upload-empty">
-              <div className="upload-icon">↑</div>
-              <b>Chưa có tài liệu</b>
-              <span>Thêm ảnh chuyển khoản mẫu để trình diễn.</span>
-            </div>
-          )}
-          <Button
-            variant="secondary"
-            className="full"
-            onClick={() => setForm({ ...form, attachment: true })}
-          >
-            Dùng ảnh chuyển khoản mẫu
-          </Button>
-        </div>
-        <div className="card privacy-note">
-          <b>Lưu ý nghiệp vụ</b>
-          <p>
-            Dữ liệu trong prototype hoàn toàn giả lập. Không nhập thông tin cá
-            nhân thật.
-          </p>
-        </div>
-      </div>
-      <div className="card submission-history">
-        <CardHead
-          title="Lịch sử phản ánh gần đây"
-          sub="Dữ liệu demo đã tiếp nhận"
-        />
-        <div className="citizen-history">
-          {reports
-            .filter((r) => r.id === "PA-013")
-            .map((r) => (
-              <p key={r.id}>
-                <b>{r.id}</b> · {r.title} · {r.amount} triệu đồng · Đã tiếp nhận
-                mô phỏng
-              </p>
-            ))}
-          {!hasNew && (
-            <p className="muted">
-              Chưa có phản ánh của người gửi mẫu trong phiên demo.
-            </p>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
@@ -2340,9 +2008,7 @@ function ReportDetail({
   onUpdate: (report: Report) => void
   notify: (x: string) => void
 }) {
-  const [extracted, setExtracted] = useState(
-    report.extracted ?? report.id !== "PA-013",
-  )
+  const [extracted, setExtracted] = useState(report.extracted ?? true)
   const [preview, setPreview] = useState(false)
   const [draft, setDraft] = useState({
     account: report.account || "",
@@ -2350,6 +2016,8 @@ function ReportDetail({
     phone: report.phone || "",
     website: report.website || "",
     amount: String(report.amount),
+    behavior: report.behavior,
+    behaviorOther: report.behaviorOther || "",
   })
   const [dirty, setDirty] = useState(false)
   const [error, setError] = useState("")
@@ -2373,9 +2041,15 @@ function ReportDetail({
   const save = () => {
     if (!Number.isFinite(Number(draft.amount)) || Number(draft.amount) < 0)
       return setError("Số tiền phải là số không âm.")
+    if (draft.behavior === "Khác" && !draft.behaviorOther.trim())
+      return setError("Nhập mô tả loại phản ánh khác trước khi lưu.")
     const next = {
       ...report,
       ...draft,
+      behaviorOther:
+        draft.behavior === "Khác" ? draft.behaviorOther.trim() : undefined,
+      initialBehavior: report.initialBehavior || report.behavior,
+      initialBehaviorOther: report.initialBehaviorOther ?? report.behaviorOther,
       amount: Number(draft.amount),
       extracted: true,
       reviewed: true,
@@ -2391,6 +2065,15 @@ function ReportDetail({
       next.status = "Đã kiểm tra"
     }
     onUpdate(next)
+    if (
+      report.behavior !== next.behavior ||
+      report.behaviorOther !== next.behaviorOther
+    )
+      onLog(
+        "Điều chỉnh loại phản ánh",
+        report.id,
+        `Trước: ${report.behavior}${report.behaviorOther ? ": " + report.behaviorOther : ""}; sau: ${next.behavior}${next.behaviorOther ? ": " + next.behaviorOther : ""}`,
+      )
     onLog(
       "Kiểm tra thông tin trích xuất",
       report.id,
@@ -2438,11 +2121,35 @@ function ReportDetail({
             <div className="quote-content">{report.content}</div>
             <DetailRows
               rows={[
-                ["Phát sinh sự việc", formatDateTime(report.occurredAt)],
+                [
+                  "Phát sinh sự việc",
+                  report.occurredTimeUnknown
+                    ? "Không nhớ chính xác"
+                    : formatDateTime(report.occurredAt),
+                ],
                 ["Tiếp nhận phản ánh", formatDateTime(report.receivedAt)],
                 ["Địa bàn", report.area],
-                ["Số tiền", `${report.amount} triệu đồng`],
-                ["Nhóm hành vi", report.behavior],
+                ["Người gửi", report.senderName || "Người gửi mẫu"],
+                ["Liên hệ", report.senderContact || "Chưa cung cấp"],
+                ["Số tiền", report.transferStatus === "Không" ? "Không phát sinh chuyển tiền" : report.transferStatus === "Chưa rõ" ? "Chưa rõ" : `${report.amount} triệu đồng`],
+                [
+                  "Loại phản ánh",
+                  reportTypeLabel(report.behavior) +
+                    (report.behaviorOther ? ": " + report.behaviorOther : ""),
+                ],
+                [
+                  "Phân loại ban đầu",
+                  reportTypeLabel(report.initialBehavior || report.behavior) +
+                    (report.initialBehaviorOther
+                      ? ": " + report.initialBehaviorOther
+                      : ""),
+                ],
+                [
+                  "Kênh tiếp nhận",
+                  report.source +
+                    (report.sourceOther ? ": " + report.sourceOther : ""),
+                ],
+                ["Mạng xã hội", report.socialAccount || "Chưa cung cấp"],
               ]}
             />
           </div>
@@ -2584,6 +2291,34 @@ function ReportDetail({
             </Button>
           ) : (
             <div className="entity-form">
+              <Field label="Loại phản ánh">
+                <select
+                  value={draft.behavior}
+                  disabled={!canEdit}
+                  onChange={(e) => {
+                    setDraft({ ...draft, behavior: e.target.value })
+                    setDirty(true)
+                  }}
+                >
+                  {Array.from(new Set([...REPORT_TYPES, draft.behavior])).map(
+                    (type) => (
+                      <option key={type}>{type}</option>
+                    ),
+                  )}
+                </select>
+              </Field>
+              {draft.behavior === "Khác" && (
+                <Field label="Mô tả loại phản ánh">
+                  <input
+                    value={draft.behaviorOther}
+                    readOnly={!canEdit}
+                    onChange={(e) => {
+                      setDraft({ ...draft, behaviorOther: e.target.value })
+                      setDirty(true)
+                    }}
+                  />
+                </Field>
+              )}
               {(
                 [
                   ["account", "Tài khoản ngân hàng"],
@@ -2631,7 +2366,12 @@ function ReportDetail({
           <div className="receipt-preview">
             <b>NGÂN HÀNG MẪU A</b>
             <div className="receipt-amount">15.000.000 đ</div>
-            <p>DEMO-TK-001 · {formatDateTime(report.occurredAt)}</p>
+            <p>
+              DEMO-TK-001 ·{" "}
+              {report.occurredTimeUnknown
+                ? "Không nhớ chính xác"
+                : formatDateTime(report.occurredAt)}
+            </p>
             <div className="watermark">TÀI LIỆU GIẢ LẬP</div>
           </div>
         </Modal>
@@ -3112,7 +2852,9 @@ function Cases({
                         `Phản ánh độc lập ${c.reportIds.join(", ")}`}
                     </span>
                   </td>
-                  <td>{related[0]?.behavior || "Đang phân loại"}</td>
+                  <td>
+                    {reportTypeLabel(related[0]?.behavior || "Chưa xác định")}
+                  </td>
                   <td>
                     <b>{total} triệu</b>
                   </td>
@@ -3473,6 +3215,17 @@ function ReportModal({
           </p>
         </div>
         <div className="report-section">
+          <b>Loại phản ánh</b>
+          <p>
+            {reports
+              .map(
+                (r) =>
+                  `${r.id}: ${reportTypeLabel(r.behavior)}${r.behaviorOther ? ": " + r.behaviorOther : ""}`,
+              )
+              .join("; ")}
+          </p>
+        </div>
+        <div className="report-section">
           <b>Thực thể được ghi nhận</b>
           <p>{entityText}.</p>
         </div>
@@ -3754,5 +3507,46 @@ function DetailRows({ rows }: { rows: string[][] }) {
         </div>
       ))}
     </div>
+  )
+}
+
+function CitizenReportView({
+  report,
+  onBack,
+}: {
+  report: Report
+  onBack: () => void
+}) {
+  return (
+    <section className="report-intake">
+      <button className="intake-link" onClick={onBack}>
+        ← Xem danh sách phản ánh
+      </button>
+      <div className="intake-card">
+        <h1>
+          {report.id} · {report.title}
+        </h1>
+        <p>
+          Loại phản ánh: {reportTypeLabel(report.behavior)}
+          {report.behaviorOther ? ": " + report.behaviorOther : ""}
+        </p>
+        <p>
+          Phát sinh:{" "}
+          {report.occurredTimeUnknown
+            ? "Không nhớ chính xác"
+            : formatDateTime(report.occurredAt)}
+        </p>
+        <p>Tiếp nhận: {formatDateTime(report.receivedAt)} · Giờ Việt Nam</p>
+        <p>
+          Số tiền:{" "}
+          {report.transferStatus === "Không"
+            ? "Không phát sinh chuyển tiền"
+            : `${report.amount} triệu đồng`}
+        </p>
+        <WorkflowBadge value={report.status} />
+        <p className="intake-content">{report.content}</p>
+        <p>Tài liệu: {report.attachment ? "01 ảnh mẫu" : "Không có"}</p>
+      </div>
+    </section>
   )
 }
