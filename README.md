@@ -75,3 +75,7 @@ Dùng `CHROMIUM_PATH=/duong/dan/chromium` khi khác mặc định. Các kiểm t
 - PA-013 là tình huống tạo mới duy nhất để review; đặt lại trước khi trình diễn lại. Ảnh bằng chứng là minh họa HTML, không phải quy trình tải/chấm chứng từ thật.
 - Dữ liệu chỉ lưu trên một trình duyệt, không đồng bộ nhiều người; xóa dữ liệu trình duyệt hoặc chặn localStorage sẽ ảnh hưởng lưu tiến độ. Không có cơ chế bảo mật, chữ ký số hay nhật ký chống sửa phục vụ vận hành thật.
 - Tối ưu desktop theo hai kích thước yêu cầu; chưa chứng nhận giao diện mobile, kiểm thử bảo mật hoặc độ giống từng pixel. Không triển khai website ra dịch vụ bên ngoài.
+
+## Preview trên Vercel
+
+Xem [hướng dẫn kết nối GitHub và deploy đúng nhánh sửa](docs/VERCEL-PREVIEW.md). `vercel.json` đã cấu hình Vite, pnpm 11.25.0 và thư mục output `dist`; Node được cố định 24.x. Không cần backend hoặc biến môi trường bí mật. Nhánh review là **`feat/improve-demo`**; không dùng nhầm deployment của `main` (bản gốc).
