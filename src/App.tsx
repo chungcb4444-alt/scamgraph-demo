@@ -8,80 +8,41 @@ import {
   useState,
 } from "react"
 
-type Screen = "dashboard" | "reports" | "new-report" | "report-detail" | "graph" | "alerts" | "cases" | "case-detail" | "accounts" | "logs"
+type Screen =
+  | "dashboard"
+  | "reports"
+  | "new-report"
+  | "report-detail"
+  | "graph"
+  | "alerts"
+  | "cases"
+  | "case-detail"
+  | "accounts"
+  | "logs"
 
-type Report = {
-  id: string
-  title: string
-  source: string
-  area: string
-  time: string
-  amount: number
-  status: string
-  behavior: string
-  content: string
-  account?: string
-  bank?: string
-  phone?: string
-  website?: string
-  cluster?: string
-  extracted?: boolean
-  reviewed?: boolean
-  rejectedClusters?: string[]
-  attachment?: boolean
-}
-
-type CaseFile = {
-  id: string
-  name: string
-  priority: string
-  officer: string
-  status: string
-  updated: string
-  note: string
-  reportIds: string[]
-  clusterId?: string
-  history: string[]
-}
-
-type LogItem = {
-  time: string
-  user: string
-  role: string
-  action: string
-  target: string
-  result: string
-  detail?: string
-}
-
-type Cluster = {
-  id: string
-  name: string
-  risk: string
-  score: number
-}
-
-type AlertItem = {
-  id: string
-  subjectId: string
-  clusterId?: string
-  reportId?: string
-  title: string
-  level: "Cao" | "Trung bình" | "Thấp"
-  score: number
-  description: string
-}
+import type { Report, CaseFile, LogItem, Cluster, AlertItem } from "./types"
+import {
+  dayKey,
+  formatDateTime,
+  fromVietnamInput,
+  lastSevenDays,
+  migrateStoredData,
+  nowISO,
+  seedTimestamp,
+  vietnamInput,
+} from "./demoTime"
+import LinkGraph from "./LinkGraph"
+import { WorkflowBadge, workflowLabel } from "./workflow"
 
 const demoText =
   "Tôi nhận được cuộc gọi của người tự xưng là nhân viên ngân hàng, yêu cầu truy cập xacminh-demo.example để xác minh tài khoản. Sau đó tôi chuyển 15.000.000 đồng vào tài khoản DEMO-TK-001 tại Ngân hàng mẫu A. Người liên hệ sử dụng số DEMO-SDT-001. Sau khi chuyển tiền, tôi không liên lạc được."
 
-const initialReports: Report[] = [
+const reportTemplates: Report[] = [
   {
     id: "PA-001",
     title: "Cuộc gọi yêu cầu xác minh tài khoản",
     source: "Cổng trực tuyến",
     area: "Hà Nội",
-    time: "18/06/2025 09:24",
     amount: 10,
     status: "Đã phân tích",
     behavior: "Giả danh ngân hàng",
@@ -99,7 +60,6 @@ const initialReports: Report[] = [
     title: "Yêu cầu chuyển tiền để khóa giao dịch",
     source: "Đường dây nóng",
     area: "Đà Nẵng",
-    time: "17/06/2025 15:40",
     amount: 20,
     status: "Đã phân tích",
     behavior: "Giả danh ngân hàng",
@@ -115,7 +75,6 @@ const initialReports: Report[] = [
     title: "Trang xác minh tài khoản đáng ngờ",
     source: "Ứng dụng di động",
     area: "TP. Hồ Chí Minh",
-    time: "16/06/2025 11:05",
     amount: 15,
     status: "Có liên quan",
     behavior: "Giả danh ngân hàng",
@@ -131,7 +90,6 @@ const initialReports: Report[] = [
     title: "Giả danh cán bộ yêu cầu nộp phạt",
     source: "Cổng trực tuyến",
     area: "Hải Phòng",
-    time: "15/06/2025 14:20",
     amount: 8,
     status: "Cần xác minh",
     behavior: "Giả danh cơ quan nhà nước",
@@ -145,7 +103,6 @@ const initialReports: Report[] = [
     title: "Thông báo vi phạm hành chính giả",
     source: "Đường dây nóng",
     area: "Cần Thơ",
-    time: "14/06/2025 10:12",
     amount: 12,
     status: "Có liên quan",
     behavior: "Giả danh cơ quan nhà nước",
@@ -159,7 +116,6 @@ const initialReports: Report[] = [
     title: "Cuộc gọi tự xưng cơ quan điều tra",
     source: "Tiếp nhận trực tiếp",
     area: "Bắc Ninh",
-    time: "13/06/2025 16:48",
     amount: 5,
     status: "Đã phân tích",
     behavior: "Giả danh cơ quan nhà nước",
@@ -172,7 +128,6 @@ const initialReports: Report[] = [
     title: "Đơn hàng trực tuyến không được giao",
     source: "Ứng dụng di động",
     area: "Hà Nội",
-    time: "12/06/2025 09:30",
     amount: 3,
     status: "Mới tiếp nhận",
     behavior: "Mua bán trực tuyến",
@@ -183,7 +138,6 @@ const initialReports: Report[] = [
     title: "Mời đầu tư lợi nhuận cao",
     source: "Cổng trực tuyến",
     area: "Lâm Đồng",
-    time: "11/06/2025 13:15",
     amount: 30,
     status: "Cần xác minh",
     behavior: "Đầu tư trực tuyến",
@@ -194,7 +148,6 @@ const initialReports: Report[] = [
     title: "Tin nhắn nhận quà trúng thưởng",
     source: "Đường dây nóng",
     area: "Nghệ An",
-    time: "10/06/2025 08:55",
     amount: 2,
     status: "Mới tiếp nhận",
     behavior: "Trúng thưởng giả",
@@ -205,7 +158,6 @@ const initialReports: Report[] = [
     title: "Tuyển cộng tác viên xử lý đơn",
     source: "Ứng dụng di động",
     area: "Thanh Hóa",
-    time: "09/06/2025 19:10",
     amount: 7,
     status: "Cần xác minh",
     behavior: "Việc làm trực tuyến",
@@ -216,7 +168,6 @@ const initialReports: Report[] = [
     title: "Tài khoản mạng xã hội mạo danh",
     source: "Tiếp nhận trực tiếp",
     area: "Quảng Ninh",
-    time: "08/06/2025 10:42",
     amount: 4,
     status: "Đã phân tích",
     behavior: "Mạo danh người quen",
@@ -227,7 +178,6 @@ const initialReports: Report[] = [
     title: "Đường dẫn cập nhật dịch vụ giả",
     source: "Cổng trực tuyến",
     area: "Huế",
-    time: "07/06/2025 12:27",
     amount: 0,
     status: "Mới tiếp nhận",
     behavior: "Đường dẫn giả mạo",
@@ -235,21 +185,18 @@ const initialReports: Report[] = [
   },
 ]
 
-const initialCases: CaseFile[] = [
+const caseTemplates: CaseFile[] = [
   {
     id: "HS-001",
     name: "Xác minh nhóm giả danh cơ quan nhà nước",
     priority: "Cao",
     officer: "Lê Minh Anh",
     status: "Đang xác minh",
-    updated: "18/06/2025",
+    updated: "",
     note: "Đối chiếu các đầu mối chung trong CUM-002.",
     reportIds: ["PA-004", "PA-005", "PA-006"],
     clusterId: "CUM-002",
-    history: [
-      "18/06/2025 08:40 · Chuyển trạng thái sang Đang xác minh",
-      "17/06/2025 15:20 · Tạo hồ sơ từ CUM-002",
-    ],
+    history: ["Chuyển trạng thái sang Đang xác minh", "Tạo hồ sơ từ CUM-002"],
   },
   {
     id: "HS-002",
@@ -257,12 +204,12 @@ const initialCases: CaseFile[] = [
     priority: "Trung bình",
     officer: "Trần Quốc Huy",
     status: "Chờ bổ sung",
-    updated: "17/06/2025",
+    updated: "",
     note: "Chờ bổ sung tài liệu giao dịch giả lập.",
     reportIds: ["PA-008"],
     history: [
-      "17/06/2025 14:10 · Chuyển trạng thái sang Chờ bổ sung",
-      "17/06/2025 10:05 · Tạo hồ sơ từ phản ánh PA-008",
+      "Chuyển trạng thái sang Chờ bổ sung",
+      "Tạo hồ sơ từ phản ánh PA-008",
     ],
   },
 ]
@@ -375,7 +322,16 @@ function useStoredState<T>(key: string, initial: T) {
       }
       if (key.endsWith("wizard-step") && ![1, 2, 3, 4].includes(parsed))
         return initial
-      return parsed as T
+      const migrated = migrateStoredData(key, parsed)
+      if (stored && JSON.stringify(migrated) !== JSON.stringify(parsed)) {
+        try {
+          if (!localStorage.getItem(`${key}:migration-backup-v1`))
+            localStorage.setItem(`${key}:migration-backup-v1`, stored)
+        } catch {
+          /* Keep loaded data even if backup storage is unavailable. */
+        }
+      }
+      return migrated as T
     } catch {
       return initial
     }
@@ -390,9 +346,9 @@ function useStoredState<T>(key: string, initial: T) {
   return [value, setValue] as const
 }
 
-const initialLogs: LogItem[] = [
+const logTemplates: LogItem[] = [
   {
-    time: "18/06/2025 09:35",
+    time: "",
     user: "phan.tich.demo",
     role: "Cán bộ phân tích",
     action: "Trích xuất mô phỏng",
@@ -401,7 +357,7 @@ const initialLogs: LogItem[] = [
     detail: "Nhận diện 5 thực thể từ nội dung và tài liệu giả lập.",
   },
   {
-    time: "18/06/2025 08:40",
+    time: "",
     user: "le.minh.anh",
     role: "Cán bộ xử lý hồ sơ",
     action: "Đổi trạng thái",
@@ -410,7 +366,7 @@ const initialLogs: LogItem[] = [
     detail: "Trước: Mới tạo → Sau: Đang xác minh",
   },
   {
-    time: "17/06/2025 16:15",
+    time: "",
     user: "tiep.nhan.demo",
     role: "Cán bộ tiếp nhận",
     action: "Tạo phản ánh",
@@ -418,6 +374,33 @@ const initialLogs: LogItem[] = [
     result: "Thành công",
   },
 ]
+
+function makeSampleData(now = new Date()) {
+  const reports = reportTemplates.map((report, index) => {
+    const receivedAt = seedTimestamp(index, 9, 24, now)
+    return {
+      ...report,
+      time: undefined,
+      receivedAt,
+      occurredAt: new Date(
+        new Date(receivedAt).getTime() - 30 * 60000,
+      ).toISOString(),
+      updatedAt: receivedAt,
+    }
+  })
+  const cases = caseTemplates.map((item, index) => ({
+    ...item,
+    updated: seedTimestamp(index, 8, 40, now),
+    history: item.history.map(
+      (entry, i) => `${seedTimestamp(index + i, 8, 40, now)} · ${entry}`,
+    ),
+  }))
+  const logs = logTemplates.map((item, index) => ({
+    ...item,
+    time: item.target === "HS-001" ? cases[0].updated : item.action === "Tạo phản ánh" ? reports.find(report => report.id === item.target)?.receivedAt || seedTimestamp(1, 9, 24, now) : seedTimestamp(0, 10, 5, now),
+  }))
+  return { reports, cases, logs }
+}
 
 const roles = [
   "Quản trị hệ thống",
@@ -636,11 +619,7 @@ function statusTone(
   return "gray"
 }
 
-function reportWorkflowStatus(value: string) {
-  if (["Mới tiếp nhận", "Cần xác minh"].includes(value)) return "Chờ kiểm tra"
-  if (value === "Không hợp lệ") return "Không hợp lệ"
-  return "Đã kiểm tra"
-}
+const reportWorkflowStatus = workflowLabel
 
 function OperationsTabs({
   active,
@@ -675,6 +654,7 @@ function OperationsTabs({
 }
 
 export default function App() {
+  const [sampleData] = useState(() => makeSampleData())
   const [loggedIn, setLoggedIn] = useStoredState(
     "scamgraph-demo-session",
     false,
@@ -685,15 +665,15 @@ export default function App() {
   )
   const [reports, setReports] = useStoredState<Report[]>(
     "scamgraph-demo-reports",
-    initialReports,
+    sampleData.reports,
   )
   const [cases, setCases] = useStoredState<CaseFile[]>(
     "scamgraph-demo-cases",
-    initialCases,
+    sampleData.cases,
   )
   const [logs, setLogs] = useStoredState<LogItem[]>(
     "scamgraph-demo-logs",
-    initialLogs,
+    sampleData.logs,
   )
   const [selectedReport, setSelectedReport] = useStoredState(
     "scamgraph-demo-selected-report",
@@ -712,8 +692,9 @@ export default function App() {
     "scamgraph-demo-role",
     "Cán bộ phân tích",
   )
-  const [accountRoles, setAccountRoles] =
-    useStoredState<Record<string, string>>("scamgraph-demo-account-roles", {})
+  const [accountRoles, setAccountRoles] = useStoredState<
+    Record<string, string>
+  >("scamgraph-demo-account-roles", {})
   const [editingAccount, setEditingAccount] = useState("tiep.nhan.demo")
   const [editingRole, setEditingRole] = useState("Cán bộ tiếp nhận")
   const citizen = role === "Người dân / Tổ chức"
@@ -753,9 +734,7 @@ export default function App() {
   ) =>
     setLogs((v) => [
       {
-        time: new Date().toLocaleString("vi-VN", {
-          timeZone: "Asia/Ho_Chi_Minh",
-        }),
+        time: nowISO(),
         user: actorForRole(role),
         role,
         action,
@@ -800,21 +779,20 @@ export default function App() {
       /* In-memory reset remains available. */
     }
     setWizardVersion((v) => v + 1)
-    setReports(initialReports)
-    setCases(initialCases)
+    const fresh = makeSampleData()
+    setReports(fresh.reports)
+    setCases(fresh.cases)
     setAccountRoles({})
     setLogs([
       {
-        time: new Date().toLocaleString("vi-VN", {
-          timeZone: "Asia/Ho_Chi_Minh",
-        }),
+        time: nowISO(),
         user: "demo",
         role,
         action: "Đặt lại demo",
         target: "Toàn bộ dữ liệu",
         result: "Thành công",
       },
-      ...initialLogs,
+      ...fresh.logs,
     ])
     setCaseModal(false)
     setAlertModal(false)
@@ -837,9 +815,7 @@ export default function App() {
           setLoggedIn(true)
           setLogs((v) => [
             {
-              time: new Date().toLocaleString("vi-VN", {
-                timeZone: "Asia/Ho_Chi_Minh",
-              }),
+              time: nowISO(),
               user: actorForRole(nextRole),
               role: nextRole,
               action: "Đăng nhập mô phỏng",
@@ -965,6 +941,14 @@ export default function App() {
           </div>
         </header>
         <main className="content">
+          {reports.some((r) => r.timeMigration) && (
+            <div className="migration-note">
+              Dữ liệu phiên cũ đã được chuyển cấu trúc thời gian và giữ nguyên
+              bản ghi, số tiền, hồ sơ, nhật ký. Mốc phát sinh/tiếp nhận cũ dùng
+              thời gian đã có vì phiên cũ chưa tách hai trường. Đặt lại demo có
+              xác nhận để tạo bộ mẫu theo ngày hôm nay.
+            </div>
+          )}
           {["reports", "report-detail", "cases", "case-detail"].includes(
             screen,
           ) && (
@@ -1059,7 +1043,8 @@ export default function App() {
             />
           )}
           {screen === "graph" && (
-            <Graph
+            <LinkGraph
+              key={activeCluster.id}
               cluster={activeCluster}
               reports={clusterReports}
               total={clusterTotal}
@@ -1202,13 +1187,11 @@ export default function App() {
               id,
               ...data,
               status: "Mới tạo",
-              updated: new Date().toLocaleString("vi-VN"),
+              updated: nowISO(),
               note: "",
               reportIds: data.reportIds,
               clusterId: data.clusterId,
-              history: [
-                `${new Date().toLocaleString("vi-VN")} · Tạo hồ sơ từ ${data.clusterId}`,
-              ],
+              history: [`${nowISO()} · Tạo hồ sơ từ ${data.clusterId}`],
             }
             setCases((v) => [item, ...v])
             addLog("Tạo hồ sơ", id, `Tạo từ cụm ${data.clusterId}.`)
@@ -1244,7 +1227,7 @@ export default function App() {
         >
           <DetailRows
             rows={[
-              ["Thời gian", logModal.time],
+              ["Thời gian", formatDateTime(logModal.time)],
               ["Tài khoản", logModal.user],
               ["Vai trò", logModal.role],
               ["Đối tượng", logModal.target],
@@ -1306,18 +1289,20 @@ export default function App() {
 }
 
 function pageTitle(screen: Screen) {
-  return ({
-    dashboard: "Tổng quan",
-    reports: "Quản lý phản ánh",
-    "new-report": "Tạo phản ánh mới",
-    "report-detail": "Chi tiết phản ánh",
-    graph: "Phân tích liên kết",
-    alerts: "Cảnh báo và điểm rủi ro",
-    cases: "Hồ sơ vụ việc",
-    "case-detail": "Chi tiết hồ sơ",
-    accounts: "Tài khoản và phân quyền",
-    logs: "Nhật ký hệ thống",
-  } as Record<Screen, string>)[screen]
+  return (
+    {
+      dashboard: "Tổng quan",
+      reports: "Quản lý phản ánh",
+      "new-report": "Tạo phản ánh mới",
+      "report-detail": "Chi tiết phản ánh",
+      graph: "Phân tích liên kết",
+      alerts: "Cảnh báo và điểm rủi ro",
+      cases: "Hồ sơ vụ việc",
+      "case-detail": "Chi tiết hồ sơ",
+      accounts: "Tài khoản và phân quyền",
+      logs: "Nhật ký hệ thống",
+    } as Record<Screen, string>
+  )[screen]
 }
 
 function Login({
@@ -1331,7 +1316,7 @@ function Login({
     ["Lãnh đạo", "Lãnh đạo theo dõi", "dashboard"],
     ["Quản trị", "Quản trị hệ thống", "accounts"],
   ] as const
-  const [loginRole, setLoginRole] = useState<typeof loginRoles[number][1]>(
+  const [loginRole, setLoginRole] = useState<(typeof loginRoles)[number][1]>(
     loginRoles[1][1],
   )
   const [qrOpen, setQrOpen] = useState(false)
@@ -1496,21 +1481,13 @@ function Dashboard({
   })
   const behaviorCount = (behavior: string) =>
     reports.filter((report) => report.behavior === behavior).length
-  const dailyCounts = reports.reduce<Record<string, number>>(
-    (counts, report) => {
-      const match = report.time.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/)
-      if (match) {
-        const key = `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`
-        counts[key] = (counts[key] || 0) + 1
-      }
-      return counts
-    },
-    {},
-  )
-  const recentDays = Object.entries(dailyCounts)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-7)
-  const largestDailyCount = Math.max(1, ...recentDays.map(([, count]) => count))
+  const [clock, setClock] = useState(() => new Date())
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(new Date()), 30000)
+    return () => window.clearInterval(timer)
+  }, [])
+  const recentDays = lastSevenDays(reports, clock)
+  const largestDailyCount = Math.max(1, ...recentDays.map((item) => item.count))
   const behaviorShare = [
     behaviorCount("Giả danh ngân hàng"),
     behaviorCount("Giả danh cơ quan nhà nước"),
@@ -1585,10 +1562,10 @@ function Dashboard({
         <div className="card chart-card">
           <CardHead
             title="Phản ánh theo ngày"
-            sub="7 ngày có phản ánh gần nhất trong bộ dữ liệu demo"
+            sub={`7 ngày lịch gần nhất, gồm hôm nay · Tiếp nhận: ${recentDays.reduce((sum, item) => sum + item.count, 0)} phản ánh · Giờ Việt Nam`}
           />
           <div className="daily-chart" aria-label="Thống kê phản ánh theo ngày">
-            {recentDays.map(([day, count]) => (
+            {recentDays.map(({ day, count }) => (
               <div className="daily-column" key={day}>
                 <b>{count}</b>
                 <div className="daily-track">
@@ -1836,7 +1813,7 @@ function Reports({
           <span>
             Hiển thị <b>{filtered.length}</b> phản ánh
           </span>
-          <span>Cập nhật vừa xong</span>
+          <span>Thống kê theo thời gian tiếp nhận · Asia/Ho_Chi_Minh</span>
         </div>
         <ReportTable reports={filtered} onOpen={onOpen} />
       </div>
@@ -1891,14 +1868,15 @@ function ReportTable({
                   <td>{r.source}</td>
                 </>
               )}
-              <td>{r.time}</td>
+              <td>
+                <span>{formatDateTime(r.receivedAt)}</span>
+                <span className="cell-sub">Tiếp nhận · giờ Việt Nam</span>
+              </td>
               <td>
                 <b>{r.amount ? `${r.amount} triệu` : "—"}</b>
               </td>
               <td>
-                <Badge tone={statusTone(r.status)}>
-                  {reportWorkflowStatus(r.status)}
-                </Badge>
+                <WorkflowBadge value={r.status} />
               </td>
               {!compact && (
                 <td>
@@ -1953,7 +1931,7 @@ function NewReport({
       content: demoText,
       source: "Cổng trực tuyến",
       area: "Hà Nội",
-      time: "2025-06-18T09:45",
+      time: vietnamInput(new Date(Date.now() - 30 * 60000)),
       amount: "15000000",
       attachment: form.attachment,
     })
@@ -1971,6 +1949,8 @@ function NewReport({
       .map(([k]) => k)
     if (!Number.isFinite(Number(form.amount)) || Number(form.amount) < 0)
       missing.push("Số tiền phải là số không âm")
+    if (!fromVietnamInput(form.time))
+      missing.push("Thời gian phát sinh không hợp lệ")
     if (missing.length) return setErrors(missing)
     if (hasNew)
       return setErrors([
@@ -1984,7 +1964,9 @@ function NewReport({
       content: form.content.trim(),
       source: form.source,
       area: form.area,
-      time: new Date(form.time).toLocaleString("vi-VN"),
+      occurredAt: fromVietnamInput(form.time),
+      receivedAt: nowISO(),
+      updatedAt: nowISO(),
       amount: Number(form.amount) / 1000000,
       status: "Mới tiếp nhận",
       behavior: "Giả danh ngân hàng",
@@ -2287,7 +2269,7 @@ function NewReport({
               </div>
               <div className="receipt-row">
                 <span>Thời gian</span>
-                <b>18/06/2025 09:32</b>
+                <b>{formatDateTime(fromVietnamInput(form.time))}</b>
               </div>
               <div className="watermark">TÀI LIỆU GIẢ LẬP</div>
             </div>
@@ -2397,6 +2379,8 @@ function ReportDetail({
       amount: Number(draft.amount),
       extracted: true,
       reviewed: true,
+      status: "Đã kiểm tra",
+      updatedAt: nowISO(),
       rejectedClusters: [],
     }
     const entityChanged = (["account", "phone", "website"] as const).some(
@@ -2404,7 +2388,7 @@ function ReportDetail({
     )
     if (entityChanged && report.cluster) {
       next.cluster = undefined
-      next.status = "Cần xác minh"
+      next.status = "Đã kiểm tra"
     }
     onUpdate(next)
     onLog(
@@ -2413,7 +2397,7 @@ function ReportDetail({
       (["account", "bank", "phone", "website", "amount"] as const)
         .map(
           (key) =>
-            `${({ account: "Tài khoản", bank: "Ngân hàng", phone: "Điện thoại", website: "Website", amount: "Số tiền (triệu)" })[key]} — trước: ${report[key] ?? "Chưa có"}; sau: ${next[key] ?? "Chưa có"}`,
+            `${{ account: "Tài khoản", bank: "Ngân hàng", phone: "Điện thoại", website: "Website", amount: "Số tiền (triệu)" }[key]} — trước: ${report[key] ?? "Chưa có"}; sau: ${next[key] ?? "Chưa có"}`,
         )
         .join(". ") +
         (entityChanged && report.cluster
@@ -2434,9 +2418,9 @@ function ReportDetail({
           <div className="detail-code">{report.id}</div>
           <h1 className="page-heading">{report.title}</h1>
           <div className="hero-meta">
-            <Badge tone={statusTone(report.status)}>{report.status}</Badge>
+            <WorkflowBadge value={report.status} />
             <span>
-              {report.source} · {report.time}
+              {report.source} · Tiếp nhận {formatDateTime(report.receivedAt)}
             </span>
           </div>
         </div>
@@ -2454,6 +2438,8 @@ function ReportDetail({
             <div className="quote-content">{report.content}</div>
             <DetailRows
               rows={[
+                ["Phát sinh sự việc", formatDateTime(report.occurredAt)],
+                ["Tiếp nhận phản ánh", formatDateTime(report.receivedAt)],
                 ["Địa bàn", report.area],
                 ["Số tiền", `${report.amount} triệu đồng`],
                 ["Nhóm hành vi", report.behavior],
@@ -2490,7 +2476,7 @@ function ReportDetail({
                       {match.fields
                         .map(
                           (key) =>
-                            `${({ account: "Tài khoản", phone: "Điện thoại", website: "Website" })[key]}: ${report[key]}`,
+                            `${{ account: "Tài khoản", phone: "Điện thoại", website: "Website" }[key]}: ${report[key]}`,
                         )
                         .join("; ")}
                     </p>
@@ -2528,6 +2514,7 @@ function ReportDetail({
                           onUpdate({
                             ...report,
                             cluster: cluster.id,
+                            updatedAt: nowISO(),
                             status: "Có liên quan",
                           })
                           onLog(
@@ -2597,13 +2584,15 @@ function ReportDetail({
             </Button>
           ) : (
             <div className="entity-form">
-              {([
-                ["account", "Tài khoản ngân hàng"],
-                ["bank", "Ngân hàng"],
-                ["phone", "Số điện thoại"],
-                ["website", "Website"],
-                ["amount", "Số tiền (triệu đồng)"],
-              ] as const).map(([key, label]) => (
+              {(
+                [
+                  ["account", "Tài khoản ngân hàng"],
+                  ["bank", "Ngân hàng"],
+                  ["phone", "Số điện thoại"],
+                  ["website", "Website"],
+                  ["amount", "Số tiền (triệu đồng)"],
+                ] as const
+              ).map(([key, label]) => (
                 <Field label={label} key={key}>
                   <input
                     type={key === "amount" ? "number" : "text"}
@@ -2642,309 +2631,11 @@ function ReportDetail({
           <div className="receipt-preview">
             <b>NGÂN HÀNG MẪU A</b>
             <div className="receipt-amount">15.000.000 đ</div>
-            <p>DEMO-TK-001 · 18/06/2025 09:32</p>
+            <p>DEMO-TK-001 · {formatDateTime(report.occurredAt)}</p>
             <div className="watermark">TÀI LIỆU GIẢ LẬP</div>
           </div>
         </Modal>
       )}
-    </div>
-  )
-}
-
-function Graph({
-  cluster,
-  reports,
-  total,
-  hasNew,
-  onReport,
-  onAlert,
-  onCreateCase,
-}: {
-  cluster: Cluster
-  reports: Report[]
-  total: number
-  hasNew: boolean
-  onReport: (id: string) => void
-  onAlert: () => void
-  onCreateCase: () => void
-}) {
-  const entities = getEntities(reports)
-  const initialEntity =
-    entities.accounts[0] ||
-    entities.phones[0] ||
-    entities.websites[0] ||
-    reports[0]?.id ||
-    ""
-  const [selected, setSelected] = useState(initialEntity)
-  const [zoom, setZoom] = useState(1)
-  const [filter, setFilter] = useState("Tất cả thực thể")
-  useEffect(() => {
-    setSelected(initialEntity)
-    setFilter("Tất cả thực thể")
-    setZoom(1)
-  }, [cluster.id])
-  const showReports = filter === "Tất cả thực thể" || filter === "Phản ánh"
-  const showAccounts =
-    filter === "Tất cả thực thể" || filter === "Tài khoản ngân hàng"
-  const showPhones = filter === "Tất cả thực thể" || filter === "Số điện thoại"
-  const showWebsites = filter === "Tất cả thực thể" || filter === "Website"
-  const entityReports = reports.filter(
-    (report) =>
-      report.account === selected ||
-      report.phone === selected ||
-      report.website === selected,
-  )
-  const selectedReport = reports.find((report) => report.id === selected)
-  const positions = [
-    { left: "12%", top: "16%" },
-    { left: "12%", top: "48%" },
-    { left: "12%", top: "80%" },
-    { left: "35%", top: "80%" },
-  ]
-  const accountPosition = { left: "48%", top: "25%" }
-  const phonePosition = { left: "72%", top: "50%" }
-  const websitePosition = { left: "48%", top: "72%" }
-  const score = cluster.id === "CUM-001" && hasNew ? 85 : cluster.score
-  const tone = cluster.risk === "Cao" ? "red" : "orange"
-
-  return (
-    <div className="graph-page">
-      <div className="cluster-summary">
-        <div>
-          <span className="cluster-id">{cluster.id}</span>
-          <div className="cluster-name">{cluster.name}</div>
-          <p>Kết quả hỗ trợ phân tích; cần cán bộ xác minh.</p>
-        </div>
-        <div className="cluster-numbers">
-          <div>
-            <span>Phản ánh</span>
-            <b>{reports.length}</b>
-          </div>
-          <div>
-            <span>Tổng số tiền</span>
-            <b>{total} triệu</b>
-          </div>
-          <div>
-            <span>Mức rủi ro</span>
-            <Badge tone={tone}>
-              {cluster.risk} · {score}/100
-            </Badge>
-          </div>
-        </div>
-        <div className="cluster-actions">
-          <Button variant="secondary" onClick={onAlert}>
-            Xem lý do cảnh báo
-          </Button>
-          <Button onClick={onCreateCase}>Tạo hồ sơ từ cụm</Button>
-        </div>
-      </div>
-      <div className="graph-toolbar">
-        <div className="legend">
-          <span>
-            <i className="node-report" />
-            Phản ánh
-          </span>
-          <span>
-            <i className="node-account" />
-            Tài khoản
-          </span>
-          <span>
-            <i className="node-phone" />
-            Số điện thoại
-          </span>
-          <span>
-            <i className="node-web" />
-            Website
-          </span>
-        </div>
-        <div className="graph-controls">
-          <select
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-          >
-            <option>Tất cả thực thể</option>
-            <option>Phản ánh</option>
-            <option>Tài khoản ngân hàng</option>
-            <option>Số điện thoại</option>
-            <option>Website</option>
-          </select>
-          <button onClick={() => setZoom(Math.min(1.3, zoom + 0.1))}>＋</button>
-          <button onClick={() => setZoom(Math.max(0.7, zoom - 0.1))}>−</button>
-          <button onClick={() => setZoom(1)}>⟲</button>
-        </div>
-      </div>
-      <div className="graph-workspace">
-        <div className="graph-canvas">
-          <div className="graph-inner" style={{ transform: `scale(${zoom})` }}>
-            {filter === "Tất cả thực thể" && (
-              <svg
-                className="edges"
-                viewBox="0 0 900 520"
-                preserveAspectRatio="none"
-              >
-                {reports.map((report, index) => {
-                  const y = [83, 250, 416, 416][index] || 250
-                  const x = index === 3 ? 315 : 108
-                  return (
-                    <g key={report.id}>
-                      {report.account && (
-                        <line
-                          x1={x}
-                          y1={y}
-                          x2="432"
-                          y2={
-                            130 +
-                            entities.accounts.indexOf(report.account!) * 62.4
-                          }
-                        />
-                      )}
-                      {report.phone && (
-                        <line
-                          x1={x}
-                          y1={y}
-                          x2="648"
-                          y2={
-                            260 + entities.phones.indexOf(report.phone!) * 62.4
-                          }
-                        />
-                      )}
-                      {report.website && (
-                        <line
-                          x1={x}
-                          y1={y}
-                          x2="432"
-                          y2={
-                            374.4 +
-                            entities.websites.indexOf(report.website!) * 62.4
-                          }
-                        />
-                      )}
-                    </g>
-                  )
-                })}
-              </svg>
-            )}
-            {showReports &&
-              reports.map((report, index) => (
-                <button
-                  key={report.id}
-                  className={`graph-node report-node ${
-                    selected === report.id ? "selected" : ""
-                  }`}
-                  style={positions[index]}
-                  onClick={() => setSelected(report.id)}
-                >
-                  <span>PA</span>
-                  <b>{report.id}</b>
-                  <small>{report.amount} triệu đồng</small>
-                </button>
-              ))}
-            {showAccounts &&
-              entities.accounts.map((account, index) => (
-                <button
-                  key={account}
-                  className={`graph-node account-node ${
-                    selected === account ? "selected" : ""
-                  }`}
-                  style={{ ...accountPosition, top: `${25 + index * 12}%` }}
-                  onClick={() => setSelected(account)}
-                >
-                  <span>TK</span>
-                  <b>{account}</b>
-                  <small>Phản ánh ghi nhận chuyển tiền đến</small>
-                </button>
-              ))}
-            {showPhones &&
-              entities.phones.map((phone, index) => (
-                <button
-                  key={phone}
-                  className={`graph-node phone-node ${
-                    selected === phone ? "selected" : ""
-                  }`}
-                  style={{ ...phonePosition, top: `${50 + index * 12}%` }}
-                  onClick={() => setSelected(phone)}
-                >
-                  <span>SĐT</span>
-                  <b>{phone}</b>
-                  <small>Liên hệ qua</small>
-                </button>
-              ))}
-            {showWebsites &&
-              entities.websites.map((website, index) => (
-                <button
-                  key={website}
-                  className={`graph-node web-node ${
-                    selected === website ? "selected" : ""
-                  }`}
-                  style={{ ...websitePosition, top: `${72 + index * 12}%` }}
-                  onClick={() => setSelected(website)}
-                >
-                  <span>WEB</span>
-                  <b>{website}</b>
-                  <small>Nhắc đến</small>
-                </button>
-              ))}
-          </div>
-          {filter === "Tất cả thực thể" && (
-            <div className="relation-legend">
-              <span>Phản ánh ghi nhận chuyển tiền đến</span>
-              <span>Liên hệ qua</span>
-              <span>Nhắc đến</span>
-            </div>
-          )}
-        </div>
-        <div className="info-panel">
-          <div className="info-head">
-            <span>THÔNG TIN NÚT</span>
-            <Badge tone={selected.startsWith("PA") ? "blue" : "purple"}>
-              {selected.startsWith("PA") ? "Phản ánh" : "Thực thể"}
-            </Badge>
-          </div>
-          {selectedReport ? (
-            <>
-              <div className="entity-icon blue">PA</div>
-              <div className="info-title">{selectedReport.id}</div>
-              <div className="info-sub">{selectedReport.title}</div>
-              <p className="info-content">{selectedReport.content}</p>
-              <Button
-                variant="secondary"
-                className="full"
-                onClick={() => onReport(selectedReport.id)}
-              >
-                Mở chi tiết phản ánh
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="entity-icon">ID</div>
-              <div className="info-title">{selected}</div>
-              <div className="info-sub">Thực thể trong dữ liệu mẫu</div>
-              <DetailRows
-                rows={[
-                  ["Số phản ánh", String(entityReports.length)],
-                  [
-                    "Tổng số tiền",
-                    `${entityReports.reduce((sum, report) => sum + report.amount, 0)} triệu đồng`,
-                  ],
-                  ["Đánh giá", "Có dấu hiệu liên quan"],
-                ]}
-              />
-              <div className="related-title">Nguồn liên kết</div>
-              {entityReports.map((report) => (
-                <button
-                  className="source-evidence"
-                  key={report.id}
-                  onClick={() => onReport(report.id)}
-                >
-                  <b>{report.id}</b>
-                  <span>{report.content}</span>
-                  <small>→</small>
-                </button>
-              ))}
-            </>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
@@ -3045,8 +2736,7 @@ function Alerts({
                   </div>
                   <p>{alert.description}</p>
                   <span>
-                    Cập nhật 18/06/2025 09:45 · {items.length} phản ánh ·{" "}
-                    {amount} triệu đồng
+                    {items.length} phản ánh · {amount} triệu đồng
                   </span>
                 </div>
               </button>
@@ -3437,7 +3127,7 @@ function Cases({
                         : c.status}
                     </Badge>
                   </td>
-                  <td>{c.updated}</td>
+                  <td>{formatDateTime(c.updated)}</td>
                   <td>
                     <Button variant="ghost" onClick={() => onOpen(c.id)}>
                       Chi tiết
@@ -3504,9 +3194,9 @@ function CaseDetail({
         officer,
         status,
         note,
-        updated: new Date().toLocaleString("vi-VN"),
+        updated: nowISO(),
         history: [
-          `${new Date().toLocaleString("vi-VN")} · Cập nhật cán bộ, trạng thái và nhận định`,
+          `${nowISO()} · Cập nhật cán bộ, trạng thái và nhận định`,
           ...(item.history || []),
         ],
       },
@@ -3527,7 +3217,7 @@ function CaseDetail({
             <Badge tone={statusTone(item.priority)}>
               Ưu tiên {item.priority}
             </Badge>
-            <span>Cập nhật {item.updated}</span>
+            <span>Cập nhật {formatDateTime(item.updated)}</span>
           </div>
         </div>
         <div className="hero-buttons">
@@ -3716,7 +3406,7 @@ function CaseTab({
         <div key={entry}>
           <i />
           <b>{entry.split(" · ")[1] || entry}</b>
-          <span>{entry.split(" · ")[0]}</span>
+          <span>{formatDateTime(entry.split(" · ")[0])}</span>
         </div>
       ))}
     </div>
@@ -3938,7 +3628,7 @@ function Accounts({
                     <Badge tone="green">{a[3]}</Badge>
                   </td>
                   <td>
-                    {i === 2 ? "Đang hoạt động" : `${i + 8}:20 · 18/06/2025`}
+                    {i === 2 ? "Phiên mô phỏng" : "Chưa ghi nhận phiên thật"}
                   </td>
                   <td>
                     <Button
@@ -4021,7 +3711,7 @@ function Logs({
           <tbody>
             {filtered.map((x, i) => (
               <tr key={`${x.time}-${i}`} onClick={() => onOpen(x)}>
-                <td>{x.time}</td>
+                <td>{formatDateTime(x.time)}</td>
                 <td>
                   <b>{x.user}</b>
                 </td>

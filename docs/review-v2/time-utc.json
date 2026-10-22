@@ -1,0 +1,1 @@
+{"result":"PASS","hostTimezone":"UTC","checks":["Vietnam-midnight-boundaries","dd-MM-yyyy-HH-mm-format","local-form-to-ISO","seven-calendar-days-including-zero","window-sum","migration-keeps-user-records-amounts-history","migration-idempotence","seed-relative-to-Vietnam-day"]}

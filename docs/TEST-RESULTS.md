@@ -1,3 +1,5 @@
+> Đây là kết quả lần sửa ban đầu. Kết quả sau khi sửa note về thời gian/sơ đồ/trạng thái nằm tại [NOTE-REVISION.md](NOTE-REVISION.md) và [review-v2](review-v2).
+
 # Kết quả kiểm tra demo
 
 Kiểm tra ngày **22/10/2026**, múi giờ chụp ảnh Asia/Ho_Chi_Minh. Nguồn mã: `chungcb4444-alt/scamgraph-demo`, nhánh `feat/improve-demo`. Không triển khai ra dịch vụ bên ngoài.
