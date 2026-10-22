@@ -47,9 +47,18 @@ const results = []
       assert.equal(initial.length, 12)
       const initialAudit = await get("logs")
       const initialCases = await get("cases")
-      assert.equal(initialAudit.find(log => log.target === "HS-001").time, initialCases[0].updated)
-      assert.equal(initialCases[0].history[0].split(" · ")[0], initialCases[0].updated)
-      assert.equal(initialAudit.find(log => log.action === "Tạo phản ánh").time, initial.find(report => report.id === "PA-002").receivedAt)
+      assert.equal(
+        initialAudit.find((log) => log.target === "HS-001").time,
+        initialCases[0].updated,
+      )
+      assert.equal(
+        initialCases[0].history[0].split(" · ")[0],
+        initialCases[0].updated,
+      )
+      assert.equal(
+        initialAudit.find((log) => log.action === "Tạo phản ánh").time,
+        initial.find((report) => report.id === "PA-002").receivedAt,
+      )
       assert(
         initial.every(
           (r) => r.receivedAt && r.occurredAt && r.occurredAt < r.receivedAt,
@@ -93,12 +102,14 @@ const results = []
       await nav("Phản ánh")
       await btn("＋ Tạo phản ánh").click()
       await btn("Dùng tình huống mẫu").click()
-      await page.locator(".wizard-steps button").nth(1).click()
+      await btn("Tiếp tục").click()
       await page
         .getByLabel("Thời gian phát sinh", { exact: true })
         .fill("2026-10-21T20:30")
-      await page.locator(".wizard-steps button").last().click()
-      await btn("Gửi phản ánh").click()
+      await btn("Tiếp tục").click()
+      await btn("Tiếp tục").click()
+      await btn("Lưu phản ánh").click()
+      await btn("Mở chi tiết PA-013").click()
       let added = (await get("reports")).find((r) => r.id === "PA-013")
       assert.equal(added.amount, 15)
       assert.equal(added.occurredAt, "2026-10-21T13:30:00.000Z")
@@ -186,10 +197,16 @@ const results = []
           "Căn cứ",
         ),
       )
-      await page.getByRole("checkbox", { name: "Hiện nhãn", exact: true }).check()
-      assert.equal(await page.locator(".node-relation").count(), await page.locator(".map-entity").count())
-      if (await page.locator(".map-edge").count() > 1) await page.locator(".map-edge").nth(1).hover()
-      assert(await page.locator(".edge-label-card").count() <= 1)
+      await page
+        .getByRole("checkbox", { name: "Hiện nhãn", exact: true })
+        .check()
+      assert.equal(
+        await page.locator(".node-relation").count(),
+        await page.locator(".map-entity").count(),
+      )
+      if ((await page.locator(".map-edge").count()) > 1)
+        await page.locator(".map-edge").nth(1).hover()
+      assert((await page.locator(".edge-label-card").count()) <= 1)
       await page.evaluate(() => scrollTo(0, 400))
       assert((await page.locator(".topbar").boundingBox()).y < 0)
       await shot("structured-graph-small")
@@ -202,7 +219,12 @@ const results = []
       await page.keyboard.press("Escape")
       await nav("Hồ sơ vụ việc")
       await page.evaluate(() => scrollTo(0, 300))
-      assert.equal(await page.locator(".topbar").evaluate(el => getComputedStyle(el).position), "static")
+      assert.equal(
+        await page
+          .locator(".topbar")
+          .evaluate((el) => getComputedStyle(el).position),
+        "static",
+      )
       await page.locator("tbody tr").filter({ hasText: "HS-003" }).click()
       await btn("Xem báo cáo").click()
       let report = await page.getByRole("dialog").innerText()
@@ -240,9 +262,17 @@ const results = []
       )
       await nav("Tổng quan")
       await page.locator(".cluster-item").filter({ hasText: "CUM-001" }).click()
-      await page.getByLabel("Gom nhóm phản ánh", { exact: true }).selectOption("day")
-      assert((await page.locator(".map-group").first().getAttribute("aria-label")).match(/\d{2}\/\d{2}\/\d{4}/))
-      await page.getByLabel("Gom nhóm phản ánh", { exact: true }).selectOption("behavior")
+      await page
+        .getByLabel("Gom nhóm phản ánh", { exact: true })
+        .selectOption("day")
+      assert(
+        (
+          await page.locator(".map-group").first().getAttribute("aria-label")
+        ).match(/\d{2}\/\d{2}\/\d{4}/),
+      )
+      await page
+        .getByLabel("Gom nhóm phản ánh", { exact: true })
+        .selectOption("behavior")
       const beforeLoad = {
         reports: await get("reports"),
         cases: await get("cases"),

@@ -19,7 +19,11 @@ const fs = require("node:fs")
     page.on("pageerror", (e) => errors.push(e.message))
     page.on("request", (r) => {
       if (
-        !r.url().startsWith(new URL(process.env.DEMO_URL || "http://127.0.0.1:8443/").origin) &&
+        !r
+          .url()
+          .startsWith(
+            new URL(process.env.DEMO_URL || "http://127.0.0.1:8443/").origin,
+          ) &&
         /^https?:/.test(r.url())
       )
         external.push(r.url())
@@ -45,9 +49,13 @@ const fs = require("node:fs")
     await btn("Đăng nhập demo →").click()
     await nav("Phản ánh")
     await btn("＋ Tạo phản ánh").click()
-    await page.locator(".wizard-steps button").last().click()
-    await btn("Gửi phản ánh").click()
-    assert((await page.locator(".error-box").innerText()).includes("Tiêu đề"))
+    await btn("Tiếp tục").click()
+    await btn("Tiếp tục").click()
+    assert(
+      (await page.locator(".intake-error-summary").innerText()).includes(
+        "tiêu đề",
+      ),
+    )
     assert.equal(
       await page.evaluate(
         () => JSON.parse(localStorage.getItem("scamgraph-demo-reports")).length,
@@ -55,13 +63,19 @@ const fs = require("node:fs")
       12,
     )
     await btn("Dùng tình huống mẫu").click()
-    await page.locator(".wizard-steps button").nth(1).click()
-    await page.getByLabel("Số tiền được phản ánh", { exact: true }).fill("-1")
-    await page.locator(".wizard-steps button").last().click()
-    await btn("Gửi phản ánh").click()
-    assert((await page.locator(".error-box").innerText()).includes("không âm"))
+    await page.getByLabel("Số tiền đã chuyển", { exact: true }).fill("-1")
+    await btn("Tiếp tục").click()
+    assert(
+      (await page.locator(".intake-error-summary").innerText()).includes(
+        "lớn hơn 0",
+      ),
+    )
+    page.once("dialog", (d) => d.accept())
     await btn("Dùng tình huống mẫu").click()
-    await btn("Gửi phản ánh").click()
+    await btn("Tiếp tục").click()
+    await btn("Tiếp tục").click()
+    await btn("Lưu phản ánh").click()
+    await btn("Mở chi tiết PA-013").click()
     await btn("Trích xuất thông tin").click()
     await page
       .getByLabel("Tài khoản ngân hàng", { exact: true })
@@ -92,7 +106,11 @@ const fs = require("node:fs")
     )
     await nav("Phản ánh")
     await btn("＋ Tạo phản ánh").click()
-    assert(await btn("Đã gửi PA-013").isDisabled())
+    assert(
+      (await page.locator(".intake-sample").innerText()).includes(
+        "Tình huống mẫu đã được tạo",
+      ),
+    )
     assert.equal(
       await page.evaluate(
         () => JSON.parse(localStorage.getItem("scamgraph-demo-reports")).length,
@@ -168,10 +186,16 @@ const fs = require("node:fs")
     assert((await page.locator(".alert-side").innerText()).includes("30 triệu"))
     await nav("Tổng quan")
     await page.locator(".cluster-item").filter({ hasText: "CUM-002" }).click()
-    await page.getByLabel("Loại thực thể", {exact:true}).selectOption("phone")
+    await page
+      .getByLabel("Loại thực thể", { exact: true })
+      .selectOption("phone")
     assert.equal(await page.locator(".map-report").count(), 0)
-    await page.getByRole("button", { name: "Điện thoại DEMO-SDT-002", exact: true }).click()
-    assert((await page.locator(".explorer-details").innerText()).includes("PA-004"))
+    await page
+      .getByRole("button", { name: "Điện thoại DEMO-SDT-002", exact: true })
+      .click()
+    assert(
+      (await page.locator(".explorer-details").innerText()).includes("PA-004"),
+    )
     await page.locator(".source-evidence").first().click()
     assert((await page.locator(".detail-code").innerText()).includes("PA-004"))
     await role("Quản trị hệ thống")
