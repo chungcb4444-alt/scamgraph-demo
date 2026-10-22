@@ -1,0 +1,58 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "required-type-default-empty",
+      "known-type-no-transfer",
+      "unknown-event-time",
+      "changing-type-preserves-content",
+      "back-and-reload-draft",
+      "single-demo-label",
+      "font-sizes-100-percent",
+      "confirm-template-overwrite-cancel",
+      "PA013-reserved-and-sample-15",
+      "double-submit-protected",
+      "sample-exists-open-not-block-manual",
+      "other-type-required-description",
+      "unclassified-no-fake-bank-data",
+      "localStorage-error-rollback-no-false-success",
+      "multiple-unique-IDs-after-sample",
+      "citizen-own-list-read-only-detail",
+      "officer-title-save-source-other",
+      "only-reports-nav-active",
+      "classification-audit-before-after",
+      "type-filter-after-reload",
+      "legacy-classification-in-correct-case-report",
+      "no-browser-errors"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "required-type-default-empty",
+      "known-type-no-transfer",
+      "unknown-event-time",
+      "changing-type-preserves-content",
+      "back-and-reload-draft",
+      "single-demo-label",
+      "font-sizes-100-percent",
+      "confirm-template-overwrite-cancel",
+      "PA013-reserved-and-sample-15",
+      "double-submit-protected",
+      "sample-exists-open-not-block-manual",
+      "other-type-required-description",
+      "unclassified-no-fake-bank-data",
+      "localStorage-error-rollback-no-false-success",
+      "multiple-unique-IDs-after-sample",
+      "citizen-own-list-read-only-detail",
+      "officer-title-save-source-other",
+      "only-reports-nav-active",
+      "classification-audit-before-after",
+      "type-filter-after-reload",
+      "legacy-classification-in-correct-case-report",
+      "no-browser-errors"
+    ]
+  }
+]

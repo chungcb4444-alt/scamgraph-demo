@@ -113,3 +113,5 @@ PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/intake.c
 ```
 
 Runner có cùng `DEMO_URL`, `TEST_OUTPUT`, `CHROMIUM_PATH` với các runner trước. Chưa bổ sung upload tài liệu thật, backend hoặc API. Chưa merge/triển khai Production; chọn Preview của nhánh mới khi muốn review.
+
+Bản đồng bộ giao diện các trang: xem [hướng dẫn, thay đổi và kiểm thử](docs/UNIFIED-DESIGN.md), cùng [ảnh review](docs/design-review/). Nhánh `feat/unified-workspace-design` kế thừa đầy đủ bản tiếp nhận phản ánh mới nhất.

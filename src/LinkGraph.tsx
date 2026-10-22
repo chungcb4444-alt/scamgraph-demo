@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { Cluster, Report } from "./types"
 import { dayKey, formatDateTime, nowISO, seedTimestamp } from "./demoTime"
 import "./linkGraph.css"
+import { Modal, PageHeader } from "./ui"
 
 type Entity = {
   id: string
@@ -26,6 +27,17 @@ type Edge = {
   to: Node
   relation: string
   reports: Report[]
+}
+// Fit labels by measured width while retaining full text in the accessible title and drawer.
+const labelMeasure = document.createElement("canvas").getContext("2d")
+function fitLabel(value: string, font: string) {
+  if (!labelMeasure) return value.slice(0, 18)
+  labelMeasure.font = font
+  if (labelMeasure.measureText(value).width <= 184) return value
+  let short = value
+  while (short.length && labelMeasure.measureText(short + "…").width > 184)
+    short = short.slice(0, -1)
+  return short + "…"
 }
 const PAGE_SIZE = 5
 function entitiesOf(reports: Report[]): Entity[] {
@@ -84,6 +96,14 @@ export default function LinkGraph({
   onAlert: () => void
   onCreateCase: () => void
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [compact, setCompact] = useState(() => window.innerWidth <= 1500)
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1500px)")
+    const update = () => setCompact(media.matches)
+    media.addEventListener("change", update)
+    return () => media.removeEventListener("change", update)
+  }, [])
   const [loadMode, setLoadMode] = useState(false)
   const stress = useMemo(() => (loadMode ? stressData() : []), [loadMode])
   const [previewReport, setPreviewReport] = useState<Report | null>(null)
@@ -152,7 +172,10 @@ export default function LinkGraph({
     ...shownGroups.map((g, i) => ({
       id: g.id,
       kind: "group" as const,
-      title: grouping === "day" && /^\d{4}-\d{2}-\d{2}$/.test(g.key) ? `${g.key.slice(8)}/${g.key.slice(5,7)}/${g.key.slice(0,4)}` : g.key,
+      title:
+        grouping === "day" && /^\d{4}-\d{2}-\d{2}$/.test(g.key)
+          ? `${g.key.slice(8)}/${g.key.slice(5, 7)}/${g.key.slice(0, 4)}`
+          : g.key,
       sub: `${g.items.length} phản ánh · ${g.items.reduce((s, r) => s + r.amount, 0)} triệu`,
       x: 10,
       y: 30 + i * 150,
@@ -250,6 +273,7 @@ export default function LinkGraph({
   const sourcePages = Math.max(1, Math.ceil(sourceFiltered.length / PAGE_SIZE))
   const sourcePageSafe = Math.min(sourcePage, sourcePages - 1)
   const choose = (id: string) => {
+    if (id) setDetailsOpen(true)
     setSelected(id)
     setSourcePage(0)
     setSourceQuery("")
@@ -265,10 +289,125 @@ export default function LinkGraph({
     setSourceQuery("")
     setZoom(1)
   }
-  const labelEdge = edges.some(edge => edge.id === hover) ? hover : selected
+  const labelEdge = edges.some((edge) => edge.id === hover) ? hover : selected
   const sourceTotal = sources.reduce((s, r) => s + r.amount, 0)
+  const inspector = (
+    <aside className="card explorer-details">
+      <h2>
+        {chosenEdge
+          ? "Căn cứ quan hệ"
+          : chosenNode
+            ? "Thông tin nút"
+            : "Tổng quan liên kết"}
+      </h2>
+      <strong>
+        {chosenEdge
+          ? `${chosenEdge.from.title} → ${chosenEdge.to.title}`
+          : chosenNode?.title ||
+            (loadMode ? "Dữ liệu thử tải riêng" : cluster.id)}
+      </strong>
+      <p className="relation-explanation">
+        {chosenEdge
+          ? chosenEdge.relation
+          : chosenNode?.entity
+            ? chosenNode.entity.relation
+            : chosenNode?.kind === "group"
+              ? "Nhóm khám phá theo tiêu chí đang chọn. Không phải xác nhận liên kết."
+              : "Chọn nút hoặc đường nối để xem ý nghĩa quan hệ và phản ánh nguồn."}
+      </p>
+      <dl>
+        <div>
+          <dt>Phản ánh nguồn</dt>
+          <dd>{sources.length}</dd>
+        </div>
+        <div>
+          <dt>Tổng số tiền</dt>
+          <dd>{sourceTotal} triệu đồng</dd>
+        </div>
+      </dl>
+      {chosenNode?.kind === "group" && (
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setExpanded(expanded === chosenNode.id ? null : chosenNode.id)
+            setReportPage(0)
+          }}
+        >
+          {expanded === chosenNode.id ? "Thu gọn nhóm" : "Mở rộng nhóm"}
+        </button>
+      )}
+      <p className="muted">
+        Chỉ phản ánh những gì nguồn dữ liệu ghi nhận. Không xác nhận quyền sở
+        hữu tài khoản hay danh tính.
+      </p>
+      <input
+        aria-label="Tìm phản ánh nguồn"
+        placeholder="Tìm mã hoặc nội dung nguồn..."
+        value={sourceQuery}
+        onChange={(e) => {
+          setSourceQuery(e.target.value)
+          setSourcePage(0)
+        }}
+      />
+      <div className="source-list">
+        {sourceFiltered
+          .slice(
+            sourcePageSafe * PAGE_SIZE,
+            sourcePageSafe * PAGE_SIZE + PAGE_SIZE,
+          )
+          .map((r) => (
+            <button
+              className="source-evidence"
+              key={r.id}
+              onClick={() => (loadMode ? setPreviewReport(r) : onReport(r.id))}
+            >
+              <b>{r.id}</b>
+              <span>{r.content}</span>
+              <small>{loadMode ? "Xem nguồn thử tải →" : "Mở nguồn →"}</small>
+            </button>
+          ))}
+        {!sourceFiltered.length && <p>Không có phản ánh nguồn phù hợp.</p>}
+      </div>
+      <div className="map-pagination">
+        <button
+          aria-label="Nguồn trước"
+          disabled={sourcePageSafe === 0}
+          onClick={() => setSourcePage((v) => v - 1)}
+        >
+          ←
+        </button>
+        <span>
+          Trang {sourcePageSafe + 1}/{sourcePages} · {sourceFiltered.length}{" "}
+          nguồn
+        </span>
+        <button
+          aria-label="Nguồn sau"
+          disabled={sourcePageSafe + 1 >= sourcePages}
+          onClick={() => setSourcePage((v) => v + 1)}
+        >
+          →
+        </button>
+      </div>
+    </aside>
+  )
   return (
-    <div className="link-explorer page-stack">
+    <div
+      className={`link-explorer page-stack ${compact ? "compact-explorer" : ""}`}
+    >
+      <PageHeader
+        title="Phân tích liên kết"
+        description="Khám phá nhóm phản ánh, thực thể và căn cứ quan hệ."
+        action={
+          compact && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => setDetailsOpen(true)}
+            >
+              Chi tiết và nguồn liên kết
+            </button>
+          )
+        }
+      />
       <div className="cluster-summary">
         <div>
           <span className="cluster-id">
@@ -392,7 +531,8 @@ export default function LinkGraph({
           nút / {edges.length} cạnh
         </span>
         <span>
-          Tổng tiền tính trên toàn bộ kết quả phù hợp. Tạo hồ sơ dùng toàn bộ cụm đã xác nhận; nhóm/lọc chỉ để khám phá.
+          Tổng tiền tính trên toàn bộ kết quả phù hợp. Tạo hồ sơ dùng toàn bộ
+          cụm đã xác nhận; nhóm/lọc chỉ để khám phá.
         </span>
       </div>
       <div className="explorer-layout">
@@ -402,6 +542,11 @@ export default function LinkGraph({
             <b>PHẢN ÁNH MỞ RỘNG</b>
             <b>THỰC THỂ</b>
           </div>
+          {!expanded && groups.length > 0 && (
+            <p className="map-help">
+              Chọn nhóm rồi bấm “Mở rộng nhóm” để xem từng phản ánh.
+            </p>
+          )}
           <div className="map-viewport">
             <svg
               className="relationship-map"
@@ -446,7 +591,7 @@ export default function LinkGraph({
                     <title>
                       {edge.relation} · {edge.reports.length} phản ánh nguồn
                     </title>
-                    {(labelEdge === edge.id) && (
+                    {labelEdge === edge.id && (
                       <g className="edge-label-card" pointerEvents="none">
                         <rect
                           x={mid - 100}
@@ -484,26 +629,21 @@ export default function LinkGraph({
                 >
                   <rect width="210" height="76" rx="9" />
                   <text x="12" y="25">
-                    {node.title.length > 29
-                      ? node.title.slice(0, 27) + "…"
-                      : node.title}
+                    {fitLabel(node.title, "600 16px system-ui")}
                   </text>
                   <text className="node-sub" x="12" y="49">
-                    {node.sub.length > 34
-                      ? node.sub.slice(0, 32) + "…"
-                      : node.sub}
+                    {fitLabel(node.sub, "400 14px system-ui")}
                   </text>
-                  {showLabels && node.entity && <text className="node-relation" x="12" y="67">{node.entity.relation}</text>}
+                  {showLabels && node.entity && (
+                    <text className="node-relation" x="12" y="67">
+                      {node.entity.relation}
+                    </text>
+                  )}
                   <title>
                     {node.title} · {node.sub}
                   </title>
                 </g>
               ))}
-              {!expanded && groups.length > 0 && (
-                <text className="map-hint" x="280" y="250">
-                  Chọn nhóm rồi bấm “Mở rộng nhóm”
-                </text>
-              )}
               {!matchingReports.length && (
                 <text className="map-hint" x="200" y="250">
                   Không có dữ liệu phù hợp
@@ -612,136 +752,31 @@ export default function LinkGraph({
             </div>
           )}
         </div>
-        <aside className="card explorer-details">
-          <h2>
-            {chosenEdge
-              ? "Căn cứ quan hệ"
-              : chosenNode
-                ? "Thông tin nút"
-                : "Tổng quan liên kết"}
-          </h2>
-          <strong>
-            {chosenEdge
-              ? `${chosenEdge.from.title} → ${chosenEdge.to.title}`
-              : chosenNode?.title ||
-                (loadMode ? "Dữ liệu thử tải riêng" : cluster.id)}
-          </strong>
-          <p className="relation-explanation">
-            {chosenEdge
-              ? chosenEdge.relation
-              : chosenNode?.entity
-                ? chosenNode.entity.relation
-                : chosenNode?.kind === "group"
-                  ? "Nhóm khám phá theo tiêu chí đang chọn. Không phải xác nhận liên kết."
-                  : "Chọn nút hoặc đường nối để xem ý nghĩa quan hệ và phản ánh nguồn."}
-          </p>
-          <dl>
-            <div>
-              <dt>Phản ánh nguồn</dt>
-              <dd>{sources.length}</dd>
-            </div>
-            <div>
-              <dt>Tổng số tiền</dt>
-              <dd>{sourceTotal} triệu đồng</dd>
-            </div>
-          </dl>
-          {chosenNode?.kind === "group" && (
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setExpanded(expanded === chosenNode.id ? null : chosenNode.id)
-                setReportPage(0)
-              }}
-            >
-              {expanded === chosenNode.id ? "Thu gọn nhóm" : "Mở rộng nhóm"}
-            </button>
-          )}
-          <p className="muted">
-            Chỉ phản ánh những gì nguồn dữ liệu ghi nhận. Không xác nhận quyền
-            sở hữu tài khoản hay danh tính.
-          </p>
-          <input
-            aria-label="Tìm phản ánh nguồn"
-            placeholder="Tìm mã hoặc nội dung nguồn..."
-            value={sourceQuery}
-            onChange={(e) => {
-              setSourceQuery(e.target.value)
-              setSourcePage(0)
-            }}
-          />
-          <div className="source-list">
-            {sourceFiltered
-              .slice(
-                sourcePageSafe * PAGE_SIZE,
-                sourcePageSafe * PAGE_SIZE + PAGE_SIZE,
-              )
-              .map((r) => (
-                <button
-                  className="source-evidence"
-                  key={r.id}
-                  onClick={() =>
-                    loadMode ? setPreviewReport(r) : onReport(r.id)
-                  }
-                >
-                  <b>{r.id}</b>
-                  <span>{r.content}</span>
-                  <small>
-                    {loadMode ? "Xem nguồn thử tải →" : "Mở nguồn →"}
-                  </small>
-                </button>
-              ))}
-            {!sourceFiltered.length && <p>Không có phản ánh nguồn phù hợp.</p>}
-          </div>
-          <div className="map-pagination">
-            <button
-              aria-label="Nguồn trước"
-              disabled={sourcePageSafe === 0}
-              onClick={() => setSourcePage((v) => v - 1)}
-            >
-              ←
-            </button>
-            <span>
-              Trang {sourcePageSafe + 1}/{sourcePages} · {sourceFiltered.length}{" "}
-              nguồn
-            </span>
-            <button
-              aria-label="Nguồn sau"
-              disabled={sourcePageSafe + 1 >= sourcePages}
-              onClick={() => setSourcePage((v) => v + 1)}
-            >
-              →
-            </button>
-          </div>
-        </aside>
+        {!compact && inspector}
+        {compact && detailsOpen && !previewReport && (
+          <Modal
+            drawer
+            title="Chi tiết liên kết và nguồn"
+            onClose={() => setDetailsOpen(false)}
+          >
+            {inspector}
+          </Modal>
+        )}
       </div>
       {previewReport && (
-        <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Phản ánh nguồn thử tải"
-          >
-            <div className="modal-head">
-              <h2>Phản ánh nguồn thử tải</h2>
-              <button
-                aria-label="Đóng nguồn thử tải"
-                onClick={() => setPreviewReport(null)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <b>{previewReport.id}</b>
-              <p>{previewReport.content}</p>
-              <p>Tiếp nhận: {formatDateTime(previewReport.receivedAt)}</p>
-              <p>
-                Số tiền: {previewReport.amount} triệu đồng · Chỉ dữ liệu thử
-                tải, không lưu vào hồ sơ demo.
-              </p>
-            </div>
-          </section>
-        </div>
+        <Modal
+          title="Phản ánh nguồn thử tải"
+          closeLabel="Đóng nguồn thử tải"
+          onClose={() => setPreviewReport(null)}
+        >
+          <b>{previewReport.id}</b>
+          <p>{previewReport.content}</p>
+          <p>Tiếp nhận: {formatDateTime(previewReport.receivedAt)}</p>
+          <p>
+            Số tiền: {previewReport.amount} triệu đồng · Chỉ dữ liệu thử tải,
+            không lưu vào hồ sơ demo.
+          </p>
+        </Modal>
       )}
       {loadMode && (
         <p className="load-note">

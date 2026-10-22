@@ -48,7 +48,7 @@ const fs = require("node:fs")
     assert.equal(await page.getByRole("dialog").count(), 0)
     await btn("Đăng nhập demo →").click()
     await nav("Phản ánh")
-    await btn("＋ Tạo phản ánh").click()
+    await btn("Tiếp nhận phản ánh").click()
     await btn("Tiếp tục").click()
     await btn("Tiếp tục").click()
     assert(
@@ -105,7 +105,7 @@ const fs = require("node:fs")
       3,
     )
     await nav("Phản ánh")
-    await btn("＋ Tạo phản ánh").click()
+    await btn("Tiếp nhận phản ánh").click()
     assert(
       (await page.locator(".intake-sample").innerText()).includes(
         "Tình huống mẫu đã được tạo",
