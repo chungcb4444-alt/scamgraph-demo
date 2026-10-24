@@ -38,15 +38,15 @@ const fs = require("node:fs")
     await page.goto(process.env.DEMO_URL || "http://127.0.0.1:8443/", {
       waitUntil: "networkidle",
     })
-    await btn("▦ Quét mã QR · mô phỏng").click()
+    await page.getByRole("button", {name:/Đăng nhập bằng VNeID/}).click()
     assert(
       (await page.getByRole("dialog").innerText()).includes(
-        "không kết nối VNeID",
+        "Không kết nối VNeID",
       ),
     )
     await page.keyboard.press("Escape")
     assert.equal(await page.getByRole("dialog").count(), 0)
-    await btn("Đăng nhập demo →").click()
+    await btn("Đăng nhập").click()
     await nav("Phản ánh")
     await btn("Tiếp nhận phản ánh").click()
     await btn("Tiếp tục").click()

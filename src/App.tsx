@@ -13,6 +13,8 @@ import {
   Tabs,
   DataTable,
 } from "./ui"
+import Login from "./Login"
+import BrandMark from "./BrandMark"
 import ReportIntake from "./ReportIntake"
 import { REPORT_TYPES, reportTypeLabel, nextReportId } from "./intakeModel"
 import type { IntakePayload, IntakeResult } from "./intakeModel"
@@ -448,20 +450,7 @@ const actorForRole = (role: string) =>
   })[role] || "demo"
 
 function NetworkMark() {
-  return (
-    <div className="brand-mark" aria-label="Biểu tượng mạng liên kết">
-      <svg viewBox="0 0 32 32" aria-hidden="true">
-        <line x1="8" y1="9" x2="23" y2="7" />
-        <line x1="8" y1="9" x2="14" y2="23" />
-        <line x1="23" y1="7" x2="25" y2="22" />
-        <line x1="14" y1="23" x2="25" y2="22" />
-        <circle cx="8" cy="9" r="3" />
-        <circle cx="23" cy="7" r="3" />
-        <circle cx="14" cy="23" r="3" />
-        <circle cx="25" cy="22" r="3" />
-      </svg>
-    </div>
-  )
+  return <BrandMark />
 }
 
 function statusTone(
@@ -772,7 +761,6 @@ export default function App() {
             <div className="brand-name">
               Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
             </div>
-            <div className="brand-sub">Phân tích & truy vết</div>
           </div>
         </div>
 
@@ -824,20 +812,6 @@ export default function App() {
       </aside>
       <div className="main-shell">
         <header className="topbar">
-          <div>
-            <div className="top-title">
-              {screen === "new-report"
-                ? citizen
-                  ? "Gửi phản ánh"
-                  : "Tiếp nhận phản ánh"
-                : citizen
-                  ? "CỔNG PHẢN ÁNH · VNeID MÔ PHỎNG"
-                  : admin
-                    ? "TRUNG TÂM QUẢN TRỊ"
-                    : pageTitle(screen)}
-            </div>
-            <div className="top-desc">Phân quyền mô phỏng trên giao diện</div>
-          </div>
           <div className="top-actions">
             <span className="demo-label">Demo — dữ liệu giả lập</span>
             <select
@@ -871,7 +845,6 @@ export default function App() {
             <Button variant="ghost" onClick={reset}>
               Đặt lại demo
             </Button>
-            <div className="notification">{alerts.length}</div>
           </div>
         </header>
         <main className="content">
@@ -1242,150 +1215,6 @@ function pageTitle(screen: Screen) {
   )[screen]
 }
 
-function Login({
-  onLogin,
-}: {
-  onLogin: (role: string, screen: Screen) => void
-}) {
-  const loginRoles = [
-    ["Người dân / Tổ chức", "Người dân / Tổ chức", "new-report"],
-    ["Cán bộ nghiệp vụ", "Cán bộ phân tích", "dashboard"],
-    ["Lãnh đạo", "Lãnh đạo theo dõi", "dashboard"],
-    ["Quản trị", "Quản trị hệ thống", "accounts"],
-  ] as const
-  const [loginRole, setLoginRole] = useState<(typeof loginRoles)[number][1]>(
-    loginRoles[1][1],
-  )
-  const [qrOpen, setQrOpen] = useState(false)
-  return (
-    <div className="login-page">
-      <div className="login-aside">
-        <div className="login-grid" />
-        <div className="login-copy">
-          <div className="login-logo">
-            <NetworkMark /> Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
-          </div>
-          <div className="login-kicker">NỀN TẢNG NGHIỆP VỤ</div>
-          <div className="login-heading">
-            PHÂN TÍCH VÀ TRUY VẾT
-            <br />
-            TỘI PHẠM CÔNG NGHỆ CAO
-          </div>
-          <p>
-            Nền tảng phân tích và hỗ trợ truy vết lừa đảo trực tuyến từ nguồn
-            phản ánh xã hội.
-          </p>
-          <div className="login-feature">
-            <b>01</b>
-            <span>Tiếp nhận và chuẩn hóa phản ánh</span>
-          </div>
-          <div className="login-feature">
-            <b>02</b>
-            <span>Phân tích mạng lưới liên kết</span>
-          </div>
-          <div className="login-feature">
-            <b>03</b>
-            <span>Hỗ trợ lập hồ sơ xác minh</span>
-          </div>
-        </div>
-      </div>
-      <div className="login-panel">
-        <div className="login-card">
-          <div className="mobile-logo">
-            Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
-          </div>
-          <div className="demo-label login-demo">Demo — dữ liệu giả lập</div>
-          <div className="eyebrow">CỔNG TRUY CẬP · VNeID MÔ PHỎNG</div>
-          <div className="login-role-tabs">
-            {loginRoles.map(([label, value]) => (
-              <button
-                key={label}
-                className={loginRole === value ? "active" : ""}
-                onClick={() => setLoginRole(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="login-title">Đăng nhập hệ thống</div>
-          <p className="muted">
-            Sử dụng tài khoản demo để trải nghiệm toàn bộ luồng nghiệp vụ.
-          </p>
-          <Field label="Tài khoản">
-            <input
-              value={
-                loginRole === "Người dân / Tổ chức"
-                  ? "cong.dan.demo"
-                  : "can.bo.demo"
-              }
-              readOnly
-            />
-          </Field>
-          <Field label="Mật khẩu">
-            <input type="password" value="demo1234" readOnly />
-          </Field>
-          <Button
-            onClick={() =>
-              onLogin(
-                loginRole,
-                loginRoles.find((item) => item[1] === loginRole)?.[2] ||
-                  "dashboard",
-              )
-            }
-            className="full"
-          >
-            Đăng nhập demo <span>→</span>
-          </Button>
-          <div className="login-divider">HOẶC TRẢI NGHIỆM LUỒNG KHÁC</div>
-          <Button
-            variant="secondary"
-            className="full"
-            onClick={() => setQrOpen(true)}
-          >
-            ▦ Quét mã QR · mô phỏng
-          </Button>
-          {qrOpen && (
-            <Modal
-              title="Quét mã QR mô phỏng"
-              onClose={() => setQrOpen(false)}
-              footer={
-                <Button
-                  onClick={() =>
-                    onLogin(
-                      loginRole,
-                      loginRoles.find((item) => item[1] === loginRole)?.[2] ||
-                        "dashboard",
-                    )
-                  }
-                >
-                  Tiếp tục bằng tài khoản demo
-                </Button>
-              }
-            >
-              <div className="qr-simulation">▦</div>
-              <p>
-                Đây là minh họa luồng đăng nhập; không chứa mã định danh và
-                không kết nối VNeID. Không cần quét hoặc nhập thông tin thật.
-              </p>
-            </Modal>
-          )}
-          <div className="login-note">
-            <span>i</span>
-            <p>
-              <b>Môi trường trình diễn</b>
-              <br />
-              VNeID chỉ là mô phỏng. Không sử dụng thông tin tài khoản thật.
-            </p>
-          </div>
-          <div className="secure">
-            Phiên truy cập mô phỏng · Dữ liệu hoàn toàn giả lập
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function Dashboard({
   reports,
   cases,
@@ -1545,7 +1374,6 @@ function Dashboard({
                 <span>
                   {item.officer} · {formatDateTime(item.updated)}
                 </span>
-                <br />
                 <Badge tone={statusTone(item.status)}>{item.status}</Badge>
               </button>
             ))}
@@ -1579,7 +1407,7 @@ function Dashboard({
             <div
               className="donut"
               style={{
-                background: `conic-gradient(#7053b3 0 ${behaviorShare[0]}%, #3781ca ${behaviorShare[0]}% ${behaviorShare[0] + behaviorShare[1]}%, #d58335 ${behaviorShare[0] + behaviorShare[1]}% ${behaviorShare.reduce((a, b) => a + b, 0)}%, #53627c ${behaviorShare.reduce((a, b) => a + b, 0)}% 100%)`,
+                background: `conic-gradient(#0284c7 0 ${behaviorShare[0]}%, #3781ca ${behaviorShare[0]}% ${behaviorShare[0] + behaviorShare[1]}%, #d58335 ${behaviorShare[0] + behaviorShare[1]}% ${behaviorShare.reduce((a, b) => a + b, 0)}%, #53627c ${behaviorShare.reduce((a, b) => a + b, 0)}% 100%)`,
               }}
             >
               <div>
@@ -1873,7 +1701,6 @@ function ReportTable({
               </td>
               <td>
                 <span>{formatDateTime(r.receivedAt)}</span>
-                <span className="cell-sub">Tiếp nhận · giờ Việt Nam</span>
               </td>
               <td>
                 <b>
@@ -3278,7 +3105,6 @@ function Accounts({
               <th>Vai trò</th>
               <th>Đơn vị mẫu</th>
               <th>Trạng thái</th>
-              <th>Lần truy cập cuối</th>
               <th></th>
             </tr>
           </thead>
@@ -3289,7 +3115,7 @@ function Accounts({
                   .toLowerCase()
                   .includes(query.trim().toLowerCase()),
               )
-              .map((a, i) => (
+              .map((a) => (
                 <tr key={a[0]}>
                   <td>
                     <b>{a[0]}</b>
@@ -3298,9 +3124,6 @@ function Accounts({
                   <td>{a[2]}</td>
                   <td>
                     <Badge tone="green">{a[3]}</Badge>
-                  </td>
-                  <td>
-                    {i === 2 ? "Phiên mô phỏng" : "Chưa ghi nhận phiên thật"}
                   </td>
                   <td>
                     <Button

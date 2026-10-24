@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Microsoft Typography (Segoe UI / Be Vietnam Pro / Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Segoe UI"', '"Be Vietnam Pro"', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        ms: {
+                            blue: '#0078d4',
+                            blueHover: '#0067b8',
+                            active: '#005a9e',
+                            cardBg: 'rgba(13, 20, 33, 0.82)',
+                            inputBg: 'rgba(8, 14, 24, 0.75)',
+                            border: 'rgba(56, 189, 248, 0.18)',
+                            borderFocus: '#0ea5e9'
+                        }
+                    },
+                    boxShadow: {
+                        'ms-card': '0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 25px rgba(14, 165, 233, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Microsoft Fluent Acrylic Blur */
+        .acrylic-card {
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+        }
+
+        /* Ambient Cyan/Blue Glow behind card */
+        .ambient-glow {
+            position: absolute;
+            width: 550px;
+            height: 550px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(2, 132, 199, 0.05) 50%, transparent 70%);
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Mini Spinner for Login Button */
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* QR Laser Scanning Effect */
+        @keyframes laserAnim {
+            0% { top: 8%; opacity: 0.3; }
+            50% { top: 90%; opacity: 1; }
+            100% { top: 8%; opacity: 0.3; }
+        }
+        .laser-bar {
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #0078d4, #60a5fa, #0078d4, transparent);
+            box-shadow: 0 0 12px 2px rgba(96, 165, 250, 0.7);
+            animation: laserAnim 2.2s ease-in-out infinite;
+        }
+
+        /* Logo pulse radar glow */
+        .cyber-logo-glow {
+            filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.55));
+        }
+    </style>
+</head>
+<body class="bg-[#050b14] text-slate-100 font-sans antialiased min-h-screen flex items-center justify-center p-4 selection:bg-[#0284c7] selection:text-white relative overflow-hidden">
+
+    <!-- CANVAS HIỆU ỨNG TƯƠNG TÁC ĐỒ THỊ TRUY VẾT & RADAR KHÔNG GIAN MẠNG -->
+    <canvas id="ambient-canvas" class="fixed inset-0 w-full h-full pointer-events-auto z-0 cursor-crosshair"></canvas>
+
+    <!-- Ánh sáng khuếch tán tập trung sau card -->
+    <div class="ambient-glow"></div>
+
+    <!-- THẺ ĐĂNG NHẬP CHÍNH GIỮA (MICROSOFT CENTERED CARD) -->
+    <div class="relative z-10 w-full max-w-[420px] acrylic-card bg-ms-card border border-ms-border rounded-2xl shadow-ms-card p-8 sm:p-9 transition-all duration-300">
+        
+        <!-- LOGO TINH GỌN: KHIÊN BẢO MẬT VÂN TAY & VI MẠCH RADAR TRUY VẾT -->
+        <div class="flex items-center gap-3.5 mb-7">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-950/60 via-slate-900/80 to-sky-950/60 border border-cyan-500/30 p-2 flex items-center justify-center shadow-lg shadow-cyan-950/40 cyber-logo-glow relative group flex-shrink-0">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                    <!-- Khung khiên bảo mật tinh gọn -->
+                    <path d="M32 4L48 10V28C48 42 32 56 32 56C32 56 16 42 16 28V10L32 4Z" 
+                          stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-90"/>
+                    <path d="M32 9L43 14V27C43 37.5 32 48 32 48C32 48 21 37.5 21 27V14L32 9Z" 
+                          stroke="#0284c7" stroke-width="1.2" stroke-dasharray="2 2" class="opacity-60"/>
+                    
+                    <!-- Dấu vân tay kỹ thuật số trung tâm -->
+                    <path d="M32 20C28.5 20 25.5 22.8 25.5 26.5V30" stroke="#7dd3fc" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M38.5 26C38.5 22.5 35.5 20 32 20" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M28.5 26C28.5 24 30 22.5 32 22.5C34 22.5 35.5 24 35.5 26V34C35.5 36.5 33.5 38.5 31 38.5" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M32 26V31C32 32.5 31 33.5 29.5 33.5" stroke="#7dd3fc" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M25.5 35C26.5 38.5 29 41 32 41C35 41 38.5 38 38.5 33V29" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+                    
+                    <!-- Đường vi mạch mạng mở rộng 2 bên -->
+                    <path d="M12 24H16M8 32H16M11 40H18" stroke="#38bdf8" stroke-width="1.4" stroke-linecap="round"/>
+                    <circle cx="8" cy="24" r="1.5" fill="#38bdf8"/>
+                    <circle cx="5" cy="32" r="1.5" fill="#38bdf8"/>
+                    <circle cx="8" cy="40" r="1.5" fill="#38bdf8"/>
+
+                    <path d="M48 24H52M48 32H56M46 40H53" stroke="#38bdf8" stroke-width="1.4" stroke-linecap="round"/>
+                    <circle cx="55" cy="24" r="1.5" fill="#38bdf8"/>
+                    <circle cx="59" cy="32" r="1.5" fill="#38bdf8"/>
+                    <circle cx="56" cy="40" r="1.5" fill="#38bdf8"/>
+
+                    <!-- Tâm radar chữ thập quét vết -->
+                    <line x1="32" y1="14" x2="32" y2="18" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="32" y1="42" x2="32" y2="46" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-sm sm:text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-sky-300 tracking-tight leading-snug uppercase">
+                    Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
+                </h2>
+            </div>
+        </div>
+
+        <!-- Tiêu đề đăng nhập -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-white tracking-tight">
+                Đăng nhập
+            </h1>
+        </div>
+
+        <!-- MỤC TIÊU CHÍNH: NÚT ĐĂNG NHẬP BẰNG VNeID -->
+        <div class="mb-5">
+            <button 
+                type="button" 
+                onclick="openOtherOptionsModal()"
+                class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#991b1b] via-[#b91c1c] to-[#c2410c] hover:from-[#b91c1c] hover:to-[#ea580c] active:scale-[0.99] text-white font-medium text-sm flex items-center justify-center gap-3 shadow-lg shadow-red-950/40 border border-red-500/30 transition-all duration-150 group"
+            >
+                <!-- Biểu tượng Huy hiệu VNeID / Ngôi sao vàng trên nền đỏ -->
+                <div class="w-6 h-6 rounded-md bg-white/10 p-0.5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <svg viewBox="0 0 24 24" fill="none" class="w-5 h-5">
+                        <path d="M12 2L4 5V11C4 16.5 7.4 21.6 12 23C16.6 21.6 20 16.5 20 11V5L12 2Z" fill="#dc2626" stroke="#fef08a" stroke-width="1.2"/>
+                        <path d="M12 6.5L13.5 9.8L17 10.3L14.5 12.7L15.1 16.2L12 14.5L8.9 16.2L9.5 12.7L7 10.3L10.5 9.8L12 6.5Z" fill="#facc15"/>
+                    </svg>
+                </div>
+                <span class="tracking-wide font-semibold">Đăng nhập bằng VNeID</span>
+            </button>
+        </div>
+
+        <!-- Form Đăng nhập -->
+        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+            <!-- Ô nhập tài khoản -->
+            <div>
+                <input 
+                    type="text" 
+                    id="user-account" 
+                    required 
+                    placeholder="Mã cán bộ hoặc tên người dùng"
+                    class="w-full px-3.5 py-2.5 rounded-lg bg-ms-inputBg border border-slate-700/80 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-ms-borderFocus focus:ring-1 focus:ring-ms-borderFocus transition-colors"
+                    autocomplete="username"
+                >
+            </div>
+
+            <!-- Ô nhập mật khẩu -->
+            <div class="relative">
+                <input 
+                    type="password" 
+                    id="user-password" 
+                    required 
+                    placeholder="Mật khẩu hệ thống"
+                    class="w-full px-3.5 py-2.5 pr-10 rounded-lg bg-ms-inputBg border border-slate-700/80 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-ms-borderFocus focus:ring-1 focus:ring-ms-borderFocus transition-colors"
+                    autocomplete="current-password"
+                >
+                <button 
+                    type="button" 
+                    onclick="togglePassword()" 
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                    title="Hiển thị/ẩn mật khẩu"
+                >
+                    <i data-lucide="eye" id="pwd-icon" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Liên kết quên mật khẩu -->
+            <div class="pt-0.5 text-right">
+                <a 
+                    href="javascript:void(0)" 
+                    onclick="showForgotHint()" 
+                    class="text-xs text-[#38bdf8] hover:text-[#7dd3fc] hover:underline transition-colors"
+                >
+                    Bạn quên mật khẩu?
+                </a>
+            </div>
+
+            <!-- Nút Đăng nhập chính -->
+            <div class="pt-2">
+                <button 
+                    type="submit" 
+                    id="btn-submit"
+                    class="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 active:from-sky-700 active:to-blue-700 text-white text-sm font-medium flex items-center justify-center gap-2 shadow-lg shadow-sky-900/30 transition-all duration-150"
+                >
+                    <span id="btn-text">Đăng nhập</span>
+                    <span id="btn-spinner" class="spinner hidden"></span>
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+    <!-- MODAL TÙY CHỌN ĐĂNG NHẬP KHÁC (QUÉT MÃ QR / VNEID) -->
+    <div id="options-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+        <div class="w-full max-w-sm acrylic-card bg-[#111726]/95 border border-cyan-500/20 rounded-xl p-6 shadow-2xl relative">
+            <button 
+                type="button" 
+                onclick="closeOtherOptionsModal()" 
+                class="absolute top-4 right-4 p-1.5 rounded text-slate-400 hover:text-white transition-colors"
+            >
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Header Modal VNeID -->
+            <div class="flex items-center gap-2.5 mb-2">
+                <div class="w-7 h-7 rounded bg-red-900/40 border border-red-500/30 flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4">
+                        <path d="M12 2L4 5V11C4 16.5 7.4 21.6 12 23C16.6 21.6 20 16.5 20 11V5L12 2Z" fill="#dc2626" stroke="#fef08a" stroke-width="1.2"/>
+                        <path d="M12 6.5L13.5 9.8L17 10.3L14.5 12.7L15.1 16.2L12 14.5L8.9 16.2L9.5 12.7L7 10.3L10.5 9.8L12 6.5Z" fill="#facc15"/>
+                    </svg>
+                </div>
+                <h3 class="text-base font-semibold text-white">
+                    Đăng nhập bằng VNeID
+                </h3>
+            </div>
+            <p class="text-xs text-slate-400 mb-5">
+                Mở ứng dụng VNeID trên điện thoại để quét mã QR bên dưới
+            </p>
+
+            <!-- Khung quét QR -->
+            <div class="relative w-48 h-48 mx-auto bg-white p-3.5 rounded-xl border border-slate-300 overflow-hidden shadow-lg flex items-center justify-center">
+                <svg viewBox="0 0 100 100" class="w-full h-full text-slate-950" fill="currentColor">
+                    <path d="M10,10 h25 v25 h-25 z M15,15 v15 h15 v-15 z M19,19 h7 v7 h-7 z"/>
+                    <path d="M65,10 h25 v25 h-25 z M70,15 v15 h15 v-15 z M74,19 h7 v7 h-7 z"/>
+                    <path d="M10,65 h25 v25 h-25 z M15,70 v15 h15 v-15 z M19,74 h7 v7 h-7 z"/>
+                    <rect x="40" y="10" width="5" height="5"/><rect x="50" y="10" width="5" height="10"/>
+                    <rect x="40" y="20" width="10" height="5"/><rect x="55" y="25" width="5" height="10"/>
+                    <rect x="10" y="40" width="10" height="5"/><rect x="25" y="45" width="15" height="5"/>
+                    <rect x="45" y="40" width="10" height="10"/><rect x="60" y="40" width="5" height="15"/>
+                    <rect x="70" y="45" width="10" height="5"/><rect x="85" y="40" width="5" height="10"/>
+                    <rect x="15" y="55" width="10" height="5"/><rect x="35" y="55" width="5" height="15"/>
+                    <rect x="50" y="60" width="15" height="5"/><rect x="75" y="55" width="15" height="5"/>
+                    <rect x="45" y="70" width="5" height="10"/><rect x="55" y="75" width="10" height="5"/>
+                    <rect x="70" y="70" width="10" height="10"/><rect x="85" y="75" width="5" height="15"/>
+                </svg>
+                <div class="laser-bar"></div>
+            </div>
+
+            <p class="text-center font-mono text-[11px] text-cyan-400 mt-3.5 flex items-center justify-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                Tia quét đang sẵn sàng kết nối VNeID
+            </p>
+
+            <div class="mt-5 space-y-2">
+                <button 
+                    type="button" 
+                    onclick="handleQRSuccess()" 
+                    class="w-full py-2.5 rounded-lg bg-gradient-to-r from-red-700 to-rose-600 hover:from-red-600 hover:to-rose-500 text-white text-xs font-semibold shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Mô phỏng xác thực VNeID thành công</span>
+                </button>
+                <button 
+                    type="button" 
+                    onclick="closeOtherOptionsModal()" 
+                    class="w-full py-2 rounded-lg text-slate-400 hover:text-slate-200 text-xs transition-colors"
+                >
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST THÔNG BÁO TINH GỌN -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden max-w-sm bg-[#111726] border border-cyan-500/20 text-white px-4 py-2.5 rounded-lg shadow-xl text-xs flex items-center gap-2.5 transition-all">
+        <i data-lucide="check" class="w-4 h-4 text-emerald-400 flex-shrink-0" id="toast-icon"></i>
+        <span id="toast-msg">Đăng nhập thành công.</span>
+    </div>
+
+    <script>
+        // Khởi tạo Lucide Icons & Canvas
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initForensicCanvas();
+        });
+
+        // Ẩn / Hiện mật khẩu
+        function togglePassword() {
+            const pwd = document.getElementById('user-password');
+            const icon = document.getElementById('pwd-icon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                pwd.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        // Xử lý gửi biểu mẫu
+        function handleLogin(e) {
+            e.preventDefault();
+            const account = document.getElementById('user-account').value.trim();
+            const btn = document.getElementById('btn-submit');
+            const btnText = document.getElementById('btn-text');
+            const spinner = document.getElementById('btn-spinner');
+
+            if (!account) return;
+
+            btn.disabled = true;
+            btnText.classList.add('hidden');
+            spinner.classList.remove('hidden');
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btnText.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                showNotification(`Đăng nhập thành công: ${account}`);
+            }, 800);
+        }
+
+        // Quên mật khẩu
+        function showForgotHint() {
+            showNotification('Vui lòng liên hệ quản trị viên để khôi phục mật khẩu.');
+        }
+
+        // Modal Tùy chọn khác
+        function openOtherOptionsModal() {
+            const modal = document.getElementById('options-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeOtherOptionsModal() {
+            const modal = document.getElementById('options-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function handleQRSuccess() {
+            closeOtherOptionsModal();
+            document.getElementById('user-account').value = 'can.bo.truyvet';
+            document.getElementById('user-password').value = '••••••••';
+            showNotification('Đã nhận diện thành công mã xác thực.');
+        }
+
+        // Toast thông báo
+        function showNotification(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('hidden');
+            clearTimeout(window._tTimer);
+            window._tTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2800);
+        }
+
+        // =========================================================================
+        // CANVAS: ĐỒ THỊ TRUY VẾT TỘI PHẠM SỐ & RADAR TƯƠNG TÁC CHUỘT
+        // =========================================================================
+        function initForensicCanvas() {
+            const canvas = document.getElementById('ambient-canvas');
+            const ctx = canvas.getContext('2d');
+            let w = canvas.width = window.innerWidth;
+            let h = canvas.height = window.innerHeight;
+
+            const mouse = {
+                x: w * 0.5,
+                y: h * 0.5,
+                radius: 170,
+                active: false
+            };
+
+            const pulseWaves = [];
+
+            window.addEventListener('resize', () => {
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+                initParticles();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+                mouse.active = true;
+            });
+
+            window.addEventListener('mouseleave', () => {
+                mouse.active = false;
+            });
+
+            // Tương tác nhấp chuột: Kích hoạt sóng radar quét truy vết (Pulse wave)
+            window.addEventListener('click', (e) => {
+                pulseWaves.push({
+                    x: e.clientX,
+                    y: e.clientY,
+                    radius: 5,
+                    maxRadius: Math.max(w, h) * 0.45,
+                    alpha: 0.8,
+                    speed: 5
+                });
+            });
+
+            // Tạo các node đại diện cho địa chỉ IP, tài khoản, đầu mối dữ liệu truy vết
+            let particles = [];
+            const particleCount = Math.min(Math.floor((w * h) / 14000), 95);
+
+            class Particle {
+                constructor() {
+                    this.reset();
+                }
+
+                reset() {
+                    this.x = Math.random() * w;
+                    this.y = Math.random() * h;
+                    this.vx = (Math.random() - 0.5) * 0.65;
+                    this.vy = (Math.random() - 0.5) * 0.65;
+                    this.radius = Math.random() * 1.8 + 1.2;
+                    this.baseAlpha = Math.random() * 0.45 + 0.25;
+                    this.alpha = this.baseAlpha;
+                    // Một số hạt đặc biệt đóng vai trò là "Hub đối tượng trọng điểm"
+                    this.isHub = Math.random() < 0.14;
+                    if (this.isHub) {
+                        this.radius = 3.2;
+                    }
+                }
+
+                update() {
+                    // Chuyển động tự do
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Va chạm viền
+                    if (this.x < 0 || this.x > w) this.vx *= -1;
+                    if (this.y < 0 || this.y > h) this.vy *= -1;
+
+                    // Tương tác từ tính với con trỏ chuột (Forensic Sensor)
+                    if (mouse.active) {
+                        const dx = mouse.x - this.x;
+                        const dy = mouse.y - this.y;
+                        const dist = Math.hypot(dx, dy);
+
+                        if (dist < mouse.radius) {
+                            const force = (mouse.radius - dist) / mouse.radius;
+                            // Hút nhẹ về con trỏ chuột như đầu dò tín hiệu
+                            this.x += (dx / dist) * force * 1.5;
+                            this.y += (dy / dist) * force * 1.5;
+                            this.alpha = Math.min(1, this.baseAlpha + 0.4);
+                        } else {
+                            this.alpha = this.baseAlpha;
+                        }
+                    } else {
+                        this.alpha = this.baseAlpha;
+                    }
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    if (this.isHub) {
+                        ctx.fillStyle = `rgba(56, 189, 248, ${this.alpha})`;
+                        ctx.shadowColor = '#38bdf8';
+                        ctx.shadowBlur = 8;
+                    } else {
+                        ctx.fillStyle = `rgba(125, 211, 252, ${this.alpha * 0.7})`;
+                        ctx.shadowBlur = 0;
+                    }
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push(new Particle());
+                }
+            }
+
+            initParticles();
+
+            // Vòng lặp Render đồ thị & Radar
+            let radarAngle = 0;
+            function animate() {
+                ctx.clearRect(0, 0, w, h);
+
+                // 1. Vẽ lưới tọa độ mờ (Cyber Grid)
+                ctx.strokeStyle = 'rgba(14, 165, 233, 0.025)';
+                ctx.lineWidth = 1;
+                const gridSize = 65;
+                for (let x = 0; x < w; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, h);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < h; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.stroke();
+                }
+
+                // 2. Vẽ vòng tròn Radar quét tương tác theo vị trí chuột
+                if (mouse.active) {
+                    ctx.save();
+                    ctx.translate(mouse.x, mouse.y);
+                    
+                    // Vòng tròn radar ngoài
+                    ctx.beginPath();
+                    ctx.arc(0, 0, mouse.radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.14)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 6]);
+                    ctx.stroke();
+
+                    // Vòng tròn radar trong
+                    ctx.beginPath();
+                    ctx.arc(0, 0, mouse.radius * 0.45, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+                    ctx.setLineDash([2, 4]);
+                    ctx.stroke();
+
+                    // Tia quét radar quay tròn
+                    radarAngle += 0.025;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(radarAngle) * mouse.radius, Math.sin(radarAngle) * mouse.radius);
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([]);
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+
+                // 3. Cập nhật và liên kết mạng lưới (Graph Edges)
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+
+                    // Nối dây giữa các hạt nếu gần nhau
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.hypot(dx, dy);
+
+                        if (dist < 115) {
+                            const lineAlpha = (1 - dist / 115) * 0.22;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(56, 189, 248, ${lineAlpha})`;
+                            ctx.lineWidth = 0.9;
+                            ctx.stroke();
+                        }
+                    }
+
+                    // Nối dây từ con trỏ chuột đến các hạt trong vùng quét
+                    if (mouse.active) {
+                        const mdx = mouse.x - particles[i].x;
+                        const mdy = mouse.y - particles[i].y;
+                        const mdist = Math.hypot(mdx, mdy);
+
+                        if (mdist < mouse.radius) {
+                            const mAlpha = (1 - mdist / mouse.radius) * 0.42;
+                            ctx.beginPath();
+                            ctx.moveTo(mouse.x, mouse.y);
+                            ctx.lineTo(particles[i].x, particles[i].y);
+                            ctx.strokeStyle = `rgba(56, 189, 248, ${mAlpha})`;
+                            ctx.lineWidth = 1.2;
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // 4. Cập nhật các vòng sóng xung kích Click (Pulse waves)
+                for (let k = pulseWaves.length - 1; k >= 0; k--) {
+                    const wave = pulseWaves[k];
+                    wave.radius += wave.speed;
+                    wave.alpha *= 0.96;
+
+                    ctx.beginPath();
+                    ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(56, 189, 248, ${wave.alpha})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    if (wave.alpha < 0.02 || wave.radius > wave.maxRadius) {
+                        pulseWaves.splice(k, 1);
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+    </script>
+</body>
+</html>
