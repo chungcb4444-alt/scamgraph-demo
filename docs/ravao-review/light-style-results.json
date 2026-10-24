@@ -1,0 +1,30 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "white sidebar and cards",
+      "reference-style process overview",
+      "all seven existing navigation entries",
+      "all table headers including sticky action column blue",
+      "header and input contrast >=4.5",
+      "initial 12 reports retained",
+      "no horizontal page overflow",
+      "no browser errors"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "white sidebar and cards",
+      "reference-style process overview",
+      "all seven existing navigation entries",
+      "all table headers including sticky action column blue",
+      "header and input contrast >=4.5",
+      "initial 12 reports retained",
+      "no horizontal page overflow",
+      "no browser errors"
+    ]
+  }
+]

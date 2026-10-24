@@ -4,7 +4,7 @@
   align-items: center;
   gap: 9px;
   font-size: 14px;
-  color: #c7d3e6;
+  color: #475569;
 }
 
 .load-toggle input,
@@ -24,9 +24,9 @@
 
 .zoom-actions button,
 .map-pagination button {
-  color: #bae6fd;
-  background: #1b2541;
-  border: 1px solid #3b4865;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #dfe6f0;
   border-radius: 5px;
   padding: 8px;
   font-size: 14px;
@@ -38,7 +38,7 @@
   gap: 15px;
   flex-wrap: wrap;
   font-size: 14px;
-  color: #b4c3dc;
+  color: #475569;
 }
 
 .explorer-layout {
@@ -59,15 +59,16 @@
   padding: 14px;
   gap: 8px;
   font-size: 14px;
-  color: #7dd3fc;
-  background: #0c1427;
+  color: #475569;
+  background: #ffffff;
 }
 
 .map-viewport {
   overflow: auto;
+
   background:
-    radial-gradient(#283653 1px, transparent 1px) 0 0 / 20px 20px,
-    #080e18;
+    radial-gradient(#dce5f2 1px, transparent 1px) 0 0 / 20px 20px,
+    #fbfcff;
 }
 
 .relationship-map {
@@ -85,38 +86,41 @@
 }
 
 .map-node rect {
-  fill: #132033;
-  stroke: #536084;
   stroke-width: 1.5;
+
+  fill: #ffffff;
+  stroke: #8ca5c7;
 }
 
 .map-group rect {
-  stroke: #0ea5e9;
-  fill: #10283d;
+  fill: #eaf1ff;
+  stroke: #2563eb;
 }
 
 .map-entity rect {
-  stroke: #3d8bca;
-  fill: #112c43;
+  fill: #ffffff;
+  stroke: #2b66b4;
 }
 
 .map-node text {
-  fill: #f0f3ff;
   font:
     600 16px system-ui,
     sans-serif;
+
+  fill: #183c77;
 }
 
 .map-node text.node-sub {
-  fill: #c0cce0;
   font-size: 14px;
   font-weight: 400;
+
+  fill: #475569;
 }
 
 .map-node.is-selected rect,
 .map-node:hover rect,
 .map-node:focus-visible rect {
-  stroke: #7dd3fc;
+  stroke: #1e4c9a;
   stroke-width: 3;
 }
 
@@ -126,13 +130,13 @@
 }
 
 .edge-line {
-  stroke: #8597b6;
+  stroke: #93a9c7;
   stroke-width: 1.7;
   fill: none;
 }
 
 .map-edge.is-direct .edge-line {
-  stroke: #a8bdf0;
+  stroke: #1e4c9a;
 }
 
 .edge-hit {
@@ -143,24 +147,25 @@
 
 .map-edge:hover .edge-line,
 .map-edge:focus-visible .edge-line {
-  stroke: #7dd3fc;
+  stroke: #1e4c9a;
   stroke-width: 3;
 }
 
 .edge-label-card rect {
-  fill: #171d36;
-  stroke: #596789;
+  fill: #ffffff;
+  stroke: #b9cbe4;
 }
 
 .edge-label-card text {
-  fill: #f4edff;
   font:
     13px system-ui,
     sans-serif;
+
+  fill: #164699;
 }
 
 .map-hint {
-  fill: #9daac3;
+  fill: #475569;
   font:
     14px system-ui,
     sans-serif;
@@ -174,7 +179,7 @@
   gap: 10px;
   padding: 12px;
   font-size: 14px;
-  color: #b9c5da;
+  color: #475569;
 }
 
 .map-pagination button:disabled {
@@ -195,14 +200,14 @@
 .explorer-details > strong {
   overflow-wrap: anywhere;
   display: block;
-  color: #7dd3fc;
+  color: #475569;
 }
 
 .relation-explanation,
 .load-note {
   font-size: 14px;
   line-height: 1.7;
-  color: #bdcae0;
+  color: #475569;
 }
 
 .explorer-details dl {
@@ -214,7 +219,7 @@
   display: flex;
   justify-content: space-between;
   padding: 12px 0;
-  border-top: 1px solid #34405b;
+  border-top: 1px solid #dfe6f0;
   gap: 8px;
 }
 
@@ -253,7 +258,7 @@
 }
 
 .map-edge:focus-visible .edge-line {
-  stroke: #7dd3fc;
+  stroke: #1e4c9a;
   stroke-width: 4;
 }
 
@@ -298,7 +303,7 @@
 }
 
 .map-node text.node-relation {
-  fill: #7dd3fc;
+  fill: #475569;
   font-size: 13px;
   font-weight: 400;
 }
@@ -340,5 +345,5 @@
   padding: 12px 16px;
   font-size: 14px;
   color: var(--muted);
-  background: #0d1421;
+  background: #ffffff;
 }

@@ -103,7 +103,7 @@ fs.mkdirSync(out, { recursive: true })
         viewport: `${width}x${height}`,
         result: "PASS",
         checks: [
-          "centered supplied design",
+          "login layout and role selector",
           "no page overflow at login",
           "password toggle",
           "forgot demo hint",

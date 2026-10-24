@@ -1,0 +1,51 @@
+{
+  "baseline": "06800280908c75e91ba1a814b9a8772ef178523a",
+  "result": "PASS",
+  "files": [
+    {
+      "file": "src/App.tsx",
+      "unchanged": true,
+      "sha256": "6aa7911840547cce2b59c1e7c2df172615d293a7fca46ad24b7fbdc3e0d62566"
+    },
+    {
+      "file": "src/LinkGraph.tsx",
+      "unchanged": true,
+      "sha256": "541aad1e016761c982e5a359f5db55585c39b162e88297355314c2a601a02318"
+    },
+    {
+      "file": "src/ReportIntake.tsx",
+      "unchanged": true,
+      "sha256": "102c8bc3f47523d09f45cee68fa98a0c87066af59f7bb9396aed4f4cc469438c"
+    },
+    {
+      "file": "src/types.ts",
+      "unchanged": true,
+      "sha256": "d9e6c8773d4fed3be0691d4af018acf6d9811ef81be487fe519c317426a8e4f5"
+    },
+    {
+      "file": "src/demoTime.ts",
+      "unchanged": true,
+      "sha256": "77b81a77b025331bdf8fb95c6844d9ec3460e3620a4b48a6e176ca9aee1ce36a"
+    },
+    {
+      "file": "src/intakeModel.ts",
+      "unchanged": true,
+      "sha256": "255bf147681882066da32eae4046c261740257f5706a0aa2dfe9ac12bfac7a5f"
+    },
+    {
+      "file": "src/ui/Modal.tsx",
+      "unchanged": true,
+      "sha256": "0bc3689001be3d1c960f1024c85135cc66c1fa01a68c6813020fd13016fdedfe"
+    },
+    {
+      "file": "package.json",
+      "unchanged": true,
+      "sha256": "846cd9af725691a65dcf9f1e609c32f135cfb8cfc5c513f33cdc3bad834828ab"
+    },
+    {
+      "file": "pnpm-lock.yaml",
+      "unchanged": true,
+      "sha256": "4898ab91c6fe90782fb79b43995ba987b2b648464db013df5c770c0370959931"
+    }
+  ]
+}
