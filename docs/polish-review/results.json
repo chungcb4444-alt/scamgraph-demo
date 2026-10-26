@@ -1,0 +1,30 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "scroll on failed validation only",
+      "no scrolling while editing remaining errors",
+      "draft content retained",
+      "three alerts and level filter",
+      "same modal and source data",
+      "dark and light alerts",
+      "30px title / 15px navigation",
+      "no overflow or page errors"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "scroll on failed validation only",
+      "no scrolling while editing remaining errors",
+      "draft content retained",
+      "three alerts and level filter",
+      "same modal and source data",
+      "dark and light alerts",
+      "30px title / 15px navigation",
+      "no overflow or page errors"
+    ]
+  }
+]

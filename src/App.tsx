@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useState } from "react"
 
 import {
   PageHeader,
@@ -2161,6 +2161,9 @@ function Alerts({
   onGraph: (clusterId: string) => void
   onCreate: (clusterId?: string) => void
 }) {
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
   const [level, setLevel] = useState("Tất cả mức độ")
   const filtered = alerts.filter(
     (alert) => level === "Tất cả mức độ" || alert.level === level,
@@ -2188,11 +2191,12 @@ function Alerts({
         }
         action={<> </>}
       />
-      <div className="alert-layout">
+      <div className="alert-layout" data-priority={selected.level}>
         <Card className="alert-list">
           <div className="alert-list-head">
             <span>{alerts.length} cảnh báo đang mở</span>
             <select
+              aria-label="Lọc mức độ cảnh báo"
               value={level}
               onChange={(event) => setLevel(event.target.value)}
             >
@@ -2212,6 +2216,7 @@ function Alerts({
                 className={`alert-row ${
                   selected.id === alert.id ? "active" : ""
                 }`}
+                aria-pressed={selected.id === alert.id}
                 onClick={() => onOpen(alert.id)}
                 key={alert.id}
               >
@@ -2269,7 +2274,7 @@ function Alerts({
           <div
             className="score-ring"
             style={{
-              background: `conic-gradient(var(--red) 0 ${selected.score}%,#e9edf1 ${selected.score}%)`,
+              background: `conic-gradient(var(--priority-color, var(--red)) 0 ${selected.score}%,#e9edf1 ${selected.score}%)`,
             }}
           >
             <div>

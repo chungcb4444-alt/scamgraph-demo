@@ -1,0 +1,711 @@
+/* Workspace-only scale. Login and its illustration keep their existing sizes. */
+.app-shell {
+  --page-title: 30px;
+  --section-title: 21px;
+  --text: 15px;
+  --small: 13px;
+  font-size: 15px;
+}
+.app-shell input {
+  font-size: 15px;
+}
+.app-shell select {
+  font-size: 15px;
+}
+.app-shell textarea {
+  font-size: 15px;
+}
+.app-shell .brand-mark {
+  font-size: 20px;
+}
+.app-shell .brand-name {
+  font-size: 13px;
+}
+.app-shell .nav-item {
+  font-size: 15px;
+}
+.app-shell .nav-icon {
+  font-size: 13px;
+}
+.app-shell .user-avatar {
+  font-size: 13px;
+}
+.app-shell .sidebar-user strong {
+  font-size: 13px;
+}
+.app-shell .top-title {
+  font-size: 15px;
+}
+.app-shell .top-desc {
+  font-size: 13px;
+}
+.app-shell .notification {
+  font-size: 13px;
+}
+.app-shell .muted {
+  font-size: 15px;
+}
+.app-shell .btn {
+  font-size: 15px;
+}
+.app-shell .stat-label {
+  font-size: 15px;
+}
+.app-shell .stat-value {
+  font-size: 30px;
+}
+.app-shell .stat-sub {
+  font-size: 13px;
+}
+.app-shell .inline-alert div:nth-child(2) {
+  font-size: 13px;
+}
+.app-shell .card-sub {
+  font-size: 13px;
+}
+.app-shell .text-action {
+  font-size: 13px;
+}
+.app-shell .y-axis {
+  font-size: 13px;
+}
+.app-shell .x-axis {
+  font-size: 13px;
+}
+.app-shell .donut b {
+  font-size: 19px;
+}
+.app-shell .donut span {
+  font-size: 13px;
+}
+.app-shell .legend-line {
+  font-size: 13px;
+}
+.app-shell .cluster-item > b {
+  font-size: 13px;
+}
+.app-shell .cluster-meta {
+  font-size: 13px;
+}
+.app-shell .cluster-id {
+  font-size: 13px;
+}
+.app-shell table {
+  font-size: 14px;
+}
+.app-shell th {
+  font-size: 13px;
+}
+.app-shell .cell-sub {
+  font-size: 13px;
+}
+.app-shell .empty {
+  font-size: 13px;
+}
+.app-shell .table-summary {
+  font-size: 13px;
+}
+.app-shell .search-wrap span {
+  font-size: 16px;
+}
+.app-shell .field-label {
+  font-size: 14px;
+}
+.app-shell .field-hint {
+  font-size: 13px;
+}
+.app-shell .field-error {
+  font-size: 13px;
+}
+.app-shell .section-head p {
+  font-size: 13px;
+}
+.app-shell .privacy-note p {
+  font-size: 13px;
+}
+.app-shell .upload-empty {
+  font-size: 13px;
+}
+.app-shell .upload-icon {
+  font-size: 16px;
+}
+.app-shell .receipt-top {
+  font-size: 13px;
+}
+.app-shell .receipt-amount {
+  font-size: 19px;
+}
+.app-shell .receipt-row {
+  font-size: 13px;
+}
+.app-shell .watermark {
+  font-size: 23px;
+}
+.app-shell .error-box {
+  font-size: 13px;
+}
+.app-shell .back-link {
+  font-size: 13px;
+}
+.app-shell .detail-code {
+  font-size: 13px;
+}
+.app-shell .hero-meta {
+  font-size: 13px;
+}
+.app-shell .quote-content {
+  font-size: 15px;
+}
+.app-shell .meta-grid span {
+  font-size: 13px;
+}
+.app-shell .detail-rows span {
+  font-size: 13px;
+}
+.app-shell .meta-grid b {
+  font-size: 13px;
+}
+.app-shell .detail-rows b {
+  font-size: 15px;
+}
+.app-shell .file-icon {
+  font-size: 13px;
+}
+.app-shell .file-row > div:nth-child(2) {
+  font-size: 13px;
+}
+.app-shell .file-row span {
+  font-size: 13px;
+}
+.app-shell .extraction-note {
+  font-size: 13px;
+}
+.app-shell .processing {
+  font-size: 13px;
+}
+.app-shell .processing span {
+  font-size: 13px;
+}
+.app-shell .cluster-name {
+  font-size: 15px;
+}
+.app-shell .cluster-summary p {
+  font-size: 13px;
+}
+.app-shell .cluster-numbers span {
+  font-size: 13px;
+}
+.app-shell .cluster-numbers b {
+  font-size: 13px;
+}
+.app-shell .legend {
+  font-size: 13px;
+}
+.app-shell .graph-controls select {
+  font-size: 13px;
+}
+.app-shell .graph-node > span {
+  font-size: 13px;
+}
+.app-shell .graph-node b {
+  font-size: 13px;
+}
+.app-shell .graph-node small {
+  font-size: 13px;
+}
+.app-shell .edge-label {
+  font-size: 13px;
+}
+.app-shell .info-head {
+  font-size: 13px;
+}
+.app-shell .entity-icon {
+  font-size: 13px;
+}
+.app-shell .info-sub {
+  font-size: 13px;
+}
+.app-shell .related-title {
+  font-size: 13px;
+}
+.app-shell .related-row {
+  font-size: 13px;
+}
+.app-shell .info-content {
+  font-size: 13px;
+}
+.app-shell .source-evidence b {
+  font-size: 13px;
+}
+.app-shell .source-evidence span {
+  font-size: 13px;
+}
+.app-shell .relation-legend span {
+  font-size: 13px;
+}
+.app-shell .no-related b {
+  font-size: 13px;
+}
+.app-shell .no-related span {
+  font-size: 13px;
+}
+.app-shell .alert-list-head {
+  font-size: 13px;
+}
+.app-shell .alert-list-head select {
+  font-size: 13px;
+}
+.app-shell .score {
+  font-size: 13px;
+}
+.app-shell .alert-row-top {
+  font-size: 13px;
+}
+.app-shell .alert-row p {
+  font-size: 14px;
+}
+.app-shell .alert-row > div > span {
+  font-size: 13px;
+}
+.app-shell .score-ring b {
+  font-size: 24px;
+}
+.app-shell .score-ring span {
+  font-size: 13px;
+}
+.app-shell .risk-title {
+  font-size: 13px;
+}
+.app-shell .factor-mini {
+  font-size: 13px;
+}
+.app-shell .tabs button {
+  font-size: 15px;
+}
+.app-shell .save-row {
+  font-size: 13px;
+}
+.app-shell .linked-cluster span {
+  font-size: 13px;
+}
+.app-shell .linked-cluster b {
+  font-size: 13px;
+}
+.app-shell .linked-cluster small {
+  font-size: 13px;
+}
+.app-shell .entity-list span {
+  font-size: 13px;
+}
+.app-shell .entity-list b {
+  font-size: 13px;
+}
+.app-shell .entity-list small {
+  font-size: 13px;
+}
+.app-shell .timeline > div {
+  font-size: 13px;
+}
+.app-shell .timeline span {
+  font-size: 13px;
+}
+.app-shell .role-switcher p {
+  font-size: 13px;
+}
+.app-shell .role-code {
+  font-size: 17px;
+}
+.app-shell .role-card > b {
+  font-size: 13px;
+}
+.app-shell .role-card p {
+  font-size: 13px;
+}
+.app-shell .action-tag {
+  font-size: 13px;
+}
+.app-shell .eyebrow {
+  font-size: 13px;
+}
+.app-shell .icon-btn {
+  font-size: 16px;
+}
+.app-shell .score-box b {
+  font-size: 23px;
+}
+.app-shell .score-box span {
+  font-size: 13px;
+}
+.app-shell .alert-detail-top p {
+  font-size: 13px;
+}
+.app-shell .factor-check {
+  font-size: 13px;
+}
+.app-shell .factor b {
+  font-size: 13px;
+}
+.app-shell .factor div span {
+  font-size: 13px;
+}
+.app-shell .factor strong {
+  font-size: 13px;
+}
+.app-shell .warning-note {
+  font-size: 13px;
+}
+.app-shell .report-header > div:nth-child(2) {
+  font-size: 13px;
+}
+.app-shell .report-header span {
+  font-size: 13px;
+}
+.app-shell .report-header small {
+  font-size: 13px;
+}
+.app-shell .report-title {
+  font-size: 16px;
+}
+.app-shell .report-section b {
+  font-size: 13px;
+}
+.app-shell .report-section p {
+  font-size: 15px;
+}
+.app-shell .report-disclaimer {
+  font-size: 13px;
+}
+.app-shell .secure {
+  font-size: 13px;
+}
+.app-shell .operations-tabs button {
+  font-size: 15px;
+}
+.app-shell .wizard-steps button {
+  font-size: 13px;
+}
+.app-shell .simulation-note {
+  font-size: 13px;
+}
+.app-shell .top-actions select {
+  font-size: 14px;
+}
+.app-shell .candidate p {
+  font-size: 13px;
+}
+.app-shell .save-row span {
+  font-size: 13px;
+}
+.app-shell .qr-simulation {
+  font-size: 108px;
+}
+.app-shell .citizen-guide ul {
+  font-size: 13px;
+}
+.app-shell .citizen-guide > p {
+  font-size: 13px;
+}
+.app-shell .status-tabs button {
+  font-size: 15px;
+}
+.app-shell .reports-filter select {
+  font-size: 15px;
+}
+.app-shell .audit-card td:nth-child(1) {
+  font-size: 13px;
+}
+.app-shell .daily-column {
+  font-size: 13px;
+}
+.app-shell .migration-note {
+  font-size: 13px;
+}
+.app-shell .filter-field {
+  font-size: 14px;
+}
+.app-shell .alert-row-top b {
+  font-size: 15px;
+}
+.app-shell .alert-row span {
+  font-size: 13px;
+}
+.app-shell .audit-changes p {
+  font-size: 14px;
+}
+.app-shell .recent-cases span,
+.app-shell .cluster-item > b {
+  font-size: 14px;
+}
+.app-shell .toast {
+  font-size: 13px;
+}
+.app-shell .role-help .section-title {
+  font-size: 17px;
+}
+.app-shell .link-explorer .cluster-name {
+  font-size: 22px;
+}
+.app-shell .report-intake {
+  font-size: 15px;
+}
+.app-shell .intake-heading p {
+  font-size: 15px;
+}
+.app-shell .intake-heading small {
+  font-size: 13px;
+}
+.app-shell .intake-demo {
+  font-size: 13px;
+}
+.app-shell .intake-sample {
+  font-size: 13px;
+}
+.app-shell .report-intake h3 {
+  font-size: 17px;
+}
+.app-shell .report-intake h3 small {
+  font-size: 13px;
+}
+.app-shell .intake-steps button {
+  font-size: 13px;
+}
+.app-shell .intake-field {
+  font-size: 14px;
+}
+.app-shell .report-intake input,
+.app-shell .report-intake select,
+.app-shell .report-intake textarea {
+  font-size: 15px;
+}
+.app-shell .intake-field small,
+.app-shell .intake-help {
+  font-size: 13px;
+}
+.app-shell .intake-check {
+  font-size: 13px;
+}
+.app-shell .report-intake button.intake-primary,
+.app-shell .report-intake button.intake-secondary {
+  font-size: 15px;
+}
+.app-shell .intake-link {
+  font-size: 15px;
+}
+.app-shell .intake-error-summary,
+.app-shell .intake-storage-note {
+  font-size: 13px;
+}
+.app-shell .intake-receipt span {
+  font-size: 13px;
+}
+.app-shell .success-symbol {
+  font-size: 22px;
+}
+.app-shell .load-toggle,
+.app-shell .inline-check {
+  font-size: 13px;
+}
+.app-shell .zoom-actions button,
+.app-shell .map-pagination button {
+  font-size: 13px;
+}
+.app-shell .graph-counts {
+  font-size: 13px;
+}
+.app-shell .map-columns {
+  font-size: 13px;
+}
+.app-shell .map-node text.node-sub {
+  font-size: 13px;
+}
+.app-shell .map-pagination {
+  font-size: 13px;
+}
+.app-shell .relation-explanation,
+.app-shell .load-note {
+  font-size: 13px;
+}
+.app-shell .explorer-details dl {
+  font-size: 13px;
+}
+.app-shell .explorer-details input {
+  font-size: 13px;
+}
+.app-shell .explorer-details .source-evidence span {
+  font-size: 13px;
+}
+.app-shell .explorer-details .source-evidence small {
+  font-size: 13px;
+}
+.app-shell .explorer-toolbar > select {
+  font-size: 15px;
+}
+.app-shell .zoom-actions button,
+.app-shell .map-pagination button {
+  font-size: 14px;
+}
+.app-shell .cluster-name {
+  font-size: 22px;
+}
+.app-shell .map-help {
+  font-size: 13px;
+}
+.app-shell .content > .page-stack:has(.alert-layout) {
+  animation: alert-page-in 160ms ease-out;
+}
+.app-shell .alert-layout {
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+  gap: 20px;
+  align-items: start;
+  --priority-color: var(--red);
+}
+.app-shell .alert-layout[data-priority="Trung bình"] {
+  --priority-color: var(--orange);
+}
+.app-shell .alert-layout[data-priority="Thấp"] {
+  --priority-color: var(--green);
+}
+.app-shell .alert-list,
+.app-shell .alert-side {
+  backdrop-filter: none;
+}
+.app-shell .alert-list {
+  padding-bottom: 10px;
+}
+.app-shell .alert-list-head {
+  padding: 18px 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.app-shell .alert-list-head select {
+  width: 180px;
+}
+.app-shell .alert-row {
+  width: calc(100% - 24px);
+  margin: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid transparent;
+  border-radius: 12px;
+  padding: 18px;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 14px;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+  transform: none;
+}
+.app-shell .alert-row:hover {
+  border-color: #6e9fe8;
+  box-shadow: 0 3px 12px #1e3a8a0d;
+}
+.app-shell .alert-row.active {
+  border-left-color: var(--blue);
+  background: var(--blue-soft);
+}
+.app-shell .alert-row-top {
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+.app-shell .alert-row-top b {
+  line-height: 1.5;
+}
+.app-shell .alert-row-top .badge {
+  flex-shrink: 0;
+}
+.app-shell .alert-row p {
+  line-height: 1.6;
+  margin: 8px 0;
+}
+.app-shell .alert-row .score {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.app-shell .alert-side {
+  padding: 24px;
+}
+.app-shell .alert-side .risk-title {
+  color: var(--priority-color);
+  font-size: 16px;
+}
+.app-shell .alert-side .score-ring {
+  width: 104px;
+  height: 104px;
+  position: relative;
+}
+.app-shell .alert-side .score-ring::before {
+  width: 82px;
+  height: 82px;
+}
+.app-shell .alert-side .full {
+  margin-top: 12px;
+}
+.app-shell .factor-mini {
+  gap: 16px;
+  padding: 14px 0;
+  align-items: flex-start;
+}
+.app-shell .factor-mini b {
+  white-space: nowrap;
+}
+.modal-backdrop:has(.alert-detail-top) {
+  backdrop-filter: blur(4px);
+  animation: alert-page-in 150ms ease-out;
+}
+.modal:has(.alert-detail-top) {
+  animation: alert-dialog-in 180ms ease-out;
+}
+@keyframes alert-page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes alert-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 1100px) {
+  .app-shell .alert-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .content > .page-stack,
+  .modal-backdrop:has(.alert-detail-top),
+  .modal:has(.alert-detail-top) {
+    animation: none !important;
+  }
+  .app-shell .alert-row {
+    transition: none;
+  }
+}
+@media screen {
+  :root[data-theme="dark"] .app-shell .alert-row.active {
+    background: #13233d;
+    border-left-color: #60a5fa;
+  }
+}
+@media screen {
+  :root[data-theme="dark"] .app-shell .alert-layout {
+    --priority-color: #ff8fa3;
+  }
+  :root[data-theme="dark"]
+    .app-shell
+    .alert-layout[data-priority="Trung bình"] {
+    --priority-color: #f5bd73;
+  }
+  :root[data-theme="dark"] .app-shell .alert-layout[data-priority="Thấp"] {
+    --priority-color: #70dca9;
+  }
+}

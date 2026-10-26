@@ -1,0 +1,54 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "initial-12-and-45",
+      "search-and-filter",
+      "create-13-before-link",
+      "edit-and-review-extraction",
+      "reject-restore-proposal",
+      "confirm-4-and-60",
+      "case-4-reports",
+      "assign-status-note",
+      "case-specific-report",
+      "wizard-reload-persistence",
+      "reload-persistence",
+      "CUM-002-25",
+      "HS-002-independent-30",
+      "account-role-persistence",
+      "audit-before-after",
+      "logs",
+      "citizen-isolation",
+      "reset-cancel-and-confirm",
+      "no-page-overflow",
+      "no-browser-errors"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "initial-12-and-45",
+      "search-and-filter",
+      "create-13-before-link",
+      "edit-and-review-extraction",
+      "reject-restore-proposal",
+      "confirm-4-and-60",
+      "case-4-reports",
+      "assign-status-note",
+      "case-specific-report",
+      "wizard-reload-persistence",
+      "reload-persistence",
+      "CUM-002-25",
+      "HS-002-independent-30",
+      "account-role-persistence",
+      "audit-before-after",
+      "logs",
+      "citizen-isolation",
+      "reset-cancel-and-confirm",
+      "no-page-overflow",
+      "no-browser-errors"
+    ]
+  }
+]

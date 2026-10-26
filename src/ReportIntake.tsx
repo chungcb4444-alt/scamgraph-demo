@@ -144,6 +144,7 @@ export default function ReportIntake({
     }
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [validationAttempt, setValidationAttempt] = useState(0)
   const [storageNote, setStorageNote] = useState("")
   const [success, setSuccess] = useState<Report | null>(null)
   const submitted = useRef(false)
@@ -168,9 +169,17 @@ export default function ReportIntake({
     }
   }, [draft, step])
   useEffect(() => {
-    if (Object.values(errors).some(Boolean))
-      errorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" })
-  }, [errors])
+    if (validationAttempt === 0) return
+    const frame = requestAnimationFrame(() =>
+      errorRef.current?.scrollIntoView({
+        block: "center",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      }),
+    )
+    return () => cancelAnimationFrame(frame)
+  }, [validationAttempt])
   const validate = () => {
     const result: Record<string, string> = {}
     if (!draft.behavior)
@@ -228,6 +237,7 @@ export default function ReportIntake({
     if (step === 2) {
       const problems = validate()
       if (Object.keys(problems).length) {
+        setValidationAttempt((v) => v + 1)
         setErrors(problems)
         return
       }
@@ -239,6 +249,7 @@ export default function ReportIntake({
     if (submitted.current) return
     const problems = validate()
     if (Object.keys(problems).length) {
+      setValidationAttempt((v) => v + 1)
       setErrors(problems)
       setStep(2)
       return
