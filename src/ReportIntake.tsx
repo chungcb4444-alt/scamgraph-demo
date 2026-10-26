@@ -303,7 +303,6 @@ export default function ReportIntake({
   return (
     <div className="report-intake">
       <header className="intake-heading">
-        <span className="intake-demo">Demo — dữ liệu giả lập</span>
         <h1>{citizen ? "Gửi phản ánh" : "Tiếp nhận phản ánh"}</h1>
         <p>
           Cung cấp thông tin về sự việc có dấu hiệu lừa đảo hoặc hành vi đáng
@@ -495,7 +494,12 @@ export default function ReportIntake({
                   <Field
                     label="Thời gian phát sinh"
                     error={errors.time}
-                    hint={"Giờ Việt Nam — Asia/Ho_Chi_Minh." + (!draft.unknownTime && fromVietnamInput(draft.time) ? ` Đã chọn: ${formatDateTime(fromVietnamInput(draft.time))}.` : "")}
+                    hint={
+                      "Giờ Việt Nam — Asia/Ho_Chi_Minh." +
+                      (!draft.unknownTime && fromVietnamInput(draft.time)
+                        ? ` Đã chọn: ${formatDateTime(fromVietnamInput(draft.time))}.`
+                        : "")
+                    }
                   >
                     <input
                       type="datetime-local"
@@ -694,7 +698,14 @@ export default function ReportIntake({
                             ? `: ${draft.sourceOther}`
                             : ""),
                     ],
-                    ...([['Thông tin liên hệ', draft.contact], ['Tài khoản ngân hàng', draft.account], ['Ngân hàng', draft.bank], ['Điện thoại liên quan', draft.phone], ['Website', draft.website], ['Tài khoản mạng xã hội', draft.socialAccount]].filter(([, value]) => value.trim())),
+                    ...[
+                      ["Thông tin liên hệ", draft.contact],
+                      ["Tài khoản ngân hàng", draft.account],
+                      ["Ngân hàng", draft.bank],
+                      ["Điện thoại liên quan", draft.phone],
+                      ["Website", draft.website],
+                      ["Tài khoản mạng xã hội", draft.socialAccount],
+                    ].filter(([, value]) => value.trim()),
                     ["Tài liệu", draft.attachment ? "01 ảnh mẫu" : "Không có"],
                   ].map(([key, value]) => (
                     <div key={key}>

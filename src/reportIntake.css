@@ -1,17 +1,13 @@
 .report-intake {
   max-width: 1050px;
   margin: 0 auto;
-  color: #e8eefb;
+  color: #334155;
   font-size: 16px;
   line-height: 1.5;
 }
 .intake-shell .content {
   max-width: 1150px;
   padding: 28px 24px 44px;
-}
-.intake-shell .nav-item {
-  font-size: 14px;
-  line-height: 1.5;
 }
 .intake-shell .sidebar .demo-label {
   display: none;
@@ -21,25 +17,25 @@
 }
 .intake-heading h1,
 .report-intake h1 {
-  font-size: 28px;
+  font-size: var(--page-title);
   font-weight: 700;
   margin: 14px 0 8px;
   line-height: 1.3;
 }
 .intake-heading p {
   font-size: 16px;
-  color: #bdcae0;
+  color: #475569;
   margin: 0 0 8px;
 }
 .intake-heading small {
   font-size: 14px;
-  color: #b6c4dc;
+  color: #475569;
 }
 .intake-demo {
   display: inline-block;
-  color: #d0bcff;
-  background: #211e41;
-  border: 1px solid #68548e;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #dfe6f0;
   border-radius: 5px;
   padding: 7px 12px;
   font-size: 14px;
@@ -51,17 +47,17 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 18px 0;
-  color: #b7c6dd;
+  color: #475569;
   font-size: 14px;
 }
 .intake-card {
-  padding: 24px;
-  background: #10182d;
-  border: 1px solid #2e3d5d;
+  padding: var(--panel-padding);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 10px;
 }
 .report-intake h2 {
-  font-size: 20px;
+  font-size: var(--section-title);
   line-height: 1.4;
   margin: 0 0 24px;
   font-weight: 650;
@@ -73,7 +69,7 @@
 }
 .report-intake h3 small {
   font-size: 14px;
-  color: #a9b9d2;
+  color: #475569;
   font-weight: 400;
   margin-left: 12px;
 }
@@ -86,9 +82,9 @@
   gap: 10px;
 }
 .intake-steps button {
-  border: 1px solid #38435f;
-  background: #10182d;
-  color: #b7c6de;
+  border: 1px solid #dfe6f0;
+  background: #ffffff;
+  color: #475569;
   width: 100%;
   display: flex;
   align-items: center;
@@ -105,22 +101,23 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #28334e;
+  background: #ffffff;
   display: grid;
   place-items: center;
 }
 .intake-steps .current button {
-  color: white;
-  background: #29224f;
-  border-color: #a48aff;
-  box-shadow: inset 0 -2px #a48aff;
+  background: #edf3ff;
+  border-color: #2563eb;
+  color: #19489d;
+  box-shadow: inset 0 -2px #2563eb;
 }
 .intake-steps .current span {
-  background: #7454e7;
+  background: #2563eb;
+  color: white;
 }
 .intake-steps .complete button {
-  color: #9fe0c1;
-  border-color: #3d6c60;
+  color: #167044;
+  border-color: #dfe6f0;
 }
 .intake-steps button:disabled {
   cursor: default;
@@ -143,7 +140,7 @@
   font-weight: 500;
 }
 .intake-field > span > b {
-  color: #ff929f;
+  color: #b42338;
 }
 .report-intake input,
 .report-intake select,
@@ -152,9 +149,9 @@
   line-height: 1.5;
   min-height: 46px;
   padding: 10px 12px;
-  background: #0a1122;
-  border: 1px solid #43516e;
-  color: #f1f4ff;
+  background: #ffffff;
+  border: 1px solid #dfe6f0;
+  color: #334155;
   border-radius: 6px;
 }
 .report-intake textarea {
@@ -163,14 +160,14 @@
 }
 .report-intake input::placeholder,
 .report-intake textarea::placeholder {
-  color: #a1b0c9;
+  color: #475569;
 }
 .intake-field small,
 .intake-help {
   font-size: 14px;
   line-height: 1.6;
   font-weight: 400;
-  color: #b9c7de;
+  color: #475569;
   margin: 0;
 }
 .intake-check {
@@ -192,7 +189,7 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  border-top: 1px solid #33415e;
+  border-top: 1px solid #dfe6f0;
   padding-top: 22px;
   margin-top: 26px;
 }
@@ -207,13 +204,14 @@
 }
 .intake-primary {
   border: 1px solid transparent;
-  background: linear-gradient(90deg, #7147ff, #2d73f7);
+
+  background: #19489d;
   color: white;
 }
 .intake-secondary {
-  border: 1px solid #53617e;
-  background: #18233c;
-  color: #e8efff;
+  border: 1px solid #dfe6f0;
+  background: #ffffff;
+  color: #334155;
 }
 .report-intake button:disabled {
   cursor: default;
@@ -222,7 +220,7 @@
 .intake-link {
   border: 0;
   background: none;
-  color: #c6b4ff;
+  color: #475569;
   font-size: 16px;
   padding: 8px 0;
   text-decoration: underline;
@@ -235,9 +233,9 @@
 .intake-error-summary,
 .intake-storage-note {
   padding: 16px;
-  color: #ffbdc5;
-  border: 1px solid #b86779;
-  background: #2a1729;
+  color: #b42338;
+  border: 1px solid #dfe6f0;
+  background: #ffffff;
   border-radius: 6px;
   margin-bottom: 22px;
   font-size: 14px;
@@ -247,21 +245,21 @@
   padding-left: 22px;
 }
 .intake-error {
-  color: #ffb1be !important;
+  color: #b42338 !important;
 }
 .intake-documents p {
   margin: 0 0 20px;
 }
 .intake-empty,
 .intake-receipt {
-  border: 1px dashed #65718d;
+  border: 1px dashed #dfe6f0;
   border-radius: 8px;
   padding: 24px;
   margin: 18px 0;
-  color: #c9d5ea;
+  color: #475569;
 }
 .intake-receipt {
-  background: #0b182c;
+  background: #ffffff;
   border-style: solid;
 }
 .intake-receipt span {
@@ -275,10 +273,10 @@
   grid-template-columns: 200px minmax(0, 1fr);
   gap: 14px;
   padding: 12px 0;
-  border-bottom: 1px solid #2d3a55;
+  border-bottom: 1px solid #dfe6f0;
 }
 .intake-review dt {
-  color: #b5c3d9;
+  color: #475569;
 }
 .intake-review dd {
   margin: 0;
@@ -287,7 +285,7 @@
 .intake-content {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background: #0a1225;
+  background: #ffffff;
   padding: 18px;
   border-radius: 6px;
   line-height: 1.6;
@@ -298,8 +296,8 @@
 .success-symbol {
   display: grid;
   place-items: center;
-  background: #134a3c;
-  color: #9ff2cd;
+  background: #f4f7fc;
+  color: #167044;
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -316,4 +314,19 @@
   .intake-review dl > div {
     grid-template-columns: 1fr;
   }
+}
+
+.intake-heading h1 {
+  color: #164699;
+  position: relative;
+  padding-bottom: 14px;
+}
+.intake-heading h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 92px;
+  height: 4px;
+  background: linear-gradient(90deg, #244d9f 0 62%, #dc3048 62%);
 }

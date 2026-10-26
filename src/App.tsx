@@ -1,13 +1,21 @@
-import {
-  cloneElement,
-  isValidElement,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+import { useEffect, useMemo, useState } from "react"
 
+import {
+  PageHeader,
+  FilterField,
+  EmptyState,
+  Modal,
+  Button,
+  Badge,
+  Field,
+  CardHead,
+  Card,
+  Tabs,
+  DataTable,
+} from "./ui"
+import AppearanceToggle from "./AppearanceToggle"
+import Login from "./Login"
+import BrandMark from "./BrandMark"
 import ReportIntake from "./ReportIntake"
 import { REPORT_TYPES, reportTypeLabel, nextReportId } from "./intakeModel"
 import type { IntakePayload, IntakeResult } from "./intakeModel"
@@ -443,175 +451,7 @@ const actorForRole = (role: string) =>
   })[role] || "demo"
 
 function NetworkMark() {
-  return (
-    <div className="brand-mark" aria-label="Biểu tượng mạng liên kết">
-      <svg viewBox="0 0 32 32" aria-hidden="true">
-        <line x1="8" y1="9" x2="23" y2="7" />
-        <line x1="8" y1="9" x2="14" y2="23" />
-        <line x1="23" y1="7" x2="25" y2="22" />
-        <line x1="14" y1="23" x2="25" y2="22" />
-        <circle cx="8" cy="9" r="3" />
-        <circle cx="23" cy="7" r="3" />
-        <circle cx="14" cy="23" r="3" />
-        <circle cx="25" cy="22" r="3" />
-      </svg>
-    </div>
-  )
-}
-
-function Button({
-  children,
-  variant = "primary",
-  onClick,
-  disabled = false,
-  type = "button",
-  className = "",
-}: {
-  children: React.ReactNode
-  variant?: "primary" | "secondary" | "ghost" | "danger"
-  onClick?: () => void
-  disabled?: boolean
-  type?: "button" | "submit"
-  className?: string
-}) {
-  return (
-    <button
-      type={type}
-      className={`btn btn-${variant} ${className}`}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {children}
-    </button>
-  )
-}
-
-function Badge({
-  children,
-  tone = "blue",
-}: {
-  children: React.ReactNode
-  tone?: "blue" | "red" | "orange" | "green" | "gray" | "purple"
-}) {
-  return (
-    <span className={`badge badge-${tone}`}>
-      <span className="badge-dot" />
-      {children}
-    </span>
-  )
-}
-
-function Modal({
-  title,
-  children,
-  onClose,
-  footer,
-  wide = false,
-}: {
-  title: string
-  children: React.ReactNode
-  onClose: () => void
-  footer?: React.ReactNode
-  wide?: boolean
-}) {
-  const dialogRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null
-    const dialog = dialogRef.current
-    dialog?.focus()
-    const keydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault()
-        onClose()
-        return
-      }
-      if (event.key !== "Tab" || !dialog) return
-      const focusable = Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
-        ),
-      )
-      const first = focusable[0],
-        last = focusable[focusable.length - 1]
-      if (
-        event.shiftKey &&
-        (document.activeElement === first || document.activeElement === dialog)
-      ) {
-        event.preventDefault()
-        last?.focus()
-      } else if (
-        !event.shiftKey &&
-        (document.activeElement === last || document.activeElement === dialog)
-      ) {
-        event.preventDefault()
-        first?.focus()
-      }
-    }
-    document.addEventListener("keydown", keydown)
-    return () => {
-      document.removeEventListener("keydown", keydown)
-      previous?.focus()
-    }
-  }, [onClose])
-  return (
-    <div className="modal-backdrop" onMouseDown={onClose}>
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={`modal ${wide ? "modal-wide" : ""}`}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <div className="modal-head">
-          <div>
-            <div className="eyebrow">
-              Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
-            </div>
-            <div className="modal-title">{title}</div>
-          </div>
-          <button className="icon-btn" onClick={onClose} aria-label="Đóng">
-            ×
-          </button>
-        </div>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-foot">{footer}</div>}
-      </div>
-    </div>
-  )
-}
-
-function Field({
-  label,
-  required,
-  children,
-  hint,
-  error,
-}: {
-  label: string
-  required?: boolean
-  children: React.ReactNode
-  hint?: string
-  error?: string
-}) {
-  const fieldId = useId()
-  return (
-    <label className="field" htmlFor={fieldId}>
-      <span className="field-label">
-        {label}
-        {required && <b> *</b>}
-      </span>
-      {isValidElement(children)
-        ? cloneElement(
-            children as React.ReactElement<Record<string, unknown>>,
-            { id: fieldId, "aria-label": label },
-          )
-        : children}
-      {hint && <span className="field-hint">{hint}</span>}
-      {error && <span className="field-error">{error}</span>}
-    </label>
-  )
+  return <BrandMark />
 }
 
 function statusTone(
@@ -752,7 +592,11 @@ export default function App() {
       ...v,
     ])
   const submitIntake = (payload: IntakePayload): IntakeResult => {
-    if (!citizen && !canEdit) return {ok:false, error:'Vai trò này chỉ được xem dữ liệu, không được tạo phản ánh.'}
+    if (!citizen && !canEdit)
+      return {
+        ok: false,
+        error: "Vai trò này chỉ được xem dữ liệu, không được tạo phản ánh.",
+      }
     let oldReports: string | null = null
     let oldLogs: string | null = null
     let wroteReports = false
@@ -918,10 +762,9 @@ export default function App() {
             <div className="brand-name">
               Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
             </div>
-            <div className="brand-sub">Phân tích & truy vết</div>
           </div>
         </div>
-        <div className="demo-label">Demo — dữ liệu giả lập</div>
+
         <nav className="nav">
           {(citizen
             ? [
@@ -970,25 +813,9 @@ export default function App() {
       </aside>
       <div className="main-shell">
         <header className="topbar">
-          <div>
-            <div className="top-title">
-              {screen === "new-report"
-                ? citizen
-                  ? "Gửi phản ánh"
-                  : "Tiếp nhận phản ánh"
-                : citizen
-                  ? "CỔNG PHẢN ÁNH · VNeID MÔ PHỎNG"
-                  : admin
-                    ? "TRUNG TÂM QUẢN TRỊ"
-                    : pageTitle(screen)}
-            </div>
-            <div className="top-desc">
-              {screen === "new-report"
-                ? "Tiếp nhận thông tin sự việc · Phân quyền mô phỏng"
-                : "Demo — dữ liệu giả lập · Phân quyền chỉ mô phỏng trên giao diện"}
-            </div>
-          </div>
           <div className="top-actions">
+            <span className="demo-label">Demo — dữ liệu giả lập</span>
+            <AppearanceToggle />
             <select
               aria-label="Chuyển vai trò demo"
               value={role}
@@ -1020,7 +847,6 @@ export default function App() {
             <Button variant="ghost" onClick={reset}>
               Đặt lại demo
             </Button>
-            <div className="notification">{alerts.length}</div>
           </div>
         </header>
         <main className="content">
@@ -1058,6 +884,7 @@ export default function App() {
               )}
               alerts={alerts}
               onReports={() => go("reports")}
+              onCase={openCase}
               onNew={() =>
                 canEdit || citizen
                   ? go("new-report")
@@ -1070,6 +897,7 @@ export default function App() {
           )}
           {screen === "reports" && (
             <Reports
+              citizen={citizen}
               reports={
                 citizen
                   ? reports.filter(
@@ -1375,12 +1203,12 @@ export default function App() {
 function pageTitle(screen: Screen) {
   return (
     {
-      dashboard: "Tổng quan",
+      dashboard: "Tổng quan công việc",
       reports: "Quản lý phản ánh",
       "new-report": "Tạo phản ánh mới",
       "report-detail": "Chi tiết phản ánh",
       graph: "Phân tích liên kết",
-      alerts: "Cảnh báo và điểm rủi ro",
+      alerts: "Cảnh báo cần rà soát",
       cases: "Hồ sơ vụ việc",
       "case-detail": "Chi tiết hồ sơ",
       accounts: "Tài khoản và phân quyền",
@@ -1389,156 +1217,13 @@ function pageTitle(screen: Screen) {
   )[screen]
 }
 
-function Login({
-  onLogin,
-}: {
-  onLogin: (role: string, screen: Screen) => void
-}) {
-  const loginRoles = [
-    ["Người dân / Tổ chức", "Người dân / Tổ chức", "new-report"],
-    ["Cán bộ nghiệp vụ", "Cán bộ phân tích", "dashboard"],
-    ["Lãnh đạo", "Lãnh đạo theo dõi", "dashboard"],
-    ["Quản trị", "Quản trị hệ thống", "accounts"],
-  ] as const
-  const [loginRole, setLoginRole] = useState<(typeof loginRoles)[number][1]>(
-    loginRoles[1][1],
-  )
-  const [qrOpen, setQrOpen] = useState(false)
-  return (
-    <div className="login-page">
-      <div className="login-aside">
-        <div className="login-grid" />
-        <div className="login-copy">
-          <div className="login-logo">
-            <NetworkMark /> Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
-          </div>
-          <div className="login-kicker">NỀN TẢNG NGHIỆP VỤ</div>
-          <div className="login-heading">
-            PHÂN TÍCH VÀ TRUY VẾT
-            <br />
-            TỘI PHẠM CÔNG NGHỆ CAO
-          </div>
-          <p>
-            Nền tảng phân tích và hỗ trợ truy vết lừa đảo trực tuyến từ nguồn
-            phản ánh xã hội.
-          </p>
-          <div className="login-feature">
-            <b>01</b>
-            <span>Tiếp nhận và chuẩn hóa phản ánh</span>
-          </div>
-          <div className="login-feature">
-            <b>02</b>
-            <span>Phân tích mạng lưới liên kết</span>
-          </div>
-          <div className="login-feature">
-            <b>03</b>
-            <span>Hỗ trợ lập hồ sơ xác minh</span>
-          </div>
-        </div>
-      </div>
-      <div className="login-panel">
-        <div className="login-card">
-          <div className="mobile-logo">
-            Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
-          </div>
-          <div className="demo-label login-demo">Demo — dữ liệu giả lập</div>
-          <div className="eyebrow">CỔNG TRUY CẬP · VNeID MÔ PHỎNG</div>
-          <div className="login-role-tabs">
-            {loginRoles.map(([label, value]) => (
-              <button
-                key={label}
-                className={loginRole === value ? "active" : ""}
-                onClick={() => setLoginRole(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="login-title">Đăng nhập hệ thống</div>
-          <p className="muted">
-            Sử dụng tài khoản demo để trải nghiệm toàn bộ luồng nghiệp vụ.
-          </p>
-          <Field label="Tài khoản">
-            <input
-              value={
-                loginRole === "Người dân / Tổ chức"
-                  ? "cong.dan.demo"
-                  : "can.bo.demo"
-              }
-              readOnly
-            />
-          </Field>
-          <Field label="Mật khẩu">
-            <input type="password" value="demo1234" readOnly />
-          </Field>
-          <Button
-            onClick={() =>
-              onLogin(
-                loginRole,
-                loginRoles.find((item) => item[1] === loginRole)?.[2] ||
-                  "dashboard",
-              )
-            }
-            className="full"
-          >
-            Đăng nhập demo <span>→</span>
-          </Button>
-          <div className="login-divider">HOẶC TRẢI NGHIỆM LUỒNG KHÁC</div>
-          <Button
-            variant="secondary"
-            className="full"
-            onClick={() => setQrOpen(true)}
-          >
-            ▦ Quét mã QR · mô phỏng
-          </Button>
-          {qrOpen && (
-            <Modal
-              title="Quét mã QR mô phỏng"
-              onClose={() => setQrOpen(false)}
-              footer={
-                <Button
-                  onClick={() =>
-                    onLogin(
-                      loginRole,
-                      loginRoles.find((item) => item[1] === loginRole)?.[2] ||
-                        "dashboard",
-                    )
-                  }
-                >
-                  Tiếp tục bằng tài khoản demo
-                </Button>
-              }
-            >
-              <div className="qr-simulation">▦</div>
-              <p>
-                Đây là minh họa luồng đăng nhập; không chứa mã định danh và
-                không kết nối VNeID. Không cần quét hoặc nhập thông tin thật.
-              </p>
-            </Modal>
-          )}
-          <div className="login-note">
-            <span>i</span>
-            <p>
-              <b>Môi trường trình diễn</b>
-              <br />
-              VNeID chỉ là mô phỏng. Không sử dụng thông tin tài khoản thật.
-            </p>
-          </div>
-          <div className="secure">
-            Phiên truy cập mô phỏng · Dữ liệu hoàn toàn giả lập
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function Dashboard({
   reports,
   cases,
   hasNew,
   alerts,
   onReports,
+  onCase,
   onNew,
   onReport,
   onGraph,
@@ -1548,6 +1233,7 @@ function Dashboard({
   cases: CaseFile[]
   hasNew: boolean
   alerts: AlertItem[]
+  onCase: (id: string) => void
   onReports: () => void
   onNew: () => void
   onReport: (id: string) => void
@@ -1610,16 +1296,22 @@ function Dashboard({
   ]
   return (
     <div className="page-stack">
-      <div className="welcome-row">
-        <div>
-          <div className="page-heading">Tổng quan phân tích và xác minh</div>
-          <p className="muted">
+      <PageHeader
+        title="Tổng quan công việc"
+        description={
+          <>
+            {" "}
             Thống kê tính trực tiếp từ bộ dữ liệu giả lập đang lưu trên trình
-            duyệt
-          </p>
-        </div>
-        <Button onClick={onNew}>＋ Tạo phản ánh</Button>
-      </div>
+            duyệt{" "}
+          </>
+        }
+        action={
+          <>
+            {" "}
+            <Button onClick={onNew}>Tiếp nhận phản ánh</Button>{" "}
+          </>
+        }
+      />
       {hasNew && (
         <div className="inline-alert">
           <div className="alert-symbol">!</div>
@@ -1645,8 +1337,52 @@ function Dashboard({
           </div>
         ))}
       </div>
+      <Card className="work-queue">
+        <CardHead
+          title="Công việc cần xử lý"
+          sub="Ưu tiên kiểm tra phản ánh và tiếp tục hồ sơ đang mở"
+        />
+        <div className="work-links">
+          <button className="btn btn-secondary" onClick={onReports}>
+            {
+              reports.filter(
+                (r) => reportWorkflowStatus(r.status) === "Chờ kiểm tra",
+              ).length
+            }{" "}
+            phản ánh chờ kiểm tra →
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => onAlert(alerts[0]?.id || "CB-001")}
+          >
+            {alerts.length} cảnh báo cần rà soát →
+          </button>
+        </div>
+      </Card>
+      <Card>
+        <CardHead title="Hồ sơ gần đây" sub="Theo thời gian cập nhật hồ sơ" />
+        <div className="recent-cases">
+          {[...cases]
+            .sort((a, b) => b.updated.localeCompare(a.updated))
+            .slice(0, 3)
+            .map((item) => (
+              <button
+                className="btn btn-secondary recent-case-item"
+                key={item.id}
+                onClick={() => onCase(item.id)}
+              >
+                <span className="id-link">{item.id}</span>
+                <b>{item.name}</b>
+                <span>
+                  {item.officer} · {formatDateTime(item.updated)}
+                </span>
+                <Badge tone={statusTone(item.status)}>{item.status}</Badge>
+              </button>
+            ))}
+        </div>
+      </Card>
       <div className="dashboard-grid">
-        <div className="card chart-card">
+        <Card className="chart-card">
           <CardHead
             title="Phản ánh theo ngày"
             sub={`7 ngày lịch gần nhất, gồm hôm nay · Tiếp nhận: ${recentDays.reduce((sum, item) => sum + item.count, 0)} phản ánh · Giờ Việt Nam`}
@@ -1666,14 +1402,14 @@ function Dashboard({
               </div>
             ))}
           </div>
-        </div>
-        <div className="card behavior-card">
+        </Card>
+        <Card className="behavior-card">
           <CardHead title="Nhóm hành vi" sub="Theo số phản ánh" />
           <div className="donut-row">
             <div
               className="donut"
               style={{
-                background: `conic-gradient(#7053b3 0 ${behaviorShare[0]}%, #3781ca ${behaviorShare[0]}% ${behaviorShare[0] + behaviorShare[1]}%, #d58335 ${behaviorShare[0] + behaviorShare[1]}% ${behaviorShare.reduce((a, b) => a + b, 0)}%, #53627c ${behaviorShare.reduce((a, b) => a + b, 0)}% 100%)`,
+                background: `conic-gradient(#0284c7 0 ${behaviorShare[0]}%, #3781ca ${behaviorShare[0]}% ${behaviorShare[0] + behaviorShare[1]}%, #d58335 ${behaviorShare[0] + behaviorShare[1]}% ${behaviorShare.reduce((a, b) => a + b, 0)}%, #53627c ${behaviorShare.reduce((a, b) => a + b, 0)}% 100%)`,
               }}
             >
               <div>
@@ -1715,10 +1451,10 @@ function Dashboard({
               ))}
             </div>
           </div>
-        </div>
+        </Card>
       </div>
       <div className="dashboard-grid lower">
-        <div className="card table-card">
+        <Card className="table-card">
           <CardHead
             title="Phản ánh mới nhất"
             sub="Dữ liệu tiếp nhận gần đây"
@@ -1726,12 +1462,16 @@ function Dashboard({
             onAction={onReports}
           />
           <ReportTable
-            reports={reports.slice(0, 5)}
+            reports={[...reports]
+              .sort((a, b) =>
+                (b.receivedAt || "").localeCompare(a.receivedAt || ""),
+              )
+              .slice(0, 5)}
             onOpen={onReport}
             compact
           />
-        </div>
-        <div className="card">
+        </Card>
+        <Card>
           <CardHead title="Cụm đáng chú ý" sub="Sắp xếp theo mức rủi ro" />
           <div className="cluster-list">
             {clusterData.map((cluster) => (
@@ -1761,43 +1501,19 @@ function Dashboard({
               </button>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
-    </div>
-  )
-}
-
-function CardHead({
-  title,
-  sub,
-  action,
-  onAction,
-}: {
-  title: string
-  sub?: string
-  action?: string
-  onAction?: () => void
-}) {
-  return (
-    <div className="card-head">
-      <div>
-        <div className="card-title">{title}</div>
-        {sub && <div className="card-sub">{sub}</div>}
-      </div>
-      {action && (
-        <button className="text-action" onClick={onAction}>
-          {action}
-        </button>
-      )}
     </div>
   )
 }
 
 function Reports({
+  citizen,
   reports,
   onNew,
   onOpen,
 }: {
+  citizen: boolean
   reports: Report[]
   onNew: () => void
   onOpen: (id: string) => void
@@ -1805,6 +1521,8 @@ function Reports({
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("Tất cả trạng thái")
   const [behavior, setBehavior] = useState("Tất cả loại phản ánh")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
   const [source, setSource] = useState("")
   const [area, setArea] = useState("")
   const filtered = reports.filter(
@@ -1817,19 +1535,26 @@ function Reports({
       (behavior.startsWith("Tất cả") ||
         reportTypeLabel(r.behavior) === behavior) &&
       (!source || r.source === source) &&
-      (!area || r.area === area),
+      (!area || r.area === area) &&
+      (!from || dayKey(r.receivedAt || "") >= from) &&
+      (!to || dayKey(r.receivedAt || "") <= to),
   )
   return (
     <div className="page-stack">
-      <div className="page-title-row">
-        <div>
-          <div className="page-heading">Danh sách phản ánh</div>
-          <p className="muted">
-            Quản lý, tra cứu và theo dõi toàn bộ phản ánh đã tiếp nhận.
-          </p>
-        </div>
-        <Button onClick={onNew}>＋ Tạo phản ánh</Button>
-      </div>
+      <PageHeader
+        title="Quản lý phản ánh"
+        description={
+          <> Quản lý, tra cứu và theo dõi toàn bộ phản ánh đã tiếp nhận. </>
+        }
+        action={
+          <>
+            {" "}
+            <Button onClick={onNew}>
+              {citizen ? "Gửi phản ánh" : "Tiếp nhận phản ánh"}
+            </Button>{" "}
+          </>
+        }
+      />
       <div className="status-tabs">
         {[
           "Tất cả trạng thái",
@@ -1854,51 +1579,79 @@ function Reports({
           </button>
         ))}
       </div>
-      <div className="card filter-card reports-filter">
-        <div className="search-wrap">
-          <span>⌕</span>
+      <Card className="filter-card reports-filter">
+        <FilterField label="Tìm kiếm">
+          <div className="search-wrap">
+            <span>⌕</span>
+            <input
+              placeholder="Tìm theo mã hoặc tiêu đề..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+        </FilterField>
+        <FilterField label="Trạng thái">
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option>Tất cả trạng thái</option>
+            <option>Chờ kiểm tra</option>
+            <option>Đã kiểm tra</option>
+            <option>Không hợp lệ</option>
+          </select>
+        </FilterField>
+        <FilterField label="Loại phản ánh">
+          <select
+            value={behavior}
+            onChange={(e) => setBehavior(e.target.value)}
+          >
+            <option>Tất cả loại phản ánh</option>
+            {Array.from(
+              new Set(reports.map((r) => reportTypeLabel(r.behavior))),
+            ).map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </FilterField>
+        <FilterField label="Nguồn tiếp nhận">
+          <select
+            aria-label="Nguồn tiếp nhận"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+          >
+            <option value="">Mọi nguồn tin</option>
+            {Array.from(new Set(reports.map((r) => r.source))).map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </FilterField>
+        <FilterField label="Địa bàn">
+          <select
+            aria-label="Địa bàn phản ánh"
+            value={area}
+            onChange={(e) => setArea(e.target.value)}
+          >
+            <option value="">Mọi địa bàn</option>
+            {Array.from(new Set(reports.map((r) => r.area))).map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </FilterField>
+        <FilterField label="Tiếp nhận từ ngày">
           <input
-            placeholder="Tìm theo mã hoặc tiêu đề..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
           />
-        </div>
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option>Tất cả trạng thái</option>
-          <option>Chờ kiểm tra</option>
-          <option>Đã kiểm tra</option>
-          <option>Không hợp lệ</option>
-        </select>
-        <select value={behavior} onChange={(e) => setBehavior(e.target.value)}>
-          <option>Tất cả loại phản ánh</option>
-          {Array.from(
-            new Set(reports.map((r) => reportTypeLabel(r.behavior))),
-          ).map((x) => (
-            <option key={x}>{x}</option>
-          ))}
-        </select>
-        <select
-          aria-label="Nguồn tiếp nhận"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-        >
-          <option value="">Mọi nguồn tin</option>
-          {Array.from(new Set(reports.map((r) => r.source))).map((value) => (
-            <option key={value}>{value}</option>
-          ))}
-        </select>
-        <select
-          aria-label="Địa bàn phản ánh"
-          value={area}
-          onChange={(e) => setArea(e.target.value)}
-        >
-          <option value="">Mọi địa bàn</option>
-          {Array.from(new Set(reports.map((r) => r.area))).map((value) => (
-            <option key={value}>{value}</option>
-          ))}
-        </select>
-      </div>
-      <div className="card table-card">
+        </FilterField>
+        <FilterField label="Đến ngày">
+          <input
+            type="date"
+            min={from}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </FilterField>
+      </Card>
+      <Card className="table-card">
         <div className="table-summary">
           <span>
             Hiển thị <b>{filtered.length}</b> phản ánh
@@ -1906,7 +1659,7 @@ function Reports({
           <span>Thống kê theo thời gian tiếp nhận · Asia/Ho_Chi_Minh</span>
         </div>
         <ReportTable reports={filtered} onOpen={onOpen} />
-      </div>
+      </Card>
     </div>
   )
 }
@@ -1922,17 +1675,11 @@ function ReportTable({
 }) {
   return (
     <div className="table-scroll">
-      <table>
+      <DataTable>
         <thead>
           <tr>
             <th>Mã phản ánh</th>
-            <th>Người gửi mẫu</th>
             <th>Nội dung / Loại phản ánh</th>
-            {!compact && (
-              <>
-                <th>Nguồn</th>
-              </>
-            )}
             <th>Thời gian</th>
             <th>Số tiền</th>
             <th>Trạng thái</th>
@@ -1946,27 +1693,27 @@ function ReportTable({
                 <b className="id-link">{r.id}</b>
               </td>
               <td>
-                <b>{r.senderName || "Người gửi mẫu"}</b>
-                <span className="cell-sub">{r.area}</span>
-              </td>
-              <td>
-                <div className="cell-title">{r.title}</div>
+                <div className="cell-title" title={r.title}>
+                  {r.title}
+                </div>
                 <span className="cell-sub">
                   {reportTypeLabel(r.behavior)}
                   {r.behaviorOther ? `: ${r.behaviorOther}` : ""}
                 </span>
               </td>
-              {!compact && (
-                <>
-                  <td>{r.source}</td>
-                </>
-              )}
               <td>
                 <span>{formatDateTime(r.receivedAt)}</span>
-                <span className="cell-sub">Tiếp nhận · giờ Việt Nam</span>
               </td>
               <td>
-                <b>{r.transferStatus === 'Không' ? 'Không chuyển tiền' : r.transferStatus === 'Chưa rõ' ? 'Chưa rõ' : r.amount ? `${r.amount} triệu` : "—"}</b>
+                <b>
+                  {r.transferStatus === "Không"
+                    ? "Không phát sinh chuyển tiền"
+                    : r.transferStatus === "Chưa rõ"
+                      ? "Chưa xác định"
+                      : r.amount
+                        ? `${r.amount} triệu`
+                        : "—"}
+                </b>
               </td>
               <td>
                 <WorkflowBadge value={r.status} />
@@ -1981,7 +1728,7 @@ function ReportTable({
             </tr>
           ))}
         </tbody>
-      </table>
+      </DataTable>
       {reports.length === 0 && (
         <div className="empty">Không tìm thấy phản ánh phù hợp.</div>
       )}
@@ -2113,12 +1860,24 @@ function ReportDetail({
       </div>
       <div className="detail-grid">
         <div className="page-stack">
-          <div className="card detail-card">
+          <Card className="detail-card">
             <CardHead
               title="Nội dung gốc"
               sub="Dữ liệu giả lập do người gửi cung cấp"
             />
             <div className="quote-content">{report.content}</div>
+          </Card>
+          <Card className="detail-card">
+            <CardHead title="Thông tin chung" />
+            {report.initialBehavior &&
+              (report.initialBehavior !== report.behavior ||
+                (report.initialBehaviorOther || "") !==
+                  (report.behaviorOther || "")) && (
+                <p className="classification-note">
+                  Phân loại đã được cán bộ cập nhật; phân loại ban đầu của người
+                  gửi được giữ ở thông tin bên dưới.
+                </p>
+              )}
             <DetailRows
               rows={[
                 [
@@ -2131,7 +1890,14 @@ function ReportDetail({
                 ["Địa bàn", report.area],
                 ["Người gửi", report.senderName || "Người gửi mẫu"],
                 ["Liên hệ", report.senderContact || "Chưa cung cấp"],
-                ["Số tiền", report.transferStatus === "Không" ? "Không phát sinh chuyển tiền" : report.transferStatus === "Chưa rõ" ? "Chưa rõ" : `${report.amount} triệu đồng`],
+                [
+                  "Số tiền",
+                  report.transferStatus === "Không"
+                    ? "Không phát sinh chuyển tiền"
+                    : report.transferStatus === "Chưa rõ"
+                      ? "Chưa xác định"
+                      : `${report.amount} triệu đồng`,
+                ],
                 [
                   "Loại phản ánh",
                   reportTypeLabel(report.behavior) +
@@ -2152,8 +1918,8 @@ function ReportDetail({
                 ["Mạng xã hội", report.socialAccount || "Chưa cung cấp"],
               ]}
             />
-          </div>
-          <div className="card detail-card">
+          </Card>
+          <Card className="detail-card">
             <CardHead title="Tài liệu đính kèm" />
             {report.attachment ? (
               <div className="file-row">
@@ -2165,9 +1931,9 @@ function ReportDetail({
             ) : (
               <div className="empty">Không có tài liệu đính kèm.</div>
             )}
-          </div>
+          </Card>
           {extracted && report.reviewed && !dirty && (
-            <div className="card detail-card evidence-card">
+            <Card className="detail-card evidence-card">
               <CardHead
                 title="Căn cứ liên kết mô phỏng"
                 sub="Đối chiếu chính xác thực thể đã lưu; cần cán bộ xác nhận, không tự động gán cụm."
@@ -2269,10 +2035,10 @@ function ReportDetail({
                   Lưu thông tin đã kiểm tra trước khi xác nhận liên kết.
                 </p>
               )}
-            </div>
+            </Card>
           )}
         </div>
-        <div className="card extraction">
+        <Card className="extraction">
           <CardHead
             title="Thông tin trích xuất"
             sub="Mô phỏng theo kịch bản mẫu, không sử dụng OCR/AI hay API."
@@ -2356,7 +2122,7 @@ function ReportDetail({
               </Button>
             </div>
           )}
-        </div>
+        </Card>
       </div>
       {preview && (
         <Modal
@@ -2411,16 +2177,19 @@ function Alerts({
   const total = related.reduce((sum, report) => sum + report.amount, 0)
   return (
     <div className="page-stack">
-      <div className="page-title-row">
-        <div>
-          <div className="page-heading">Cảnh báo cần xem xét</div>
-          <p className="muted">
-            Điểm minh họa dùng để ưu tiên xác minh, không phải kết luận vi phạm.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Cảnh báo cần rà soát"
+        description={
+          <>
+            {" "}
+            Điểm minh họa dùng để ưu tiên xác minh, không phải kết luận vi
+            phạm.{" "}
+          </>
+        }
+        action={<> </>}
+      />
       <div className="alert-layout">
-        <div className="card alert-list">
+        <Card className="alert-list">
           <div className="alert-list-head">
             <span>{alerts.length} cảnh báo đang mở</span>
             <select
@@ -2478,6 +2247,16 @@ function Alerts({
                   <span>
                     {items.length} phản ánh · {amount} triệu đồng
                   </span>
+                  <p>
+                    Nguồn mới nhất:{" "}
+                    {formatDateTime(
+                      [...items]
+                        .map((r) => r.receivedAt || "")
+                        .sort()
+                        .at(-1),
+                    )}
+                  </p>
+                  <Badge tone="gray">Cần rà soát</Badge>
                 </div>
               </button>
             )
@@ -2485,8 +2264,8 @@ function Alerts({
           {filtered.length === 0 && (
             <div className="empty">Không có kết quả phù hợp.</div>
           )}
-        </div>
-        <div className="card alert-side">
+        </Card>
+        <Card className="alert-side">
           <div
             className="score-ring"
             style={{
@@ -2535,7 +2314,7 @@ function Alerts({
               </Button>
             </>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   )
@@ -2771,15 +2550,18 @@ function Cases({
   )
   return (
     <div className="page-stack">
-      <div className="page-title-row">
-        <div>
-          <div className="page-heading">Hồ sơ vụ việc</div>
-          <p className="muted">
-            Theo dõi quá trình xác minh và tổng hợp nhận định nghiệp vụ.
-          </p>
-        </div>
-        <Button onClick={onCreate}>＋ Tạo hồ sơ phân tích</Button>
-      </div>
+      <PageHeader
+        title="Hồ sơ vụ việc"
+        description={
+          <> Theo dõi quá trình xác minh và tổng hợp nhận định nghiệp vụ. </>
+        }
+        action={
+          <>
+            {" "}
+            <Button onClick={onCreate}>＋ Tạo hồ sơ phân tích</Button>{" "}
+          </>
+        }
+      />
       <div className="stats-grid case-stats">
         <div className="stat-card">
           <div className="stat-label">Tổng hồ sơ</div>
@@ -2798,25 +2580,29 @@ function Cases({
           </div>
         </div>
       </div>
-      <div className="card filter-card case-filter">
-        <div className="search-wrap">
-          <span>⌕</span>
-          <input
-            placeholder="Tìm mã hoặc tên hồ sơ..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option>Tất cả trạng thái</option>
-          <option>Mới tạo</option>
-          <option>Đang xác minh</option>
-          <option>Chờ bổ sung</option>
-          <option>Hoàn tất phân tích</option>
-        </select>
-      </div>
-      <div className="card table-card">
-        <table>
+      <Card className="filter-card case-filter">
+        <FilterField label="Tìm hồ sơ">
+          <div className="search-wrap">
+            <span>⌕</span>
+            <input
+              placeholder="Tìm mã hoặc tên hồ sơ..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+        </FilterField>
+        <FilterField label="Trạng thái">
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option>Tất cả trạng thái</option>
+            <option>Mới tạo</option>
+            <option>Đang xác minh</option>
+            <option>Chờ bổ sung</option>
+            <option>Hoàn tất phân tích</option>
+          </select>
+        </FilterField>
+      </Card>
+      <Card className="table-card">
+        <DataTable>
           <thead>
             <tr>
               <th>Mã hồ sơ</th>
@@ -2879,8 +2665,11 @@ function Cases({
               )
             })}
           </tbody>
-        </table>
-      </div>
+        </DataTable>
+        {!filtered.length && (
+          <EmptyState>Không tìm thấy hồ sơ phù hợp.</EmptyState>
+        )}
+      </Card>
     </div>
   )
 }
@@ -2953,7 +2742,7 @@ function CaseDetail({
       <div className="detail-hero case-hero">
         <div>
           <div className="detail-code">{item.id}</div>
-          <div className="page-heading">{item.name}</div>
+          <h1 className="page-heading">{item.name}</h1>
           <div className="hero-meta">
             <Badge tone={statusTone(status)}>{status}</Badge>
             <Badge tone={statusTone(item.priority)}>
@@ -2969,20 +2758,10 @@ function CaseDetail({
           <Button onClick={() => setReportOpen(true)}>Xem báo cáo</Button>
         </div>
       </div>
-      <div className="tabs">
-        {tabs.map((value) => (
-          <button
-            className={tab === value ? "active" : ""}
-            onClick={() => setTab(value)}
-            key={value}
-          >
-            {value}
-          </button>
-        ))}
-      </div>
+      <Tabs items={tabs} active={tab} onChange={setTab} />
       {tab === "Tổng quan" ? (
         <div className="case-detail-grid">
-          <div className="card detail-card">
+          <Card className="detail-card">
             <div className="section-title">Thông tin xử lý</div>
             <div className="two-col">
               <Field label="Cán bộ phụ trách">
@@ -3019,8 +2798,8 @@ function CaseDetail({
               <span>Mọi thay đổi sẽ được ghi vào nhật ký hệ thống.</span>
               <Button onClick={save}>Lưu thay đổi</Button>
             </div>
-          </div>
-          <div className="card case-summary">
+          </Card>
+          <Card className="case-summary">
             <div className="section-title">Nguồn hồ sơ</div>
             <div className="linked-cluster">
               <span>{cluster ? "CỤM LIÊN KẾT" : "PHẢN ÁNH ĐỘC LẬP"}</span>
@@ -3041,7 +2820,7 @@ function CaseDetail({
                 ["Mức ưu tiên", item.priority],
               ]}
             />
-          </div>
+          </Card>
         </div>
       ) : (
         <CaseTab
@@ -3078,12 +2857,12 @@ function CaseTab({
 }) {
   if (tab === "Phản ánh liên quan")
     return (
-      <div className="card table-card">
+      <Card className="table-card">
         <ReportTable reports={related} onOpen={onReport} />
         {related.length === 0 && (
           <div className="empty">Không có kết quả phù hợp.</div>
         )}
-      </div>
+      </Card>
     )
   if (tab === "Thực thể") {
     const list = [
@@ -3101,7 +2880,7 @@ function CaseTab({
       ...entities.websites.map((value) => ["WEB", value, "Website giả lập"]),
     ]
     return (
-      <div className="card entity-list">
+      <Card className="entity-list">
         {list.map(([type, value, detail]) => (
           <div key={value}>
             <span>{type}</span>
@@ -3112,13 +2891,13 @@ function CaseTab({
         {list.length === 0 && (
           <div className="empty">Không có thực thể được ghi nhận.</div>
         )}
-      </div>
+      </Card>
     )
   }
   if (tab === "Tài liệu") {
     const documents = related.filter((report) => report.attachment)
     return (
-      <div className="card detail-card">
+      <Card className="detail-card">
         {documents.map((report) => (
           <div className="file-row" key={report.id}>
             <div className="file-icon">PNG</div>
@@ -3139,11 +2918,11 @@ function CaseTab({
         {documents.length === 0 && (
           <div className="empty">Hồ sơ chưa có tài liệu đính kèm.</div>
         )}
-      </div>
+      </Card>
     )
   }
   return (
-    <div className="card timeline">
+    <Card className="timeline">
       {(item.history || []).map((entry) => (
         <div key={entry}>
           <i />
@@ -3151,7 +2930,7 @@ function CaseTab({
           <span>{formatDateTime(entry.split(" · ")[0])}</span>
         </div>
       ))}
-    </div>
+    </Card>
   )
 }
 
@@ -3301,19 +3080,85 @@ function Accounts({
   ]
   return (
     <div className="page-stack">
-      <div className="role-switcher">
-        <div>
-          <div className="section-title">Vai trò demo hiện tại</div>
-          <p>Mô phỏng quyền thao tác trên giao diện theo từng vai trò.</p>
+      <PageHeader
+        title="Tài khoản và phân quyền"
+        description="Quản lý tài khoản và phạm vi thao tác. Phân quyền chỉ mô phỏng trên giao diện."
+      />
+
+      <Card className="table-card">
+        <CardHead
+          title="Danh sách tài khoản giả lập"
+          sub="07 tài khoản giả lập · Thay đổi quyền chỉ tác động giao diện demo"
+        />
+        <div className="account-search">
+          <FilterField label="Tìm tài khoản">
+            <input
+              aria-label="Tìm tài khoản"
+              placeholder="Tìm tài khoản, vai trò hoặc đơn vị..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </FilterField>
         </div>
-        <select value={role} onChange={(e) => setRole(e.target.value)}>
-          {roles.map((r) => (
-            <option key={r}>{r}</option>
-          ))}
-        </select>
-      </div>
+        <DataTable>
+          <thead>
+            <tr>
+              <th>Tài khoản</th>
+              <th>Vai trò</th>
+              <th>Đơn vị mẫu</th>
+              <th>Trạng thái</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {accounts
+              .filter((a) =>
+                `${a[0]} ${accountRoles[a[0]] || a[1]} ${a[2]}`
+                  .toLowerCase()
+                  .includes(query.trim().toLowerCase()),
+              )
+              .map((a) => (
+                <tr key={a[0]}>
+                  <td>
+                    <b>{a[0]}</b>
+                  </td>
+                  <td>{accountRoles[a[0]] || a[1]}</td>
+                  <td>{a[2]}</td>
+                  <td>
+                    <Badge tone="green">{a[3]}</Badge>
+                  </td>
+                  <td>
+                    <Button
+                      variant="ghost"
+                      onClick={() => onEdit(a[0], accountRoles[a[0]] || a[1])}
+                    >
+                      Sửa vai trò
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </DataTable>
+        {!accounts.some((a) =>
+          `${a[0]} ${accountRoles[a[0]] || a[1]} ${a[2]}`
+            .toLowerCase()
+            .includes(query.trim().toLowerCase()),
+        ) && <EmptyState>Không tìm thấy tài khoản phù hợp.</EmptyState>}
+      </Card>
       <details className="role-help">
         <summary>Ma trận vai trò và phạm vi mô phỏng</summary>
+        <div className="role-switcher">
+          <div>
+            <div className="section-title">Vai trò demo hiện tại</div>
+            <p>Mô phỏng quyền thao tác trên giao diện theo từng vai trò.</p>
+          </div>
+          <select value={role} onChange={(e) => setRole(e.target.value)}>
+            {roles.map((r) => (
+              <option key={r}>{r}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="role-grid">
           {roles.map((r, i) => (
             <div
@@ -3339,63 +3184,6 @@ function Accounts({
           ))}
         </div>
       </details>
-      <div className="card table-card">
-        <CardHead
-          title="Danh sách tài khoản giả lập"
-          sub="07 tài khoản giả lập · Thay đổi quyền chỉ tác động giao diện demo"
-        />
-        <div className="account-search">
-          <input
-            aria-label="Tìm tài khoản"
-            placeholder="Tìm tài khoản, vai trò hoặc đơn vị..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Tài khoản</th>
-              <th>Vai trò</th>
-              <th>Đơn vị mẫu</th>
-              <th>Trạng thái</th>
-              <th>Lần truy cập cuối</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {accounts
-              .filter((a) =>
-                `${a[0]} ${accountRoles[a[0]] || a[1]} ${a[2]}`
-                  .toLowerCase()
-                  .includes(query.trim().toLowerCase()),
-              )
-              .map((a, i) => (
-                <tr key={a[0]}>
-                  <td>
-                    <b>{a[0]}</b>
-                  </td>
-                  <td>{accountRoles[a[0]] || a[1]}</td>
-                  <td>{a[2]}</td>
-                  <td>
-                    <Badge tone="green">{a[3]}</Badge>
-                  </td>
-                  <td>
-                    {i === 2 ? "Phiên mô phỏng" : "Chưa ghi nhận phiên thật"}
-                  </td>
-                  <td>
-                    <Button
-                      variant="ghost"
-                      onClick={() => onEdit(a[0], accountRoles[a[0]] || a[1])}
-                    >
-                      Sửa vai trò
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   )
 }
@@ -3409,6 +3197,9 @@ function Logs({
 }) {
   const [q, setQ] = useState("")
   const [action, setAction] = useState("Tất cả thao tác")
+  const [user, setUser] = useState("")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
   const actions = Array.from(new Set(logs.map((x) => x.action)))
   const filtered = useMemo(
     () =>
@@ -3417,40 +3208,65 @@ function Logs({
           `${x.user} ${x.target} ${x.action} ${x.detail || ""}`
             .toLowerCase()
             .includes(q.toLowerCase()) &&
-          (action === "Tất cả thao tác" || x.action === action),
+          (action === "Tất cả thao tác" || x.action === action) &&
+          (!user || x.user === user) &&
+          (!from || dayKey(x.time) >= from) &&
+          (!to || dayKey(x.time) <= to),
       ),
-    [logs, q, action],
+    [logs, q, action, user, from, to],
   )
   return (
     <div className="page-stack">
-      <div className="page-title-row">
-        <div>
-          <div className="page-heading">Nhật ký hệ thống</div>
-          <p className="muted">
-            Theo dõi các thao tác nghiệp vụ và thay đổi dữ liệu trong môi trường
-            demo.
-          </p>
-        </div>
-        <Badge tone="green">Ghi nhận tự động</Badge>
-      </div>
-      <div className="card filter-card">
-        <div className="search-wrap">
-          <span>⌕</span>
+      <PageHeader
+        title="Nhật ký hệ thống"
+        description="Theo dõi thao tác và thay đổi dữ liệu trong môi trường demo."
+        action={<Badge tone="green">Ghi nhận tự động</Badge>}
+      />
+      <Card className="filter-card audit-filter">
+        <FilterField label="Tìm kiếm">
+          <div className="search-wrap">
+            <span>⌕</span>
+            <input
+              placeholder="Tìm tài khoản, đối tượng..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+        </FilterField>
+        <FilterField label="Thao tác">
+          <select value={action} onChange={(e) => setAction(e.target.value)}>
+            <option>Tất cả thao tác</option>
+            {actions.map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </FilterField>
+        <FilterField label="Người thao tác">
+          <select value={user} onChange={(e) => setUser(e.target.value)}>
+            <option value="">Tất cả tài khoản</option>
+            {Array.from(new Set(logs.map((x) => x.user))).map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </FilterField>
+        <FilterField label="Từ ngày">
           <input
-            placeholder="Tìm tài khoản, đối tượng..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
           />
-        </div>
-        <select value={action} onChange={(e) => setAction(e.target.value)}>
-          <option>Tất cả thao tác</option>
-          {actions.map((x) => (
-            <option key={x}>{x}</option>
-          ))}
-        </select>
-      </div>
-      <div className="card table-card audit-card">
-        <table>
+        </FilterField>
+        <FilterField label="Đến ngày">
+          <input
+            type="date"
+            min={from}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </FilterField>
+      </Card>
+      <Card className="table-card audit-card">
+        <DataTable>
           <thead>
             <tr>
               <th>Thời gian</th>
@@ -3471,6 +3287,18 @@ function Logs({
                 <td>{x.role}</td>
                 <td>
                   <span className="action-tag">{x.action}</span>
+                  {x.detail && (
+                    <details
+                      className="audit-changes"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <summary>Chi tiết thay đổi</summary>
+                      <p>{x.detail}</p>
+                      <button className="text-action" onClick={() => onOpen(x)}>
+                        Mở sự kiện
+                      </button>
+                    </details>
+                  )}
                 </td>
                 <td>
                   <b className="id-link">{x.target}</b>
@@ -3491,8 +3319,11 @@ function Logs({
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </DataTable>
+        {!filtered.length && (
+          <EmptyState>Không có sự kiện phù hợp bộ lọc.</EmptyState>
+        )}
+      </Card>
     </div>
   )
 }

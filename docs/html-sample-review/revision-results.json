@@ -1,0 +1,66 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "stressRecords": 1000,
+    "maxObservedNodes": 13,
+    "maxObservedEdges": 29,
+    "interactionDurationMs": 10498,
+    "checks": [
+      "seven-calendar-days-and-Vietnam-midnight",
+      "empty-day-zero",
+      "reload-keeps-timestamps",
+      "seed-audit-history-times-consistent",
+      "occurred-vs-received-separate",
+      "amount-19-and-cluster-64",
+      "case-created-before-link-stays-3-and-45",
+      "new-case-4-and-64",
+      "canonical-status-color",
+      "non-overlay-header-scroll-four-pages",
+      "labels-toggle-without-overlap",
+      "group-expand-collapse",
+      "group-by-received-day",
+      "entity-filter-search",
+      "edge-explanation-and-source",
+      "zoom-fit",
+      "bounded-1000-mode",
+      "source-pagination-search",
+      "stress-isolation",
+      "reset-regenerates-samples-current-day"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "stressRecords": 1000,
+    "maxObservedNodes": 13,
+    "maxObservedEdges": 29,
+    "interactionDurationMs": 4432,
+    "checks": [
+      "seven-calendar-days-and-Vietnam-midnight",
+      "empty-day-zero",
+      "reload-keeps-timestamps",
+      "seed-audit-history-times-consistent",
+      "occurred-vs-received-separate",
+      "amount-19-and-cluster-64",
+      "case-created-before-link-stays-3-and-45",
+      "new-case-4-and-64",
+      "canonical-status-color",
+      "non-overlay-header-scroll-four-pages",
+      "labels-toggle-without-overlap",
+      "group-expand-collapse",
+      "group-by-received-day",
+      "entity-filter-search",
+      "edge-explanation-and-source",
+      "zoom-fit",
+      "bounded-1000-mode",
+      "source-pagination-search",
+      "stress-isolation",
+      "reset-regenerates-samples-current-day"
+    ]
+  },
+  {
+    "migration": "PASS",
+    "kept": "custom report, amount 19, custom case, history, journal, legacy date, backup"
+  }
+]

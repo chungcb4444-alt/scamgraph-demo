@@ -48,7 +48,8 @@ let activePage
         waitUntil: "networkidle",
       })
       await snap("01-login")
-      await button("Đăng nhập demo →").click()
+      await page.getByRole("button", {name:"Tài khoản Cán bộ",exact:true}).click()
+      await button("Đăng nhập").click()
       assert.equal((await reports()).length, 12)
       const cluster = async (id) =>
         (await reports()).filter((r) => r.cluster === id)
@@ -74,7 +75,7 @@ let activePage
         .locator(".filter-card select")
         .first()
         .selectOption({ label: "Tất cả trạng thái" })
-      await button("＋ Tạo phản ánh").click()
+      await button("Tiếp nhận phản ánh").click()
       await snap("02-new-report")
       await button("Dùng tình huống mẫu").click()
       await button("Tiếp tục").click()

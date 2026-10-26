@@ -42,7 +42,8 @@ const results = []
       }
       await page.clock.install({ time: new Date("2026-10-22T16:59:00Z") })
       await page.goto(root, { waitUntil: "networkidle" })
-      await btn("Đăng nhập demo →").click()
+      await page.getByRole("button", {name:"Tài khoản Cán bộ",exact:true}).click()
+      await btn("Đăng nhập").click()
       const initial = await get("reports")
       assert.equal(initial.length, 12)
       const initialAudit = await get("logs")
@@ -100,7 +101,7 @@ const results = []
         3,
       )
       await nav("Phản ánh")
-      await btn("＋ Tạo phản ánh").click()
+      await btn("Tiếp nhận phản ánh").click()
       await btn("Dùng tình huống mẫu").click()
       await btn("Tiếp tục").click()
       await page
@@ -154,6 +155,7 @@ const results = []
       )
       await btn("Mở rộng nhóm").click()
       assert.equal(await page.locator(".map-report").count(), 4)
+      await page.keyboard.press("Escape")
       await page
         .getByLabel("Loại thực thể", { exact: true })
         .selectOption("account")
@@ -167,6 +169,7 @@ const results = []
         (await page.locator(".is-dim").count()) > 0 ||
           (await page.locator(".map-node").count()) === 2,
       )
+      await page.keyboard.press("Escape")
       await page
         .getByLabel("Tìm thực thể hoặc phản ánh", { exact: true })
         .fill("xacminh-demo.example")
@@ -197,6 +200,7 @@ const results = []
           "Căn cứ",
         ),
       )
+      await page.keyboard.press("Escape")
       await page
         .getByRole("checkbox", { name: "Hiện nhãn", exact: true })
         .check()
@@ -315,19 +319,22 @@ const results = []
       assert.equal(await page.locator(".source-evidence").count(), 1)
       await page.locator(".source-evidence").click()
       assert(
-        (await page.getByRole("dialog").innerText()).includes("THU-TAI-0997"),
+        (await page.getByRole("dialog").last().innerText()).includes("THU-TAI-0997"),
       )
       await page.getByLabel("Đóng nguồn thử tải", { exact: true }).click()
       await page.getByLabel("Tìm phản ánh nguồn", { exact: true }).fill("")
+      await page.keyboard.press("Escape")
       await btn("Phản ánh sau").click()
       assert(
         (await page.locator(".map-pagination").allTextContents())
           .join(" ")
           .includes("6–10/250"),
       )
+      await page.keyboard.press("Escape")
       assert(await btn("Tạo hồ sơ từ cụm").isDisabled())
       await shot("stress-1000-bounded")
       await btn("Thu gọn nhóm").first().click()
+      await page.keyboard.press("Escape")
       assert.equal(await page.locator(".map-report").count(), 0)
       await page.getByRole("checkbox", { name: /Thử tải riêng/ }).uncheck()
       assert.deepEqual(

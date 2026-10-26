@@ -1,0 +1,362 @@
+.access-page {
+  min-height: 100dvh;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  isolation: isolate;
+  background: radial-gradient(ellipse at 20% 10%, #eaf0ff 0%, #f8faff 65%);
+}
+.access-network {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+.access-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 32px 36px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 16px;
+  background: #ffffff;
+  backdrop-filter: none;
+  box-shadow:
+    0 25px 60px -15px #dfe6f0,
+    0 0 25px #dfe6f0,
+    inset 0 0 0 1px #c9d9f3;
+}
+.access-brand {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.access-brand .brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+.access-brand h2 {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-transform: uppercase;
+  margin: 0;
+  color: #334155;
+}
+.access-card h1 {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0 0 20px;
+  color: var(--text-primary);
+}
+.access-vneid {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #dfe6f0;
+  background: linear-gradient(90deg, #991b1b, #b91c1c, #c2410c);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 46px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+}
+.access-vneid span {
+  color: #fde68a;
+}
+.access-vneid small {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.9;
+}
+.access-card .field {
+  margin-bottom: 14px;
+  gap: 6px;
+}
+.access-card .field-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+.access-card input,
+.access-card select {
+  font-size: 15px;
+  background: #ffffff;
+  border-color: #dfe6f0;
+  border-radius: 8px;
+}
+.access-card .btn {
+  border-radius: 8px;
+  font-size: 15px;
+}
+.access-password {
+  position: relative;
+}
+.access-password input {
+  padding-right: 48px;
+}
+.access-password button {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 44px;
+  border: 0;
+  background: none;
+  color: #475569;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+}
+.access-password svg {
+  width: 19px;
+  height: 19px;
+}
+.access-forgot {
+  display: block;
+  margin: 0 0 16px auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #475569;
+  font-size: 13px;
+  min-height: 24px;
+}
+.access-forgot:hover {
+  text-decoration: underline;
+}
+.access-demo {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 18px 0 0;
+  text-align: center;
+}
+.access-error {
+  border: 1px solid #dfe6f0;
+  padding: 12px;
+  color: #b42338;
+  background: #ffffff;
+  font-size: 14px;
+  border-radius: 8px;
+}
+.access-qr {
+  width: 192px;
+  margin: 0 auto 20px;
+  padding: 14px;
+  background: white;
+  color: #0b1321;
+  border-radius: 12px;
+  text-align: center;
+}
+.access-qr svg {
+  width: 100%;
+  display: block;
+}
+.access-qr span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+@media (max-width: 480px) {
+  .access-page {
+    padding: 16px;
+  }
+  .access-card {
+    padding: 28px 24px;
+  }
+}
+@media (max-height: 680px) {
+  .access-page {
+    align-items: flex-start;
+  }
+}
+
+/* Landing layout follows the supplied airy process section, with the existing login on the right. */
+.access-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: 64px;
+  padding: 112px max(40px, calc((100vw - 1180px) / 2)) 48px;
+  background:
+    radial-gradient(ellipse at 15% 20%, #e9f0ff, transparent 55%), #f9fbff;
+}
+.access-site-header {
+  position: absolute;
+  inset: 0 0 auto;
+  min-height: 72px;
+  padding: 12px max(40px, calc((100vw - 1180px) / 2));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  background: #ffffffeb;
+  border-bottom: 1px solid #e5ebf4;
+}
+.access-site-header a {
+  color: #19489d;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+}
+.access-site-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.access-site-brand > span {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.access-site-brand > span > span {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+  letter-spacing: 0;
+}
+.access-intro {
+  max-width: 620px;
+  position: relative;
+}
+.access-eyebrow {
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.access-intro h2 {
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: 1.18;
+  letter-spacing: -1.8px;
+  font-weight: 750;
+  color: #152440;
+  margin: 20px 0;
+}
+.access-intro h2 span {
+  color: #2563eb;
+}
+.access-intro > p {
+  color: #52627b;
+  font-size: 18px;
+  line-height: 1.7;
+  max-width: 500px;
+}
+.access-flow {
+  list-style: none;
+  margin: 32px 0 0;
+  padding: 24px;
+  background: #ffffffb8;
+  border: 1px solid #e1e9fb;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px #234b9f06;
+}
+.access-flow li {
+  display: flex;
+  gap: 20px;
+  padding: 12px 0;
+}
+.access-flow li > span {
+  color: #2563eb;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.access-flow b {
+  color: #253b60;
+  font-size: 16px;
+}
+.access-flow p {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 4px 0 0;
+}
+.access-card {
+  justify-self: end;
+  border: 1px solid #dfe7f5;
+  background: #ffffff;
+  box-shadow: 0 16px 48px rgba(40, 78, 150, 0.08);
+  border-radius: 20px;
+  scroll-margin-top: 24px;
+}
+.access-network {
+  opacity: 0.16;
+}
+.access-brand h2 {
+  color: #19489d;
+}
+.access-card h1 {
+  color: #173e7c;
+}
+.access-card input,
+.access-card select {
+  color: #24344d;
+  background: #ffffff;
+  border-color: #d4deec;
+}
+.access-password button {
+  color: #617188;
+}
+.access-forgot {
+  color: #19489d;
+}
+.access-demo {
+  color: #63728a;
+}
+@media (max-width: 1100px) {
+  .access-page {
+    gap: 36px;
+    padding-left: 32px;
+    padding-right: 32px;
+    grid-template-columns: minmax(0, 1fr) 400px;
+  }
+  .access-intro h2 {
+    font-size: 40px;
+  }
+  .access-card {
+    padding: 28px;
+  }
+}
+@media (max-width: 800px) {
+  .access-page {
+    display: flex;
+    flex-direction: column;
+    padding: 96px 20px 32px;
+    gap: 28px;
+  }
+  .access-site-header {
+    padding: 12px 20px;
+  }
+  .access-site-brand > span {
+    font-size: 17px;
+  }
+  .access-intro {
+    width: 100%;
+    max-width: 440px;
+  }
+  .access-intro h2 {
+    font-size: 34px;
+    margin: 12px 0;
+  }
+  .access-intro > p {
+    font-size: 16px;
+    margin-bottom: 0;
+  }
+  .access-flow,
+  .access-eyebrow {
+    display: none;
+  }
+  .access-card {
+    flex-shrink: 0;
+  }
+}
