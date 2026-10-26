@@ -1,0 +1,44 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "sample landing dark/light",
+      "persistent appearance",
+      "modal login/password/role",
+      "VNeID explicit simulation and Escape",
+      "existing seven modules",
+      "reduced motion",
+      "no password stored",
+      "no browser errors"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "sample landing dark/light",
+      "persistent appearance",
+      "modal login/password/role",
+      "VNeID explicit simulation and Escape",
+      "existing seven modules",
+      "reduced motion",
+      "no password stored",
+      "no browser errors"
+    ]
+  },
+  {
+    "viewport": "390x844",
+    "result": "PASS",
+    "checks": [
+      "sample landing dark/light",
+      "persistent appearance",
+      "modal login/password/role",
+      "VNeID explicit simulation and Escape",
+      "existing seven modules",
+      "reduced motion",
+      "no password stored",
+      "no browser errors"
+    ]
+  }
+]

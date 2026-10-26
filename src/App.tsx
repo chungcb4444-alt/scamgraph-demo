@@ -13,6 +13,7 @@ import {
   Tabs,
   DataTable,
 } from "./ui"
+import AppearanceToggle from "./AppearanceToggle"
 import Login from "./Login"
 import BrandMark from "./BrandMark"
 import ReportIntake from "./ReportIntake"
@@ -814,6 +815,7 @@ export default function App() {
         <header className="topbar">
           <div className="top-actions">
             <span className="demo-label">Demo — dữ liệu giả lập</span>
+            <AppearanceToggle />
             <select
               aria-label="Chuyển vai trò demo"
               value={role}

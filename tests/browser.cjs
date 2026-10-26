@@ -48,6 +48,7 @@ let activePage
         waitUntil: "networkidle",
       })
       await snap("01-login")
+      await page.getByRole("button", {name:"Tài khoản Cán bộ",exact:true}).click()
       await button("Đăng nhập").click()
       assert.equal((await reports()).length, 12)
       const cluster = async (id) =>

@@ -22,11 +22,11 @@ fs.mkdirSync(out, { recursive: true })
       const btn = (name) => p.getByRole("button", { name, exact: true })
       const nav = async (name) => {
         await p.locator("nav button").filter({ hasText: name }).click()
-        await p.waitForTimeout(200)
+        await p.waitForTimeout(400)
       }
       const shot = async (name) => {
         await p.evaluate(() => scrollTo(0, 0))
-        await p.waitForTimeout(200)
+        await p.waitForTimeout(400)
         await p.locator(".toast").waitFor({ state: "hidden", timeout: 6000 })
         assert(
           await p.evaluate(
@@ -42,6 +42,7 @@ fs.mkdirSync(out, { recursive: true })
         waitUntil: "networkidle",
       })
       await p.screenshot({ path: `${out}/${width}-login.png` })
+      await p.getByRole("button", {name:"Tài khoản Cán bộ",exact:true}).click()
       await btn("Đăng nhập").click()
       await shot("dashboard")
       assert.equal(
