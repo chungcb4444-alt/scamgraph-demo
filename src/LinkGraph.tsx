@@ -87,6 +87,7 @@ export default function LinkGraph({
   onReport,
   onAlert,
   onCreateCase,
+  allowCreate = true,
 }: {
   cluster: Cluster
   reports: Report[]
@@ -94,6 +95,7 @@ export default function LinkGraph({
   hasNew: boolean
   onReport: (id: string) => void
   onAlert: () => void
+  allowCreate?: boolean
   onCreateCase: () => void
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -443,13 +445,15 @@ export default function LinkGraph({
           >
             Xem lý do cảnh báo
           </button>
-          <button
-            className="btn btn-primary"
-            disabled={loadMode}
-            onClick={onCreateCase}
-          >
-            Tạo hồ sơ từ cụm
-          </button>
+          {allowCreate && (
+            <button
+              className="btn btn-primary"
+              disabled={loadMode}
+              onClick={onCreateCase}
+            >
+              Tạo hồ sơ từ cụm
+            </button>
+          )}
         </div>
       </div>
       <label className="load-toggle">

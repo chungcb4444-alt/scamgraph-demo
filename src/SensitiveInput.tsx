@@ -14,7 +14,7 @@ export default function SensitiveInput({
   canEdit: boolean
   onChange: (value: string) => void
 }) {
-  const { visible, toggle } = useReportPrivacy()
+  const { visible, toggle, allowReveal } = useReportPrivacy()
   const revealed = visible.has(name)
   return (
     <div className="sensitive-field" data-revealed={revealed}>
@@ -33,6 +33,7 @@ export default function SensitiveInput({
         className="sensitive-input-toggle"
         aria-label={`${revealed ? "Ẩn" : "Hiện"} ${label} trích xuất`}
         aria-pressed={revealed}
+        disabled={!allowReveal}
         onClick={() => toggle(name, `${label} trích xuất`)}
       >
         {revealed ? "Ẩn" : "Xem"}

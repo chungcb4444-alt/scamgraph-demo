@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "checks": [
+    "per-action and per-role denials",
+    "intake handoff and separate supplements",
+    "no original testimony overwrite",
+    "review before link; cluster four/60",
+    "unassigned case then leader assignment",
+    "assigned worker only",
+    "draft-submit-reject-resubmit-approve",
+    "immutable approved snapshots and new versions",
+    "unit, citizen ownership and inactive accounts",
+    "real account role changes; historical audit roles",
+    "admin audit scope",
+    "legacy unknown assignee preserved"
+  ]
+}

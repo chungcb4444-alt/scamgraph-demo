@@ -26,19 +26,15 @@ import { reportPeople, reportSearchText, samplePeople } from "./reportPeople"
 import { REPORT_TYPES, reportTypeLabel, nextReportId } from "./intakeModel"
 import type { IntakePayload, IntakeResult } from "./intakeModel"
 
-type Screen =
-  | "dashboard"
-  | "reports"
-  | "new-report"
-  | "report-detail"
-  | "graph"
-  | "alerts"
-  | "cases"
-  | "case-detail"
-  | "accounts"
-  | "logs"
-
-import type { Report, CaseFile, LogItem, Cluster, AlertItem } from "./types"
+import type {
+  Report,
+  CaseFile,
+  LogItem,
+  Cluster,
+  AlertItem,
+  StaffAccount,
+  ReportVersion,
+} from "./types"
 import {
   dayKey,
   formatDateTime,
@@ -51,6 +47,31 @@ import {
 } from "./demoTime"
 import LinkGraph from "./LinkGraph"
 import { WorkflowBadge, workflowLabel } from "./workflow"
+
+import {
+  R,
+  accountForRole,
+  initialAccount,
+  migrateAccounts,
+  migrateReport,
+  migrateCase,
+  allowedScreens,
+  homeScreen,
+  screenAllowed,
+  canReadReport,
+  canReadCase,
+  permit,
+  visibleLogs,
+  roleTask,
+} from "./access"
+import type { Screen } from "./access"
+import { applyOperation } from "./operations"
+import type { Operation } from "./operations"
+import ReceptionPanel from "./ReceptionPanel"
+import RoleWork from "./RoleWork"
+import WorkSummary from "./WorkSummary"
+import CaseWorkPanel from "./CaseWorkPanel"
+import AccountManager from "./AccountManager"
 
 const reportTemplates: Report[] = [
   {
@@ -346,6 +367,10 @@ function useStoredState<T>(key: string, initial: T) {
           /* Keep loaded data even if backup storage is unavailable. */
         }
       }
+      if (key === "scamgraph-demo-reports" && Array.isArray(migrated))
+        return migrated.map(migrateReport) as T
+      if (key === "scamgraph-demo-cases" && Array.isArray(migrated))
+        return migrated.map(migrateCase) as T
       return migrated as T
     } catch {
       return initial
@@ -424,14 +449,6 @@ function makeSampleData(now = new Date()) {
   return { reports, cases, logs }
 }
 
-const roles = [
-  "Quản trị hệ thống",
-  "Cán bộ tiếp nhận",
-  "Cán bộ phân tích",
-  "Cán bộ xử lý hồ sơ",
-  "Lãnh đạo theo dõi",
-  "Kiểm tra, giám sát",
-]
 const navItems: {
   screen: Screen
   label: string
@@ -445,17 +462,6 @@ const navItems: {
   { screen: "accounts", label: "Tài khoản và phân quyền", icon: "PQ" },
   { screen: "logs", label: "Nhật ký hệ thống", icon: "NK" },
 ]
-
-const actorForRole = (role: string) =>
-  ({
-    "Người dân / Tổ chức": "cong.dan.demo",
-    "Quản trị hệ thống": "quan.tri.demo",
-    "Cán bộ tiếp nhận": "tiep.nhan.demo",
-    "Cán bộ phân tích": "phan.tich.demo",
-    "Cán bộ xử lý hồ sơ": "xu.ly.demo",
-    "Lãnh đạo theo dõi": "lanh.dao.demo",
-    "Kiểm tra, giám sát": "giam.sat.demo",
-  })[role] || "demo"
 
 function NetworkMark() {
   return <BrandMark />
@@ -513,21 +519,29 @@ export default function App() {
     "scamgraph-demo-session",
     false,
   )
-  const [screen, setScreen] = useStoredState<Screen>(
-    "scamgraph-demo-screen",
-    "dashboard",
+  const [accountId, setAccountId] = useStoredState(
+    "scamgraph-demo-account",
+    initialAccount(),
+  )
+  const [accounts, setAccounts] = useStoredState<StaffAccount[]>(
+    "scamgraph-demo-accounts",
+    migrateAccounts(),
   )
   const [reports, setReports] = useStoredState<Report[]>(
     "scamgraph-demo-reports",
-    sampleData.reports,
+    sampleData.reports.map(migrateReport),
   )
   const [cases, setCases] = useStoredState<CaseFile[]>(
     "scamgraph-demo-cases",
-    sampleData.cases,
+    sampleData.cases.map(migrateCase),
   )
   const [logs, setLogs] = useStoredState<LogItem[]>(
     "scamgraph-demo-logs",
     sampleData.logs,
+  )
+  const [screen, setScreen] = useStoredState<Screen>(
+    "scamgraph-demo-screen",
+    "reports",
   )
   const [selectedReport, setSelectedReport] = useStoredState(
     "scamgraph-demo-selected-report",
@@ -541,95 +555,283 @@ export default function App() {
     "scamgraph-demo-selected-cluster",
     "CUM-001",
   )
-  const [selectedAlert, setSelectedAlert] = useState("CB-001")
-  const [role, setRole] = useStoredState(
-    "scamgraph-demo-role",
-    "Cán bộ phân tích",
+  const [selectedAlert, setSelectedAlert] = useState("CB-001"),
+    [caseModal, setCaseModal] = useState(false),
+    [alertModal, setAlertModal] = useState(false),
+    [logModal, setLogModal] = useState<LogItem | null>(null)
+  const [toast, setToast] = useState(""),
+    [toastType, setToastType] = useState<"success" | "error">("success"),
+    [dirty, setDirty] = useState(false),
+    [viewVersion, setViewVersion] = useState(0)
+  const actor = accounts.find((a) => a.id === accountId) || {
+    id: accountId,
+    name: "Tài khoản không tồn tại",
+    role: "",
+    unitId: "",
+    kind: "staff" as const,
+    active: false,
+  }
+  const role = actor.role,
+    citizen = actor.kind === "citizen",
+    admin = role === R.admin
+  const permittedReports = reports.filter((r) =>
+      canReadReport(actor, r, cases),
+    ),
+    permittedCases = cases.filter((c) => canReadCase(actor, c)),
+    scopedLogs = visibleLogs(actor, logs)
+  const activeScreen = screenAllowed(actor, screen) ? screen : homeScreen(actor)
+  const report = permittedReports.find((r) => r.id === selectedReport),
+    item = permittedCases.find((c) => c.id === selectedCase)
+  const alerts = getAlerts(permittedReports).filter((a) =>
+    a.clusterId
+      ? permittedReports.some((r) => r.cluster === a.clusterId)
+      : permittedReports.some((r) => r.id === a.reportId),
   )
-  const [accountRoles, setAccountRoles] = useStoredState<
-    Record<string, string>
-  >("scamgraph-demo-account-roles", {})
-  const [editingAccount, setEditingAccount] = useState("tiep.nhan.demo")
-  const [editingRole, setEditingRole] = useState("Cán bộ tiếp nhận")
-  const citizen = role === "Người dân / Tổ chức"
-  const admin = role === "Quản trị hệ thống"
-  const canEdit = [
-    "Cán bộ phân tích",
-    "Cán bộ xử lý hồ sơ",
-    "Cán bộ tiếp nhận",
-  ].includes(role)
-  const [toast, setToast] = useState("")
-  const [toastType, setToastType] = useState<"success" | "error">("success")
-  const [caseModal, setCaseModal] = useState(false)
-  const [alertModal, setAlertModal] = useState(false)
-  const [logModal, setLogModal] = useState<LogItem | null>(null)
-  const [accountModal, setAccountModal] = useState(false)
-  const [wizardVersion, setWizardVersion] = useState(0)
-  const [previousAccountRole, setPreviousAccountRole] = useState("")
-
-  const hasNew = reports.some((r) => r.id === "PA-013")
-  const alerts = getAlerts(reports)
   const activeCluster =
-    clusters.find((cluster) => cluster.id === selectedCluster) || clusters[0]
-  const clusterReports = reports.filter((r) => r.cluster === activeCluster.id)
-  const clusterTotal = clusterReports.reduce((sum, r) => sum + r.amount, 0)
-  const activeAlert =
-    alerts.find((alert) => alert.id === selectedAlert) || alerts[0]
+      clusters.find((c) => c.id === selectedCluster) || clusters[0],
+    clusterReports = permittedReports.filter(
+      (r) => r.cluster === activeCluster.id,
+    ),
+    clusterTotal = clusterReports.reduce((s, r) => s + r.amount, 0),
+    activeAlert = alerts.find((a) => a.id === selectedAlert)
   const notify = (message: string, type: "success" | "error" = "success") => {
-    setToastType(type)
     setToast(message)
-    window.setTimeout(() => setToast(""), 2600)
+    setToastType(type)
+  }
+  useEffect(() => {
+    if (!toast) return
+    const id = setTimeout(() => setToast(""), 3500)
+    return () => clearTimeout(id)
+  }, [toast])
+  useEffect(() => {
+    setCaseModal(false)
+    setAlertModal(false)
+    setLogModal(null)
+    setToast("")
+    setDirty(false)
+    setViewVersion((v) => v + 1)
+  }, [accountId, actor.role, actor.unitId, actor.active])
+  useEffect(() => {
+    const changed = (e: StorageEvent) => {
+      if (e.key === "scamgraph-demo-accounts" && e.newValue) {
+        try {
+          setAccounts(JSON.parse(e.newValue))
+        } catch {
+          /* Keep current data if malformed. */
+        }
+      }
+    }
+    window.addEventListener("storage", changed)
+    return () => window.removeEventListener("storage", changed)
+  }, [])
+  const commit = (
+    nextReports: Report[],
+    nextCases: CaseFile[],
+    nextAccounts: StaffAccount[],
+    nextLogs: LogItem[],
+  ) => {
+    const entries: [string, unknown][] = [
+      ["scamgraph-demo-reports", nextReports],
+      ["scamgraph-demo-cases", nextCases],
+      ["scamgraph-demo-accounts", nextAccounts],
+      ["scamgraph-demo-logs", nextLogs],
+    ]
+    const backups = entries.map(
+      ([key]) => [key, localStorage.getItem(key)] as const,
+    )
+    try {
+      for (const [key, value] of entries)
+        localStorage.setItem(key, JSON.stringify(value))
+    } catch (e) {
+      for (const [key, value] of backups) {
+        try {
+          if (value === null) localStorage.removeItem(key)
+          else localStorage.setItem(key, value)
+        } catch {
+          /* Preserve memory if storage remains unavailable. */
+        }
+      }
+      throw e
+    }
+    setReports(nextReports)
+    setCases(nextCases)
+    setAccounts(nextAccounts)
+    setLogs(nextLogs)
   }
   const addLog = (
     action: string,
     target: string,
-    detail?: string,
+    detail = "",
     result = "Thành công",
   ) =>
     setLogs((v) => [
       {
         time: nowISO(),
-        user: actorForRole(role),
-        role,
+        user: actor.id,
+        role: actor.role,
+        unitId: actor.unitId,
+        category: admin ? "Quản trị" : "Nghiệp vụ",
         action,
         target,
-        result,
         detail,
+        result,
       },
       ...v,
     ])
+  const latestAccounts = () => {
+    try {
+      return (
+        (JSON.parse(
+          localStorage.getItem("scamgraph-demo-accounts") || "null",
+        ) as StaffAccount[]) || accounts
+      )
+    } catch {
+      return accounts
+    }
+  }
+  const run = (op: Operation) => {
+    try {
+      const next = applyOperation(
+        { reports, cases, accounts: latestAccounts() },
+        accountId,
+        op,
+        nowISO(),
+      )
+      commit(next.reports, next.cases, next.accounts, [next.log, ...logs])
+      setDirty(false)
+      notify("Đã lưu: " + next.log.action)
+      if (op.type === "create-case") {
+        setSelectedCase(next.log.target)
+        setCaseModal(false)
+        setScreen("case-detail")
+      }
+      return true
+    } catch (e) {
+      addLog(
+        "Thao tác bị từ chối",
+        "id" in op ? op.id : op.clusterId,
+        e instanceof Error ? e.message : "Không thể lưu",
+        "Bị từ chối",
+      )
+      notify(
+        e instanceof Error
+          ? e.message
+          : "Không thể lưu dữ liệu trên trình duyệt",
+        "error",
+      )
+      return false
+    }
+  }
+  const go = (next: Screen) => {
+    if (!screenAllowed(actor, next))
+      return notify(
+        "Trang này không thuộc quyền truy cập của tài khoản.",
+        "error",
+      )
+    if (
+      dirty &&
+      !window.confirm(
+        "Có nội dung chưa lưu. Rời trang sẽ bỏ thay đổi chưa lưu; bản nháp tiếp nhận vẫn được giữ riêng cho tài khoản.",
+      )
+    )
+      return
+    setDirty(false)
+    setScreen(next)
+  }
+  const openReport = (id: string) => {
+    if (!permittedReports.some((r) => r.id === id))
+      return notify("Không có quyền xem phản ánh này.", "error")
+    setSelectedReport(id)
+    go("report-detail")
+  }
+  const openCase = (id: string) => {
+    if (!permittedCases.some((c) => c.id === id))
+      return notify("Không có quyền xem hồ sơ này.", "error")
+    setSelectedCase(id)
+    go("case-detail")
+  }
+  const openGraph = (id: string) => {
+    if (
+      !screenAllowed(actor, "graph") ||
+      !permittedReports.some((r) => r.cluster === id)
+    )
+      return notify("Không có dữ liệu sơ đồ trong phạm vi tài khoản.", "error")
+    setSelectedCluster(id)
+    go("graph")
+  }
+  const openAlert = (id: string) => {
+    const a = alerts.find((x) => x.id === id)
+    if (!screenAllowed(actor, "alerts") || !a)
+      return notify("Không có quyền xem cảnh báo này.", "error")
+    setSelectedAlert(id)
+    if (a.clusterId) setSelectedCluster(a.clusterId)
+    setAlertModal(true)
+  }
+  const openCreate = () => {
+    if (!permit(actor, "case.create"))
+      return notify("Chỉ cán bộ phân tích được tạo hồ sơ.", "error")
+    if (!clusterReports.length)
+      return notify("Không có nguồn cụm trong phạm vi.", "error")
+    setCaseModal(true)
+  }
+  const switchAccount = (id: string) => {
+    const next = accounts.find((a) => a.id === id)
+    if (!next?.active)
+      return notify("Tài khoản đã khóa hoặc không tồn tại.", "error")
+    if (
+      (dirty || caseModal) &&
+      !window.confirm(
+        "Chuyển tài khoản sẽ bỏ thay đổi chưa lưu trên hồ sơ/phân tích. Bản nháp tiếp nhận được giữ riêng cho từng tài khoản. Tiếp tục?",
+      )
+    )
+      return
+    addLog("Chuyển tài khoản thử nghiệm", id, `Từ ${actor.id}`)
+    setCaseModal(false)
+    setAlertModal(false)
+    setLogModal(null)
+    setAccountId(id)
+    const firstCluster = reports.find(
+      (r) => r.cluster && canReadReport(next, r, cases),
+    )?.cluster
+    if (firstCluster) setSelectedCluster(firstCluster)
+    setScreen(homeScreen(next))
+    setDirty(false)
+    setViewVersion((v) => v + 1)
+  }
   const submitIntake = (payload: IntakePayload): IntakeResult => {
-    if (!citizen && !canEdit)
+    const currentActor = latestAccounts().find((a) => a.id === accountId)
+    if (!currentActor || !permit(currentActor, "report.create"))
+      return { ok: false, error: "Tài khoản không có quyền tạo phản ánh." }
+    if (
+      !payload.report.title.trim() ||
+      !payload.report.content.trim() ||
+      !Number.isFinite(payload.report.amount) ||
+      payload.report.amount < 0 ||
+      (payload.report.transferStatus === "Có" && payload.report.amount <= 0)
+    )
       return {
         ok: false,
-        error: "Vai trò này chỉ được xem dữ liệu, không được tạo phản ánh.",
+        error: "Kiểm tra tiêu đề, nội dung và số tiền trước khi gửi.",
       }
-    let oldReports: string | null = null
-    let oldLogs: string | null = null
-    let wroteReports = false
     try {
-      oldReports = localStorage.getItem("scamgraph-demo-reports")
-      oldLogs = localStorage.getItem("scamgraph-demo-logs")
-      const currentReports: Report[] = oldReports
-        ? JSON.parse(oldReports)
-        : reports
-      const currentLogs: LogItem[] = oldLogs ? JSON.parse(oldLogs) : logs
-      if (!Array.isArray(currentReports) || !Array.isArray(currentLogs))
-        return {
-          ok: false,
-          error:
-            "Dữ liệu lưu hiện có không hợp lệ. Chưa tạo phản ánh; hãy xuất/kiểm tra dữ liệu trước khi thử lại.",
-        }
-      if (payload.sample && currentReports.some((r) => r.id === "PA-013"))
-        return {
-          ok: false,
-          error:
-            "Tình huống mẫu đã được tạo. Mở PA-013 hoặc nhập phản ánh khác.",
-        }
-      const report: Report = {
+      if (payload.sample && reports.some((r) => r.id === "PA-013"))
+        return { ok: false, error: "Tình huống mẫu đã được tạo." }
+      const r: Report = {
         ...payload.report,
-        id: payload.sample ? "PA-013" : nextReportId(currentReports),
-        submittedBy: actorForRole(role),
+        cluster: undefined,
+        extracted: false,
+        reviewed: false,
+        rejectedClusters: [],
+        status: "Mới tiếp nhận",
+        source:
+          currentActor.kind === "citizen"
+            ? "Cổng trực tuyến"
+            : payload.report.source,
+        id: payload.sample ? "PA-013" : nextReportId(reports),
+        submittedBy: actor.id,
+        unitId: actor.unitId,
+        intakeStatus: "Mới tiếp nhận",
+        analysisStatus: "Chờ phân tích",
         people: {
           ...(payload.sample &&
           payload.report.senderName === "Nguyễn Hoàng Minh"
@@ -638,578 +840,543 @@ export default function App() {
           ...payload.report.people,
         },
       }
-      const nextReports = [report, ...currentReports]
-      const nextLogs: LogItem[] = [
-        {
-          time: nowISO(),
-          user: actorForRole(role),
-          role,
-          action: "Tạo phản ánh",
-          target: report.id,
-          result: "Thành công",
-          detail: `Loại ban đầu: ${report.behavior}${report.behaviorOther ? ": " + report.behaviorOther : ""}; số tiền ${report.amount} triệu. Chưa xác nhận liên kết.`,
-        },
-        ...currentLogs,
-      ]
-      localStorage.setItem(
-        "scamgraph-demo-reports",
-        JSON.stringify(nextReports),
-      )
-      wroteReports = true
-      localStorage.setItem("scamgraph-demo-logs", JSON.stringify(nextLogs))
-      setReports(nextReports)
-      setLogs(nextLogs)
-      return { ok: true, report }
-    } catch {
-      if (wroteReports) {
-        try {
-          if (oldReports !== null)
-            localStorage.setItem("scamgraph-demo-reports", oldReports)
-          else localStorage.removeItem("scamgraph-demo-reports")
-          if (oldLogs !== null)
-            localStorage.setItem("scamgraph-demo-logs", oldLogs)
-        } catch {
-          /* Original write may have failed due to browser storage policy. */
-        }
+      const log: LogItem = {
+        time: nowISO(),
+        user: actor.id,
+        role: actor.role,
+        unitId: actor.unitId,
+        category: "Nghiệp vụ",
+        action: "Tạo phản ánh",
+        target: r.id,
+        result: "Thành công",
+        detail: `${r.amount} triệu; chờ tiếp nhận, chưa liên kết.`,
       }
+      commit([r, ...reports], cases, accounts, [log, ...logs])
+      setDirty(false)
+      return { ok: true, report: r }
+    } catch {
       return {
         ok: false,
         error:
-          "Chưa lưu được phản ánh trên trình duyệt. Có thể bộ nhớ đầy hoặc localStorage bị chặn. Nội dung nhập vẫn được giữ; chưa thông báo thành công.",
+          "Chưa lưu được phản ánh trên trình duyệt. Nội dung nhập được giữ để thử lại.",
       }
     }
   }
-  const go = (next: Screen) => {
-    if (citizen && !["new-report", "reports"].includes(next))
-      return notify("Người dân chỉ sử dụng cổng gửi phản ánh mô phỏng", "error")
-    setScreen(next)
-  }
-  const openReport = (id: string) => {
-    setSelectedReport(id)
-    setScreen("report-detail")
-  }
-  const openCase = (id: string) => {
-    setSelectedCase(id)
-    setScreen("case-detail")
-  }
-  const openGraph = (clusterId: string) => {
-    setSelectedCluster(clusterId)
-    setScreen("graph")
-  }
-  const openAlert = (alertId: string) => {
-    const alert = alerts.find((item) => item.id === alertId)
-    setSelectedAlert(alertId)
-    if (alert?.clusterId) setSelectedCluster(alert.clusterId)
-    setAlertModal(true)
+  const updateReport = (
+    next: Report,
+    intent?: "extract-save" | "extract-start",
+  ) => {
+    const old = reports.find((r) => r.id === next.id)
+    if (!old) return false
+    if (intent === "extract-save")
+      return run({ type: "extract-save", id: next.id, patch: next })
+    if (intent === "extract-start")
+      return run({ type: "extract-start", id: next.id })
+    if (next.cluster && next.cluster !== old.cluster)
+      return run({ type: "link", id: next.id, clusterId: next.cluster })
+    const removed = (old.rejectedClusters || []).find(
+        (x) => !next.rejectedClusters?.includes(x),
+      ),
+      added = next.rejectedClusters?.find(
+        (x) => !old.rejectedClusters?.includes(x),
+      )
+    if (removed || added)
+      return run({
+        type: "proposal",
+        id: next.id,
+        clusterId: (removed || added)!,
+        restore: !!removed,
+      })
+    if (next.extracted && !old.extracted && !next.reviewed)
+      return run({ type: "extract-start", id: next.id })
+    return run({ type: "extract-save", id: next.id, patch: next })
   }
   const reset = () => {
     if (
-      !window.confirm("Khôi phục toàn bộ dữ liệu demo về trạng thái ban đầu?")
+      !permit(actor, "account.manage") ||
+      !window.confirm("Khôi phục dữ liệu thử nghiệm? Nhật ký cũ được giữ lại.")
     )
       return
     try {
-      localStorage.removeItem("scamgraph-demo-wizard-form")
-      localStorage.removeItem("scamgraph-demo-wizard-step")
+      const fresh = makeSampleData()
+      commit(
+        fresh.reports.map(migrateReport),
+        fresh.cases.map(migrateCase),
+        accounts,
+        [
+          {
+            time: nowISO(),
+            user: actor.id,
+            role: actor.role,
+            unitId: actor.unitId,
+            category: "Quản trị",
+            action: "Đặt lại dữ liệu thử nghiệm",
+            target: "Dữ liệu thử nghiệm",
+            result: "Thành công",
+          },
+          ...logs,
+        ],
+      )
+      for (const key of Object.keys(localStorage))
+        if (key.startsWith("scamgraph-intake:")) localStorage.removeItem(key)
+      setViewVersion((v) => v + 1)
+      notify("Đã khôi phục dữ liệu; giữ nguyên nhật ký và tài khoản.")
     } catch {
-      /* In-memory reset remains available. */
+      notify("Không thể khôi phục dữ liệu.", "error")
     }
-    setWizardVersion((v) => v + 1)
-    const fresh = makeSampleData()
-    setReports(fresh.reports)
-    setCases(fresh.cases)
-    setAccountRoles({})
-    setLogs([
-      {
-        time: nowISO(),
-        user: "demo",
-        role,
-        action: "Đặt lại demo",
-        target: "Toàn bộ dữ liệu",
-        result: "Thành công",
-      },
-      ...fresh.logs,
-    ])
-    setCaseModal(false)
-    setAlertModal(false)
-    setAccountModal(false)
-    setLogModal(null)
-    setScreen(citizen ? "new-report" : "dashboard")
-    setSelectedReport("PA-001")
-    setSelectedCase("HS-001")
-    setSelectedCluster("CUM-001")
-    setSelectedAlert("CB-001")
-    notify("Đã đặt lại toàn bộ dữ liệu demo")
   }
-
   if (!loggedIn)
     return (
-      <Login
-        onLogin={(nextRole, nextScreen) => {
-          setRole(nextRole)
-          setScreen(nextScreen)
-          setLoggedIn(true)
-          setLogs((v) => [
-            {
-              time: nowISO(),
-              user: actorForRole(nextRole),
-              role: nextRole,
-              action: "Đăng nhập mô phỏng",
-              target: "Phiên demo",
-              result: "Thành công",
-            },
-            ...v,
-          ])
-        }}
-      />
+      <>
+        <Login
+          onLogin={(requestedRole) => {
+            const id = accountForRole(requestedRole),
+              a = accounts.find((x) => x.id === id)
+            if (!a?.active) {
+              notify("Tài khoản đã bị khóa.", "error")
+              return
+            }
+            setAccountId(id)
+            setScreen(homeScreen(a))
+            setLoggedIn(true)
+            setLogs((v) => [
+              {
+                time: nowISO(),
+                user: a.id,
+                role: a.role,
+                unitId: a.unitId,
+                category: "Quản trị",
+                action: "Đăng nhập mô phỏng",
+                target: a.id,
+                result: "Thành công",
+              },
+              ...v,
+            ])
+          }}
+        />
+        {toast && (
+          <div className="toast toast-error" role="alert">
+            {toast}
+          </div>
+        )}
+      </>
     )
-
+  if (!actor.active)
+    return (
+      <div className="page-stack role-blocked">
+        <Card className="role-panel">
+          <h1>Tài khoản không hoạt động</h1>
+          <p>
+            Không thể truy cập dữ liệu. Liên hệ quản trị hệ thống để kiểm tra
+            quyền.
+          </p>
+          <Button onClick={() => setLoggedIn(false)}>Đăng xuất</Button>
+        </Card>
+      </div>
+    )
+  const labels: Partial<Record<Screen, string>> = {
+    reports: citizen
+      ? "Phản ánh của tôi"
+      : role === R.reception
+        ? "Tiếp nhận phản ánh"
+        : role === R.analyst
+          ? "Phản ánh phân tích"
+          : "Phản ánh liên quan",
+    cases: role === R.worker ? "Hồ sơ được giao" : "Hồ sơ vụ việc",
+    dashboard: "Điều hành xử lý",
+    "new-report": citizen ? "Gửi phản ánh" : "Tạo phiếu tiếp nhận",
+  }
+  const notFound = (
+    <Card className="role-panel">
+      <h2>Không có quyền truy cập đối tượng</h2>
+      <p>Đối tượng không tồn tại hoặc nằm ngoài phạm vi tài khoản.</p>
+      <Button onClick={() => go(homeScreen(actor))}>Về trang công việc</Button>
+    </Card>
+  )
   return (
     <div
-      className={`app-shell ${screen === "new-report" ? "intake-shell" : ""} ${citizen ? "citizen-shell" : ""} ${
-        admin ? "admin-shell" : ""
-      }`}
+      className={`app-shell ${activeScreen === "new-report" ? "intake-shell" : ""} ${citizen ? "citizen-shell" : ""} ${admin ? "admin-shell" : ""}`}
     >
       <aside className="sidebar">
         <div className="brand">
           <NetworkMark />
-          <div>
-            <div className="brand-name">
-              Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
-            </div>
+          <div className="brand-name">
+            Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
           </div>
         </div>
-
         <nav className="nav">
-          {(citizen
-            ? [
-                {
-                  screen: "new-report" as Screen,
-                  label: "Gửi phản ánh",
-                  icon: "PA",
-                },
-              ]
-            : navItems
-          ).map((item) => (
-            <button
-              key={item.screen}
-              className={`nav-item ${
-                screen === item.screen ||
-                (item.screen === "reports" &&
-                  ["new-report", "report-detail"].includes(screen)) ||
-                (item.screen === "cases" && screen === "case-detail")
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() => go(item.screen)}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
+          {allowedScreens(actor).map((s) => {
+            const base = navItems.find((n) => n.screen === s)
+            return (
+              <button
+                key={s}
+                className={`nav-item ${activeScreen === s || (s === "reports" && activeScreen === "report-detail") || (s === "cases" && activeScreen === "case-detail") ? "active" : ""}`}
+                onClick={() => go(s)}
+              >
+                <span className="nav-icon">{base?.icon || "PA"}</span>
+                <span>{labels[s] || base?.label || s}</span>
+              </button>
+            )
+          })}
         </nav>
         <div className="sidebar-foot">
-          <div className="user-avatar">PT</div>
+          <div className="user-avatar">
+            {actor.name
+              .split(" ")
+              .slice(-2)
+              .map((x) => x[0])
+              .join("")}
+          </div>
           <div className="sidebar-user">
-            <strong>{actorForRole(role)}</strong>
+            <strong>{actor.name}</strong>
             <span>{role}</span>
           </div>
-          <button
-            className="more-btn"
-            aria-label="Đăng xuất"
-            onClick={() => {
-              addLog("Đăng xuất", role)
-              setLoggedIn(false)
-            }}
-          >
-            ↪
-          </button>
         </div>
       </aside>
       <div className="main-shell">
         <header className="topbar">
+          <span className="current-unit">{actor.unitId}</span>
           <div className="top-actions">
-            <span className="demo-label">Demo — dữ liệu giả lập</span>
+            <span className="demo-label">Dữ liệu giả lập</span>
             <AppearanceToggle />
-            <select
-              aria-label="Chuyển vai trò demo"
-              value={role}
-              onChange={(e) => {
-                addLog("Chuyển vai trò", e.target.value, `Từ ${role}`)
-                setRole(e.target.value)
-                setScreen(
-                  e.target.value === "Người dân / Tổ chức"
-                    ? "new-report"
-                    : e.target.value === "Quản trị hệ thống"
-                      ? "accounts"
-                      : "dashboard",
-                )
-              }}
-            >
-              {["Người dân / Tổ chức", ...roles].map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </select>
+            <details className="account-tools">
+              <summary>Tài khoản thử nghiệm</summary>
+              <div className="account-popover">
+                <Field label="Chuyển tài khoản thử nghiệm">
+                  <select
+                    value={accountId}
+                    onChange={(e) => {
+                      switchAccount(e.target.value)
+                      e.currentTarget
+                        .closest("details")
+                        ?.removeAttribute("open")
+                    }}
+                  >
+                    {accounts.map((a) => (
+                      <option key={a.id} value={a.id} disabled={!a.active}>
+                        {a.name} · {a.role}
+                        {a.active ? "" : " (Đã khóa)"}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <small>Tài khoản hiện tại: {actor.id}</small>
+                {admin && (
+                  <Button variant="ghost" onClick={reset}>
+                    Đặt lại dữ liệu thử nghiệm
+                  </Button>
+                )}
+              </div>
+            </details>
             <Button
               variant="ghost"
               onClick={() => {
-                addLog("Đăng xuất", role)
+                if (
+                  dirty &&
+                  !window.confirm(
+                    "Đăng xuất và bỏ thay đổi chưa lưu? Bản nháp tiếp nhận được giữ riêng.",
+                  )
+                )
+                  return
+                addLog("Đăng xuất", actor.id)
                 setLoggedIn(false)
               }}
             >
               Đăng xuất
             </Button>
-            <Button variant="ghost" onClick={reset}>
-              Đặt lại demo
-            </Button>
           </div>
         </header>
-        <main className="content">
-          {reports.some((r) => r.timeMigration) && (
-            <div className="migration-note">
-              Dữ liệu phiên cũ đã được chuyển cấu trúc thời gian và giữ nguyên
-              bản ghi, số tiền, hồ sơ, nhật ký. Mốc phát sinh/tiếp nhận cũ dùng
-              thời gian đã có vì phiên cũ chưa tách hai trường. Đặt lại demo có
-              xác nhận để tạo bộ mẫu theo ngày hôm nay.
-            </div>
+        <main
+          className="content"
+          key={`${actor.id}:${actor.role}:${actor.unitId}:${viewVersion}`}
+          onChangeCapture={(e) => {
+            if (
+              (e.target as HTMLElement).closest(
+                ".entity-form,.case-work,.reception-panel .role-form,.report-intake .intake-card,.modal",
+              )
+            )
+              setDirty(true)
+          }}
+        >
+          {citizen && (
+            <nav className="citizen-section-nav" aria-label="Cổng phản ánh">
+              <a
+                href="#reports"
+                onClick={(e) => {
+                  e.preventDefault()
+                  go("reports")
+                }}
+              >
+                Phản ánh của tôi
+              </a>
+              <a
+                href="#new-report"
+                onClick={(e) => {
+                  e.preventDefault()
+                  go("new-report")
+                }}
+              >
+                Gửi phản ánh
+              </a>
+            </nav>
           )}
-          {!citizen &&
-            ["reports", "report-detail", "cases", "case-detail"].includes(
-              screen,
-            ) && (
-              <OperationsTabs
-                active={
-                  screen === "reports" || screen === "report-detail"
-                    ? "reports"
-                    : screen === "case-detail"
-                      ? "detail"
-                      : "cases"
-                }
-                onReports={() => go("reports")}
-                onCases={() => go("cases")}
-                onDetail={() => openCase(selectedCase)}
+          <div className="role-context">
+            <b>{role}</b>
+            <span>{roleTask[role]}</span>
+          </div>
+          {activeScreen === "dashboard" && (
+            <>
+              <RoleWork
+                actor={actor}
+                reports={permittedReports}
+                cases={permittedCases}
+                onReport={openReport}
+                onCase={openCase}
               />
-            )}
-          {screen === "dashboard" && (
-            <Dashboard
-              reports={reports}
-              cases={cases}
-              hasNew={reports.some(
-                (r) => r.id === "PA-013" && r.cluster === "CUM-001",
-              )}
-              alerts={alerts}
-              onReports={() => go("reports")}
-              onCase={openCase}
-              onNew={() =>
-                canEdit || citizen
-                  ? go("new-report")
-                  : notify("Vai trò này chỉ được xem dữ liệu", "error")
-              }
-              onReport={openReport}
-              onGraph={openGraph}
-              onAlert={openAlert}
-            />
+              <details className="role-statistics">
+                <summary>
+                  Thống kê phản ánh và cụm liên kết trong đơn vị
+                </summary>
+                <Dashboard
+                  reports={permittedReports}
+                  cases={permittedCases}
+                  hasNew={permittedReports.some(
+                    (r) => r.id === "PA-013" && r.cluster === "CUM-001",
+                  )}
+                  alerts={alerts}
+                  onReports={() => go("reports")}
+                  onCase={openCase}
+                  onReport={openReport}
+                  onGraph={openGraph}
+                  onAlert={openAlert}
+                />
+              </details>
+            </>
           )}
-          {screen === "reports" && (
-            <Reports
-              citizen={citizen}
-              reports={
-                citizen
-                  ? reports.filter(
-                      (r) =>
-                        r.submittedBy === "cong.dan.demo" || r.id === "PA-013",
+          {activeScreen === "reports" && (
+            <>
+              <WorkSummary
+                actor={actor}
+                reports={permittedReports}
+                cases={permittedCases}
+              />
+              <Reports
+                key={accountId}
+                citizen={citizen}
+                actor={actor}
+                canCreate={permit(actor, "report.create")}
+                reports={permittedReports}
+                onNew={() => go("new-report")}
+                onOpen={openReport}
+              />
+            </>
+          )}
+          {activeScreen === "new-report" &&
+            (permit(actor, "report.create") ? (
+              <ReportIntake
+                key={`${accountId}:${viewVersion}`}
+                citizen={citizen}
+                storagePrefix={`scamgraph-intake:${accountId}`}
+                reports={permittedReports}
+                onSubmit={submitIntake}
+                onOpen={openReport}
+                onList={() => go("reports")}
+              />
+            ) : (
+              notFound
+            ))}
+          {activeScreen === "report-detail" &&
+            (report ? (
+              citizen ? (
+                <>
+                  <CitizenReportView
+                    report={report}
+                    onBack={() => go("reports")}
+                  />
+                  <ReceptionPanel
+                    report={report}
+                    actor={actor}
+                    accounts={accounts}
+                    cases={cases}
+                    onAction={run}
+                  />
+                </>
+              ) : (
+                <ReportDetail
+                  key={report.id}
+                  report={report}
+                  reports={permittedReports}
+                  canAnalyze={permit(actor, "report.analyze", report, cases)}
+                  canReveal={permit(actor, "sensitive.read", report, cases)}
+                  actor={actor}
+                  accounts={accounts}
+                  cases={cases}
+                  onAction={run}
+                  onBack={() => go("reports")}
+                  onGraph={() => report.cluster && openGraph(report.cluster)}
+                  onLog={(a, t, d) => {
+                    if (
+                      a === "Xem thông tin đã che" &&
+                      permit(actor, "sensitive.read", report, cases)
                     )
-                  : reports
-              }
-              onNew={() =>
-                canEdit || citizen
-                  ? go("new-report")
-                  : notify("Vai trò này chỉ được xem dữ liệu", "error")
-              }
-              onOpen={openReport}
-            />
+                      addLog(a, t, d)
+                  }}
+                  onUpdate={updateReport}
+                  notify={notify}
+                />
+              )
+            ) : (
+              notFound
+            ))}
+          {activeScreen === "graph" &&
+            (clusterReports.length ? (
+              <LinkGraph
+                key={activeCluster.id}
+                cluster={activeCluster}
+                reports={clusterReports}
+                total={clusterTotal}
+                hasNew={clusterReports.some((r) => r.id === "PA-013")}
+                allowCreate={permit(actor, "case.create")}
+                onReport={openReport}
+                onAlert={() => {
+                  const a = alerts.find((a) => a.clusterId === activeCluster.id)
+                  if (a) openAlert(a.id)
+                }}
+                onCreateCase={openCreate}
+              />
+            ) : (
+              <EmptyState>
+                Không có cụm liên kết trong phạm vi tài khoản.
+              </EmptyState>
+            ))}
+          {activeScreen === "alerts" &&
+            (alerts.length ? (
+              <Alerts
+                alerts={alerts}
+                reports={permittedReports}
+                selectedId={selectedAlert}
+                onOpen={openAlert}
+                onGraph={openGraph}
+                allowCreate={permit(actor, "case.create")}
+                onCreate={(id) => {
+                  if (id) setSelectedCluster(id)
+                  if (!permit(actor, "case.create")) return
+                  setCaseModal(true)
+                }}
+              />
+            ) : (
+              <EmptyState>
+                Không có cảnh báo trong phạm vi tài khoản.
+              </EmptyState>
+            ))}
+          {activeScreen === "cases" && (
+            <>
+              <WorkSummary
+                actor={actor}
+                reports={permittedReports}
+                cases={permittedCases}
+              />
+              <Cases
+                cases={permittedCases}
+                reports={permittedReports}
+                canCreate={permit(actor, "case.create")}
+                onOpen={openCase}
+                onCreate={openCreate}
+              />
+            </>
           )}
-          {screen === "new-report" && (
-            <ReportIntake
-              key={wizardVersion}
-              citizen={citizen}
-              reports={reports}
-              onSubmit={submitIntake}
-              onOpen={openReport}
-              onList={() => go("reports")}
-            />
+          {activeScreen === "case-detail" &&
+            (item ? (
+              <CaseDetail
+                key={item.id}
+                item={item}
+                reports={permittedReports}
+                actor={actor}
+                accounts={accounts}
+                onAction={run}
+                onReport={openReport}
+                onBack={() => go("cases")}
+                onLogs={
+                  permit(actor, "logs.read") ? () => go("logs") : undefined
+                }
+                onDraftChange={setDirty}
+              />
+            ) : (
+              notFound
+            ))}
+          {activeScreen === "accounts" && permit(actor, "account.manage") && (
+            <AccountManager accounts={accounts} onAction={run} />
           )}
-          {screen === "report-detail" && citizen && (
-            <CitizenReportView
-              report={
-                reports.find((r) => r.id === selectedReport) || reports[0]
-              }
-              onBack={() => go("reports")}
-            />
-          )}
-          {screen === "report-detail" && !citizen && (
-            <ReportDetail
-              key={selectedReport}
-              reports={reports}
-              canEdit={canEdit}
-              report={
-                reports.find((r) => r.id === selectedReport) || reports[0]
-              }
-              onBack={() => go("reports")}
-              onGraph={() => {
-                const report = reports.find((r) => r.id === selectedReport)
-                if (report?.cluster) openGraph(report.cluster)
-              }}
-              onLog={addLog}
-              onUpdate={(next) =>
-                setReports((items) =>
-                  items.map((item) => (item.id === next.id ? next : item)),
-                )
-              }
-              notify={notify}
-            />
-          )}
-          {screen === "graph" && (
-            <LinkGraph
-              key={activeCluster.id}
-              cluster={activeCluster}
-              reports={clusterReports}
-              total={clusterTotal}
-              hasNew={reports.some(
-                (r) => r.id === "PA-013" && r.cluster === "CUM-001",
-              )}
-              onReport={openReport}
-              onAlert={() =>
-                openAlert(
-                  alerts.find((item) => item.clusterId === activeCluster.id)
-                    ?.id || "CB-001",
-                )
-              }
-              onCreateCase={() =>
-                canEdit
-                  ? setCaseModal(true)
-                  : notify("Vai trò này chỉ được xem hồ sơ", "error")
-              }
-            />
-          )}
-          {screen === "alerts" && (
-            <Alerts
-              alerts={alerts}
-              reports={reports}
-              selectedId={selectedAlert}
-              onOpen={openAlert}
-              onGraph={(clusterId) => openGraph(clusterId)}
-              onCreate={(clusterId) => {
-                if (!canEdit)
-                  return notify("Vai trò này chỉ được xem dữ liệu", "error")
-                if (clusterId) setSelectedCluster(clusterId)
-                setCaseModal(true)
-              }}
-            />
-          )}
-          {screen === "cases" && (
-            <Cases
-              cases={cases}
-              reports={reports}
-              onOpen={openCase}
-              onCreate={() =>
-                canEdit
-                  ? setCaseModal(true)
-                  : notify("Vai trò này chỉ được xem dữ liệu", "error")
-              }
-            />
-          )}
-          {screen === "case-detail" && (
-            <CaseDetail
-              item={cases.find((c) => c.id === selectedCase) || cases[0]}
-              reports={reports}
-              key={selectedCase}
-              canEdit={canEdit}
-              onReport={openReport}
-              onBack={() => go("cases")}
-              onSave={(next, detail) => {
-                const previous = cases.find((c) => c.id === next.id)
-                setCases((v) => v.map((c) => (c.id === next.id ? next : c)))
-                if (previous?.officer !== next.officer)
-                  addLog(
-                    "Phân công cán bộ",
-                    next.id,
-                    `Trước: ${previous?.officer} → Sau: ${next.officer}`,
-                  )
-                if (previous?.status !== next.status)
-                  addLog(
-                    "Đổi trạng thái",
-                    next.id,
-                    `Trước: ${previous?.status} → Sau: ${next.status}`,
-                  )
-                if (previous?.note !== next.note)
-                  addLog(
-                    "Chỉnh sửa nhận định",
-                    next.id,
-                    `Trước: ${previous?.note || "Chưa có"} → Sau: ${next.note || "Chưa có"}`,
-                  )
-                if (
-                  previous?.officer === next.officer &&
-                  previous?.status === next.status &&
-                  previous?.note === next.note
-                )
-                  addLog("Cập nhật hồ sơ", next.id, detail)
-                notify("Đã lưu thay đổi hồ sơ")
-              }}
-              onDenied={() => {
-                addLog(
-                  "Cập nhật hồ sơ",
-                  selectedCase,
-                  `Vai trò ${role} không có quyền chỉnh sửa hồ sơ.`,
-                  "Bị từ chối",
-                )
-                notify("Bạn không có quyền thực hiện thao tác này", "error")
-              }}
-              onLogs={() => go("logs")}
-            />
-          )}
-          {screen === "accounts" && (
-            <Accounts
-              role={role}
-              accountRoles={accountRoles}
-              setRole={(r) => {
-                addLog("Chuyển vai trò", r, `Từ ${role}`)
-                setRole(r)
-                notify(`Đã chuyển sang vai trò: ${r}`)
-              }}
-              onEdit={(account, currentRole) => {
-                if (role !== "Quản trị hệ thống")
-                  return notify(
-                    "Bạn không có quyền thực hiện thao tác này",
-                    "error",
-                  )
-                setEditingAccount(account)
-                setPreviousAccountRole(currentRole)
-                setEditingRole(currentRole)
-                setAccountModal(true)
+          {activeScreen === "logs" && permit(actor, "logs.read") && (
+            <Logs
+              logs={scopedLogs}
+              onOpen={(l) => {
+                if (scopedLogs.includes(l)) setLogModal(l)
               }}
             />
           )}
-          {screen === "logs" && <Logs logs={logs} onOpen={setLogModal} />}
         </main>
       </div>
       {toast && (
-        <div className={`toast toast-${toastType}`}>
-          <span>{toastType === "success" ? "✓" : "!"}</span>
+        <div className={`toast toast-${toastType}`} role="status">
           {toast}
         </div>
       )}
-      {caseModal && (
+      {caseModal && permit(actor, "case.create") && (
         <CreateCaseModal
           key={selectedCluster}
-          onClusterChange={setSelectedCluster}
           cluster={activeCluster}
-          reportIds={clusterReports.map((report) => report.id)}
+          reportIds={clusterReports.map((r) => r.id)}
           reportCount={clusterReports.length}
           total={clusterTotal}
+          onClusterChange={setSelectedCluster}
           onClose={() => setCaseModal(false)}
-          onCreate={(data) => {
-            const id = `HS-${String(cases.length + 1).padStart(3, "0")}`
-            const item = {
-              id,
-              ...data,
-              status: "Mới tạo",
-              updated: nowISO(),
-              note: "",
-              reportIds: data.reportIds,
+          onCreate={(data) =>
+            run({
+              type: "create-case",
+              name: data.name,
               clusterId: data.clusterId,
-              history: [`${nowISO()} · Tạo hồ sơ từ ${data.clusterId}`],
-            }
-            setCases((v) => [item, ...v])
-            addLog("Tạo hồ sơ", id, `Tạo từ cụm ${data.clusterId}.`)
-            setCaseModal(false)
-            setSelectedCase(id)
-            setScreen("case-detail")
-            notify(`Đã tạo hồ sơ ${id}`)
-          }}
+            })
+          }
         />
       )}
-      {alertModal && (
+      {alertModal && activeAlert && screenAllowed(actor, "alerts") && (
         <AlertDetail
           alert={activeAlert}
-          reports={reports}
+          reports={permittedReports}
+          allowCreate={permit(actor, "case.create")}
           onClose={() => setAlertModal(false)}
           onGraph={() => {
             setAlertModal(false)
             if (activeAlert.clusterId) openGraph(activeAlert.clusterId)
           }}
           onCreate={() => {
-            if (!canEdit)
-              return notify("Vai trò này chỉ được xem dữ liệu", "error")
+            if (!permit(actor, "case.create")) return
             setAlertModal(false)
             if (activeAlert.clusterId) setSelectedCluster(activeAlert.clusterId)
             setCaseModal(true)
           }}
         />
       )}
-      {logModal && (
-        <Modal
-          title={`Chi tiết nhật ký — ${logModal.action}`}
-          onClose={() => setLogModal(null)}
-        >
-          <DetailRows
-            rows={[
-              ["Thời gian", formatDateTime(logModal.time)],
-              ["Tài khoản", logModal.user],
-              ["Vai trò", logModal.role],
-              ["Đối tượng", logModal.target],
-              ["Kết quả", logModal.result],
-              ["Chi tiết", logModal.detail || "Không có thay đổi dữ liệu."],
-            ]}
-          />
-        </Modal>
-      )}
-      {accountModal && (
-        <Modal
-          title="Sửa vai trò tài khoản"
-          onClose={() => setAccountModal(false)}
-          footer={
-            <>
-              <Button
-                variant="secondary"
-                onClick={() => setAccountModal(false)}
-              >
-                Hủy
-              </Button>
-              <Button
-                onClick={() => {
-                  setAccountModal(false)
-                  addLog(
-                    "Sửa quyền",
-                    editingAccount,
-                    `Trước: ${previousAccountRole} → Sau: ${editingRole}`,
-                  )
-                  setAccountRoles((v) => ({
-                    ...v,
-                    [editingAccount]: editingRole,
-                  }))
-                  notify("Đã cập nhật vai trò tài khoản")
-                }}
-              >
-                Lưu thay đổi
-              </Button>
-            </>
-          }
-        >
-          <Field label="Tài khoản">
-            <input value={editingAccount} readOnly />
-          </Field>
-          <Field label="Vai trò">
-            <select
-              value={editingRole}
-              onChange={(e) => setEditingRole(e.target.value)}
-            >
-              {["Người dân / Tổ chức", ...roles].map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </select>
-          </Field>
-        </Modal>
-      )}
+      {logModal &&
+        permit(actor, "logs.read") &&
+        scopedLogs.some((l) => l === logModal) && (
+          <Modal
+            title={`Chi tiết nhật ký — ${logModal.action}`}
+            onClose={() => setLogModal(null)}
+          >
+            <DetailRows
+              rows={[
+                ["Thời gian", formatDateTime(logModal.time)],
+                ["Tài khoản", logModal.user],
+                ["Vai trò tại thời điểm thao tác", logModal.role],
+                ["Đối tượng", logModal.target],
+                ["Kết quả", logModal.result],
+                ["Chi tiết", logModal.detail || "Không có thay đổi dữ liệu."],
+              ]}
+            />
+          </Modal>
+        )}
     </div>
   )
 }
@@ -1249,7 +1416,7 @@ function Dashboard({
   alerts: AlertItem[]
   onCase: (id: string) => void
   onReports: () => void
-  onNew: () => void
+  onNew?: () => void
   onReport: (id: string) => void
   onGraph: (id: string) => void
   onAlert: (id: string) => void
@@ -1320,10 +1487,7 @@ function Dashboard({
           </>
         }
         action={
-          <>
-            {" "}
-            <Button onClick={onNew}>Tiếp nhận phản ánh</Button>{" "}
-          </>
+          <> {onNew && <Button onClick={onNew}>Tiếp nhận phản ánh</Button>} </>
         }
       />
       {hasNew && (
@@ -1523,15 +1687,26 @@ function Dashboard({
 
 function Reports({
   citizen,
+  actor,
+  canCreate,
   reports,
   onNew,
   onOpen,
 }: {
   citizen: boolean
+  actor: StaffAccount
+  canCreate: boolean
   reports: Report[]
   onNew: () => void
   onOpen: (id: string) => void
 }) {
+  const [queue, setQueue] = useState(
+    actor.role === R.analyst
+      ? "mine"
+      : actor.role === R.reception
+        ? "waiting"
+        : "all",
+  )
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("Tất cả trạng thái")
   const [behavior, setBehavior] = useState("Tất cả loại phản ánh")
@@ -1539,8 +1714,27 @@ function Reports({
   const [to, setTo] = useState("")
   const [source, setSource] = useState("")
   const [area, setArea] = useState("")
+  const intakeFilter = actor.kind === "citizen" || actor.role === R.reception
+  const statusOptions = intakeFilter
+    ? [
+        "Tất cả trạng thái",
+        "Mới tiếp nhận",
+        "Chờ bổ sung",
+        "Chuyển phân tích",
+        "Không hợp lệ",
+      ]
+    : ["Tất cả trạng thái", "Chờ phân tích", "Đang phân tích", "Đã kiểm tra"]
+  const statusOf = (r: Report) =>
+    intakeFilter
+      ? r.intakeStatus || "Mới tiếp nhận"
+      : r.analysisStatus || "Chờ phân tích"
   const filtered = reports.filter(
     (r) =>
+      (queue === "all" ||
+        (queue === "waiting"
+          ? ["Mới tiếp nhận", "Chờ bổ sung"].includes(r.intakeStatus || "")
+          : r.intakeStatus === "Chuyển phân tích" &&
+            (!r.analysisAssignee || r.analysisAssignee === actor.id))) &&
       reportSearchText(r).includes(
         query
           .trim()
@@ -1549,8 +1743,7 @@ function Reports({
           .replace(/đ/gi, "d")
           .toLowerCase(),
       ) &&
-      (status.startsWith("Tất cả") ||
-        reportWorkflowStatus(r.status) === status) &&
+      (status.startsWith("Tất cả") || statusOf(r) === status) &&
       (behavior.startsWith("Tất cả") ||
         reportTypeLabel(r.behavior) === behavior) &&
       (!source || r.source === source) &&
@@ -1561,26 +1754,31 @@ function Reports({
   return (
     <div className="page-stack">
       <PageHeader
-        title="Quản lý phản ánh"
+        title={
+          citizen
+            ? "Phản ánh của tôi"
+            : actor.role === R.reception
+              ? "Tiếp nhận phản ánh"
+              : actor.role === R.analyst
+                ? "Phản ánh cần phân tích"
+                : "Phản ánh liên quan"
+        }
         description={
           <> Quản lý, tra cứu và theo dõi toàn bộ phản ánh đã tiếp nhận. </>
         }
         action={
           <>
             {" "}
-            <Button onClick={onNew}>
-              {citizen ? "Gửi phản ánh" : "Tiếp nhận phản ánh"}
-            </Button>{" "}
+            {canCreate && (
+              <Button onClick={onNew}>
+                {citizen ? "Gửi phản ánh" : "Tiếp nhận phản ánh"}
+              </Button>
+            )}{" "}
           </>
         }
       />
       <div className="status-tabs">
-        {[
-          "Tất cả trạng thái",
-          "Chờ kiểm tra",
-          "Đã kiểm tra",
-          "Không hợp lệ",
-        ].map((value) => (
+        {statusOptions.map((value) => (
           <button
             key={value}
             className={status === value ? "active" : ""}
@@ -1589,9 +1787,7 @@ function Reports({
             {value} (
             {
               reports.filter(
-                (r) =>
-                  value === "Tất cả trạng thái" ||
-                  reportWorkflowStatus(r.status) === value,
+                (r) => value === "Tất cả trạng thái" || statusOf(r) === value,
               ).length
             }
             )
@@ -1611,10 +1807,9 @@ function Reports({
         </FilterField>
         <FilterField label="Trạng thái">
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option>Tất cả trạng thái</option>
-            <option>Chờ kiểm tra</option>
-            <option>Đã kiểm tra</option>
-            <option>Không hợp lệ</option>
+            {statusOptions.map((x) => (
+              <option key={x}>{x}</option>
+            ))}
           </select>
         </FilterField>
         <FilterField label="Loại phản ánh">
@@ -1672,6 +1867,21 @@ function Reports({
       </Card>
       <Card className="table-card">
         <div className="table-summary">
+          <div className="role-queue-filter">
+            <Field label="Phạm vi công việc">
+              <select value={queue} onChange={(e) => setQueue(e.target.value)}>
+                <option value="all">
+                  {citizen ? "Tất cả phản ánh của tôi" : "Trong đơn vị"}
+                </option>
+                {actor.role === R.reception && (
+                  <option value="waiting">Chờ tiếp nhận / Bổ sung</option>
+                )}
+                {actor.role === R.analyst && (
+                  <option value="mine">Được giao / Chờ phân tích</option>
+                )}
+              </select>
+            </Field>
+          </div>
           <span>
             Hiển thị <b>{filtered.length}</b> phản ánh
           </span>
@@ -1702,7 +1912,7 @@ function ReportTable({
             <th scope="col">Nội dung / Loại phản ánh</th>
             <th scope="col">Thời gian</th>
             <th scope="col">Số tiền</th>
-            <th scope="col">Trạng thái</th>
+            <th scope="col">Tiếp nhận / Phân tích</th>
             {!compact && <th scope="col">Thao tác</th>}
           </tr>
         </thead>
@@ -1766,7 +1976,14 @@ function ReportTable({
                 </b>
               </td>
               <td>
-                <WorkflowBadge value={r.status} />
+                <span className="status-pair">
+                  <Badge tone="blue">{r.intakeStatus || "Mới tiếp nhận"}</Badge>
+                  <Badge
+                    tone={r.analysisStatus === "Đã kiểm tra" ? "green" : "gray"}
+                  >
+                    {r.analysisStatus || "Chờ phân tích"}
+                  </Badge>
+                </span>
               </td>
               {!compact && (
                 <td>
@@ -1789,7 +2006,12 @@ function ReportTable({
 function ReportDetail({
   report,
   reports,
-  canEdit,
+  canAnalyze,
+  canReveal,
+  actor,
+  accounts,
+  cases,
+  onAction,
   onBack,
   onGraph,
   onLog,
@@ -1798,16 +2020,25 @@ function ReportDetail({
 }: {
   report: Report
   reports: Report[]
-  canEdit: boolean
+  canAnalyze: boolean
+  canReveal: boolean
+  actor: StaffAccount
+  accounts: StaffAccount[]
+  cases: CaseFile[]
+  onAction: (op: Operation) => boolean
   onBack: () => void
   onGraph: () => void
   onLog: (a: string, t: string, d?: string) => void
-  onUpdate: (report: Report) => void
+  onUpdate: (
+    report: Report,
+    intent?: "extract-save" | "extract-start",
+  ) => boolean
   notify: (x: string) => void
 }) {
   const [extracted, setExtracted] = useState(report.extracted ?? true)
   const [preview, setPreview] = useState(false)
   const [draft, setDraft] = useState({
+    analysisNote: report.analysisNote || "",
     subjectName: reportPeople(report).subjectName || "",
     socialAccount:
       report.socialAccount || reportPeople(report).subjectSocial || "",
@@ -1878,7 +2109,7 @@ function ReportDetail({
       next.cluster = undefined
       next.status = "Đã kiểm tra"
     }
-    onUpdate(next)
+    if (!canAnalyze || !onUpdate(next, "extract-save")) return
     if (
       subjectName !== (reportPeople(report).subjectName || "") ||
       draft.socialAccount !==
@@ -1913,10 +2144,10 @@ function ReportDetail({
     )
     setDirty(false)
     setError("")
-    notify("Đã lưu thông tin đã kiểm tra")
   }
   return (
     <ReportPrivacy
+      allowReveal={canReveal}
       onReveal={(label) =>
         onLog(
           "Xem thông tin đã che",
@@ -1940,11 +2171,26 @@ function ReportDetail({
               </span>
             </div>
           </div>
-          {report.cluster && (
+          {report.cluster && screenAllowed(actor, "graph") && (
             <Button onClick={onGraph}>Xem sơ đồ {report.cluster} →</Button>
           )}
         </div>
         <ReportPeople report={report} />
+        <ReceptionPanel
+          report={report}
+          actor={actor}
+          accounts={accounts}
+          cases={cases}
+          onAction={onAction}
+        />
+        {!canAnalyze && (
+          <p className="access-note">
+            Chỉ xem thông tin phân tích.{" "}
+            {actor.role === R.analyst
+              ? "Phiếu cần được tiếp nhận bàn giao và giao cho tài khoản này trước khi chỉnh sửa."
+              : "Quyền chỉnh sửa thực thể và xác nhận liên kết thuộc cán bộ phân tích được giao."}
+          </p>
+        )}
         <div className="detail-grid">
           <div className="page-stack">
             <Card className="detail-card">
@@ -2066,68 +2312,73 @@ function ReportDetail({
                     ) : report.rejectedClusters?.includes(cluster.id) ? (
                       <>
                         <Badge tone="gray">Đã loại bỏ đề xuất</Badge>
-                        <Button
-                          variant="ghost"
-                          disabled={!canEdit}
-                          onClick={() => {
-                            onUpdate({
-                              ...report,
-                              rejectedClusters: report.rejectedClusters?.filter(
-                                (id) => id !== cluster.id,
-                              ),
-                            })
-                            onLog(
-                              "Khôi phục đề xuất",
-                              report.id,
-                              `Trước: loại bỏ ${cluster.id}; sau: chờ xem xét`,
-                            )
-                          }}
-                        >
-                          Xem xét lại {cluster.id}
-                        </Button>
+                        {actor.role === R.analyst && (
+                          <Button
+                            variant="ghost"
+                            disabled={!canAnalyze}
+                            onClick={() => {
+                              onUpdate({
+                                ...report,
+                                rejectedClusters:
+                                  report.rejectedClusters?.filter(
+                                    (id) => id !== cluster.id,
+                                  ),
+                              })
+                              onLog(
+                                "Khôi phục đề xuất",
+                                report.id,
+                                `Trước: loại bỏ ${cluster.id}; sau: chờ xem xét`,
+                              )
+                            }}
+                          >
+                            Xem xét lại {cluster.id}
+                          </Button>
+                        )}
                       </>
                     ) : (
                       <>
-                        <Button
-                          disabled={!canEdit || !report.reviewed || dirty}
-                          onClick={() => {
-                            onUpdate({
-                              ...report,
-                              cluster: cluster.id,
-                              updatedAt: nowISO(),
-                              status: "Có liên quan",
-                            })
-                            onLog(
-                              "Xác nhận liên kết",
-                              report.id,
-                              `Trước: ${report.cluster || "chưa liên kết"}; sau: ${cluster.id}; căn cứ ${matches.map((m) => m.report.id).join(", ")}`,
-                            )
-                            notify(`Đã xác nhận ${report.id} vào ${cluster.id}`)
-                          }}
-                        >
-                          Xác nhận liên kết {cluster.id}
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          disabled={!canEdit}
-                          onClick={() => {
-                            onUpdate({
-                              ...report,
-                              rejectedClusters: [
-                                ...(report.rejectedClusters || []),
-                                cluster.id,
-                              ],
-                            })
-                            onLog(
-                              "Loại bỏ đề xuất liên kết",
-                              report.id,
-                              `Trước: đề xuất ${cluster.id}; sau: loại bỏ. Không thay đổi thành viên cụm.`,
-                            )
-                            notify(`Đã loại bỏ đề xuất ${cluster.id}`)
-                          }}
-                        >
-                          Loại bỏ đề xuất {cluster.id}
-                        </Button>
+                        {actor.role === R.analyst && (
+                          <Button
+                            disabled={!canAnalyze || !report.reviewed || dirty}
+                            onClick={() => {
+                              onUpdate({
+                                ...report,
+                                cluster: cluster.id,
+                                updatedAt: nowISO(),
+                                status: "Có liên quan",
+                              })
+                              onLog(
+                                "Xác nhận liên kết",
+                                report.id,
+                                `Trước: ${report.cluster || "chưa liên kết"}; sau: ${cluster.id}; căn cứ ${matches.map((m) => m.report.id).join(", ")}`,
+                              )
+                            }}
+                          >
+                            Xác nhận liên kết {cluster.id}
+                          </Button>
+                        )}
+                        {actor.role === R.analyst && (
+                          <Button
+                            variant="secondary"
+                            disabled={!canAnalyze}
+                            onClick={() => {
+                              onUpdate({
+                                ...report,
+                                rejectedClusters: [
+                                  ...(report.rejectedClusters || []),
+                                  cluster.id,
+                                ],
+                              })
+                              onLog(
+                                "Loại bỏ đề xuất liên kết",
+                                report.id,
+                                `Trước: đề xuất ${cluster.id}; sau: loại bỏ. Không thay đổi thành viên cụm.`,
+                              )
+                            }}
+                          >
+                            Loại bỏ đề xuất {cluster.id}
+                          </Button>
+                        )}
                       </>
                     )}
                   </div>
@@ -2151,17 +2402,20 @@ function ReportDetail({
               sub="Mô phỏng theo kịch bản mẫu, không sử dụng OCR/AI hay API."
             />
             {!extracted ? (
-              <Button
-                disabled={!canEdit}
-                onClick={() => {
-                  setExtracted(true)
-                  onUpdate({ ...report, extracted: true })
-                  onLog("Trích xuất mô phỏng", report.id)
-                  notify("Đã trích xuất theo kịch bản mẫu")
-                }}
-              >
-                Trích xuất thông tin
-              </Button>
+              <>
+                {actor.role === R.analyst && (
+                  <Button
+                    disabled={!canAnalyze}
+                    onClick={() => {
+                      setExtracted(true)
+                      onUpdate({ ...report, extracted: true }, "extract-start")
+                      onLog("Trích xuất mô phỏng", report.id)
+                    }}
+                  >
+                    Trích xuất thông tin
+                  </Button>
+                )}
+              </>
             ) : (
               <div className="entity-form">
                 <p className="people-privacy-note">
@@ -2171,7 +2425,7 @@ function ReportDetail({
                 <Field label="Tên / danh xưng bên bị phản ánh">
                   <input
                     value={draft.subjectName}
-                    readOnly={!canEdit}
+                    readOnly={!canAnalyze}
                     onChange={(e) => {
                       setDraft({ ...draft, subjectName: e.target.value })
                       setDirty(true)
@@ -2182,7 +2436,7 @@ function ReportDetail({
                   label="Mạng xã hội bên bị phản ánh"
                   name="subjectSocial"
                   value={draft.socialAccount}
-                  canEdit={canEdit}
+                  canEdit={canAnalyze}
                   onChange={(value) => {
                     setDraft({ ...draft, socialAccount: value })
                     setDirty(true)
@@ -2191,7 +2445,7 @@ function ReportDetail({
                 <Field label="Loại phản ánh">
                   <select
                     value={draft.behavior}
-                    disabled={!canEdit}
+                    disabled={!canAnalyze}
                     onChange={(e) => {
                       setDraft({ ...draft, behavior: e.target.value })
                       setDirty(true)
@@ -2208,7 +2462,7 @@ function ReportDetail({
                   <Field label="Mô tả loại phản ánh">
                     <input
                       value={draft.behaviorOther}
-                      readOnly={!canEdit}
+                      readOnly={!canAnalyze}
                       onChange={(e) => {
                         setDraft({ ...draft, behaviorOther: e.target.value })
                         setDirty(true)
@@ -2231,7 +2485,7 @@ function ReportDetail({
                       name={key}
                       label={label}
                       value={draft[key]}
-                      canEdit={canEdit}
+                      canEdit={canAnalyze}
                       onChange={(value) => {
                         setDraft({ ...draft, [key]: value })
                         setDirty(true)
@@ -2244,7 +2498,7 @@ function ReportDetail({
                         min={key === "amount" ? 0 : undefined}
                         step={key === "amount" ? "any" : undefined}
                         value={draft[key]}
-                        readOnly={!canEdit}
+                        readOnly={!canAnalyze}
                         onChange={(e) => {
                           setDraft({ ...draft, [key]: e.target.value })
                           setDirty(true)
@@ -2262,9 +2516,22 @@ function ReportDetail({
                   Lưu thông tin đã kiểm tra để xem đề xuất liên kết. Kết quả chỉ
                   hỗ trợ xác minh; không phải kết luận vi phạm.
                 </p>
-                <Button disabled={!canEdit} onClick={save}>
-                  Lưu thông tin đã kiểm tra
-                </Button>
+                <Field label="Nhận định phân tích">
+                  <textarea
+                    rows={3}
+                    value={draft.analysisNote}
+                    readOnly={!canAnalyze}
+                    onChange={(e) => {
+                      setDraft({ ...draft, analysisNote: e.target.value })
+                      setDirty(true)
+                    }}
+                  />
+                </Field>
+                {actor.role === R.analyst && (
+                  <Button disabled={!canAnalyze} onClick={save}>
+                    Lưu thông tin đã kiểm tra
+                  </Button>
+                )}
               </div>
             )}
           </Card>
@@ -2307,12 +2574,14 @@ function Alerts({
   onOpen,
   onGraph,
   onCreate,
+  allowCreate = false,
 }: {
   alerts: AlertItem[]
   reports: Report[]
   selectedId: string
   onOpen: (id: string) => void
   onGraph: (clusterId: string) => void
+  allowCreate?: boolean
   onCreate: (clusterId?: string) => void
 }) {
   useLayoutEffect(() => {
@@ -2464,13 +2733,15 @@ function Alerts({
               >
                 Mở sơ đồ liên kết
               </Button>
-              <Button
-                variant="ghost"
-                className="full"
-                onClick={() => onCreate(selected.clusterId)}
-              >
-                Tạo hồ sơ
-              </Button>
+              {allowCreate && (
+                <Button
+                  variant="ghost"
+                  className="full"
+                  onClick={() => onCreate(selected.clusterId)}
+                >
+                  Tạo hồ sơ
+                </Button>
+              )}
             </>
           )}
         </Card>
@@ -2485,11 +2756,13 @@ function AlertDetail({
   onClose,
   onGraph,
   onCreate,
+  allowCreate = false,
 }: {
   alert: AlertItem
   reports: Report[]
   onClose: () => void
   onGraph: () => void
+  allowCreate?: boolean
   onCreate: () => void
 }) {
   const related = alert.clusterId
@@ -2535,7 +2808,9 @@ function AlertDetail({
               Mở sơ đồ liên kết
             </Button>
           )}
-          {alert.clusterId && <Button onClick={onCreate}>Tạo hồ sơ</Button>}
+          {alert.clusterId && allowCreate && (
+            <Button onClick={onCreate}>Tạo hồ sơ</Button>
+          )}
         </>
       }
     >
@@ -2665,26 +2940,10 @@ function CreateCaseModal({
       <Field label="Tên hồ sơ" required>
         <input value={name} onChange={(event) => setName(event.target.value)} />
       </Field>
-      <Field label="Cán bộ phụ trách" required>
-        <select
-          value={officer}
-          onChange={(event) => setOfficer(event.target.value)}
-        >
-          <option>Nguyễn Phân Tích</option>
-          <option>Lê Minh Anh</option>
-          <option>Trần Quốc Huy</option>
-        </select>
-      </Field>
-      <Field label="Mức ưu tiên">
-        <select
-          value={priority}
-          onChange={(event) => setPriority(event.target.value)}
-        >
-          <option>Cao</option>
-          <option>Trung bình</option>
-          <option>Thấp</option>
-        </select>
-      </Field>
+      <p className="access-note">
+        Hồ sơ mới chờ lãnh đạo phân công cán bộ xử lý. Mức ưu tiên ban đầu theo
+        cụm: {cluster.risk}.
+      </p>
     </Modal>
   )
 }
@@ -2694,10 +2953,12 @@ function Cases({
   reports,
   onOpen,
   onCreate,
+  canCreate = false,
 }: {
   cases: CaseFile[]
   reports: Report[]
   onOpen: (id: string) => void
+  canCreate?: boolean
   onCreate: () => void
 }) {
   const [query, setQuery] = useState("")
@@ -2717,7 +2978,9 @@ function Cases({
         action={
           <>
             {" "}
-            <Button onClick={onCreate}>＋ Tạo hồ sơ phân tích</Button>{" "}
+            {canCreate && (
+              <Button onClick={onCreate}>＋ Tạo hồ sơ phân tích</Button>
+            )}{" "}
           </>
         }
       />
@@ -2836,37 +3099,28 @@ function Cases({
 function CaseDetail({
   item,
   reports,
-  canEdit,
+  actor,
+  accounts,
+  onAction,
   onBack,
-  onSave,
-  onDenied,
   onLogs,
   onReport,
+  onDraftChange,
 }: {
   item: CaseFile
   reports: Report[]
-  canEdit: boolean
+  actor: StaffAccount
+  accounts: StaffAccount[]
+  onAction: (op: Operation) => boolean
   onBack: () => void
-  onSave: (item: CaseFile, detail: string) => void
-  onDenied: () => void
-  onLogs: () => void
+  onLogs?: () => void
   onReport: (id: string) => void
+  onDraftChange: (value: boolean) => void
 }) {
-  const [tab, setTab] = useState("Tổng quan")
-  const [officer, setOfficer] = useState(item.officer)
-  const [status, setStatus] = useState(item.status)
-  const [note, setNote] = useState(item.note)
-  const [reportOpen, setReportOpen] = useState(false)
-  const inferredClusterId = item.clusterId
-  const reportIds = item.reportIds
-  const related = reports.filter((report) => reportIds.includes(report.id))
-  const entities = getEntities(related)
-  const entityCount =
-    entities.accounts.length + entities.phones.length + entities.websites.length
-  const total = related.reduce((sum, report) => sum + report.amount, 0)
-  const cluster = inferredClusterId
-    ? clusters.find((value) => value.id === inferredClusterId)
-    : undefined
+  const [tab, setTab] = useState("Tổng quan"),
+    [preview, setPreview] = useState<{ version?: ReportVersion } | null>(null)
+  const related = reports.filter((r) => item.reportIds.includes(r.id))
+  const total = related.reduce((n, r) => n + r.amount, 0)
   const tabs = [
     "Tổng quan",
     "Phản ánh liên quan",
@@ -2874,25 +3128,10 @@ function CaseDetail({
     "Tài liệu",
     "Lịch sử xử lý",
   ]
-  const save = () => {
-    if (!canEdit) return onDenied()
-    const detail = `Cán bộ phụ trách — trước: ${item.officer}; sau: ${officer}. Trạng thái — trước: ${item.status}; sau: ${status}. Nhận định — trước: ${item.note || "Chưa có"}; sau: ${note || "Chưa có"}.`
-    onSave(
-      {
-        ...item,
-        reportIds,
-        officer,
-        status,
-        note,
-        updated: nowISO(),
-        history: [
-          `${nowISO()} · Cập nhật cán bộ, trạng thái và nhận định`,
-          ...(item.history || []),
-        ],
-      },
-      detail,
-    )
-  }
+  const snapshot = preview?.version?.snapshot
+  const previewItem = snapshot
+    ? { ...item, ...snapshot, note: preview!.version!.content }
+    : item
   return (
     <div className="page-stack">
       <button className="back-link" onClick={onBack}>
@@ -2903,104 +3142,57 @@ function CaseDetail({
           <div className="detail-code">{item.id}</div>
           <h1 className="page-heading">{item.name}</h1>
           <div className="hero-meta">
-            <Badge tone={statusTone(status)}>{status}</Badge>
-            <Badge tone={statusTone(item.priority)}>
-              Ưu tiên {item.priority}
-            </Badge>
-            <span>Cập nhật {formatDateTime(item.updated)}</span>
+            <Badge tone="blue">{item.status}</Badge>
+            <span>
+              {item.officer} · {item.reportIds.length} phản ánh · {total} triệu
+              đồng
+            </span>
           </div>
         </div>
         <div className="hero-buttons">
-          <Button variant="secondary" onClick={onLogs}>
-            Xem nhật ký
+          {onLogs && (
+            <Button variant="secondary" onClick={onLogs}>
+              Xem nhật ký
+            </Button>
+          )}
+          <Button
+            onClick={() => setPreview({ version: item.reportVersions?.at(-1) })}
+          >
+            Xem báo cáo
           </Button>
-          <Button onClick={() => setReportOpen(true)}>Xem báo cáo</Button>
         </div>
       </div>
       <Tabs items={tabs} active={tab} onChange={setTab} />
-      {tab === "Tổng quan" ? (
-        <div className="case-detail-grid">
-          <Card className="detail-card">
-            <div className="section-title">Thông tin xử lý</div>
-            <div className="two-col">
-              <Field label="Cán bộ phụ trách">
-                <select
-                  value={officer}
-                  onChange={(event) => setOfficer(event.target.value)}
-                >
-                  <option>Nguyễn Phân Tích</option>
-                  <option>Lê Minh Anh</option>
-                  <option>Trần Quốc Huy</option>
-                </select>
-              </Field>
-              <Field label="Trạng thái">
-                <select
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value)}
-                >
-                  <option>Mới tạo</option>
-                  <option>Đang xác minh</option>
-                  <option>Chờ bổ sung</option>
-                  <option>Hoàn tất phân tích</option>
-                </select>
-              </Field>
-            </div>
-            <Field label="Nhận định cán bộ">
-              <textarea
-                rows={8}
-                value={note}
-                placeholder="Thêm nhận định nghiệp vụ..."
-                onChange={(event) => setNote(event.target.value)}
-              />
-            </Field>
-            <div className="save-row">
-              <span>Mọi thay đổi sẽ được ghi vào nhật ký hệ thống.</span>
-              <Button onClick={save}>Lưu thay đổi</Button>
-            </div>
-          </Card>
-          <Card className="case-summary">
-            <div className="section-title">Nguồn hồ sơ</div>
-            <div className="linked-cluster">
-              <span>{cluster ? "CỤM LIÊN KẾT" : "PHẢN ÁNH ĐỘC LẬP"}</span>
-              <b>
-                {cluster
-                  ? `${cluster.id} · ${cluster.name}`
-                  : `Phản ánh ${reportIds[0] || "—"}`}
-              </b>
-              <small>
-                {cluster ? `Mức rủi ro ${cluster.risk}` : related[0]?.title}
-              </small>
-            </div>
-            <DetailRows
-              rows={[
-                ["Phản ánh liên quan", `${related.length} phản ánh`],
-                ["Thực thể", `${entityCount} thực thể`],
-                ["Tổng số tiền", `${total} triệu đồng`],
-                ["Mức ưu tiên", item.priority],
-              ]}
-            />
-          </Card>
-        </div>
-      ) : (
+      <div style={{ display: tab === "Tổng quan" ? "block" : "none" }}>
+        <CaseWorkPanel
+          item={item}
+          actor={actor}
+          accounts={accounts}
+          onAction={onAction}
+          onDraftChange={onDraftChange}
+          onPreview={(version) => setPreview({ version })}
+        />
+      </div>
+      {tab !== "Tổng quan" && (
         <CaseTab
           tab={tab}
           item={item}
           related={related}
-          entities={entities}
+          entities={getEntities(related)}
           onReport={onReport}
         />
       )}
-      {reportOpen && (
+      {preview && (
         <ReportModal
-          item={{ ...item, clusterId: inferredClusterId, reportIds }}
-          reports={related}
-          onClose={() => setReportOpen(false)}
+          item={previewItem}
+          reports={snapshot?.reports || related}
+          version={preview.version}
+          onClose={() => setPreview(null)}
         />
       )}
     </div>
   )
 }
-
 function CaseTab({
   tab,
   item,
@@ -3074,16 +3266,32 @@ function CaseTab({
             </details>
           </div>
         ))}
-        {documents.length === 0 && (
-          <div className="empty">Hồ sơ chưa có tài liệu đính kèm.</div>
-        )}
+        {(item.workItems || [])
+          .filter((w) => w.attachment)
+          .map((w, i) => (
+            <div className="file-row" key={`work-${i}`}>
+              <div className="file-icon">MẪU</div>
+              <div>
+                <b>Tài liệu bổ sung {i + 1}</b>
+                <span>
+                  {w.author} · {formatDateTime(w.time)}
+                </span>
+                <p>{w.content}</p>
+                <small>Tài liệu giả lập</small>
+              </div>
+            </div>
+          ))}
+        {documents.length === 0 &&
+          !(item.workItems || []).some((w) => w.attachment) && (
+            <div className="empty">Hồ sơ chưa có tài liệu đính kèm.</div>
+          )}
       </Card>
     )
   }
   return (
     <Card className="timeline">
-      {(item.history || []).map((entry) => (
-        <div key={entry}>
+      {(item.history || []).map((entry, index) => (
+        <div key={`${entry}-${index}`}>
           <i />
           <b>{entry.split(" · ")[1] || entry}</b>
           <span>{formatDateTime(entry.split(" · ")[0])}</span>
@@ -3097,10 +3305,12 @@ function ReportModal({
   item,
   reports,
   onClose,
+  version,
 }: {
   item: CaseFile
   reports: Report[]
   onClose: () => void
+  version?: ReportVersion
 }) {
   const entities = getEntities(reports)
   const total = reports.reduce((sum, report) => sum + report.amount, 0)
@@ -3138,6 +3348,13 @@ function ReportModal({
         <DetailRows
           rows={[
             ["Mã hồ sơ", item.id],
+            [
+              "Phiên bản báo cáo",
+              version
+                ? `${version.version} · ${version.state}`
+                : "Tổng hợp hiện tại (chưa lưu)",
+            ],
+            ["Ý kiến xem xét", version?.reviewNote || "Chưa có"],
             ["Nguồn hồ sơ", source],
             ["Trạng thái", item.status],
             ["Mức ưu tiên", item.priority],
@@ -3188,162 +3405,6 @@ function ReportModal({
         </div>
       </div>
     </Modal>
-  )
-}
-
-function Accounts({
-  role,
-  setRole,
-  onEdit,
-  accountRoles,
-}: {
-  accountRoles: Record<string, string>
-  role: string
-  setRole: (r: string) => void
-  onEdit: (account: string, role: string) => void
-}) {
-  const [query, setQuery] = useState("")
-  const accounts = [
-    [
-      "cong.dan.demo",
-      "Người dân / Tổ chức",
-      "Cổng phản ánh mẫu",
-      "Đang hoạt động",
-    ],
-    [
-      "quan.tri.demo",
-      "Quản trị hệ thống",
-      "Trung tâm quản trị mẫu",
-      "Đang hoạt động",
-    ],
-    ["tiep.nhan.demo", "Cán bộ tiếp nhận", "Đội tiếp nhận A", "Đang hoạt động"],
-    [
-      "phan.tich.demo",
-      "Cán bộ phân tích",
-      "Đội phân tích mạng lưới",
-      "Đang hoạt động",
-    ],
-    ["xu.ly.demo", "Cán bộ xử lý hồ sơ", "Đội xác minh mẫu", "Đang hoạt động"],
-    [
-      "lanh.dao.demo",
-      "Lãnh đạo theo dõi",
-      "Đơn vị chỉ đạo mẫu",
-      "Đang hoạt động",
-    ],
-    [
-      "giam.sat.demo",
-      "Kiểm tra, giám sát",
-      "Bộ phận giám sát",
-      "Đang hoạt động",
-    ],
-  ]
-  return (
-    <div className="page-stack">
-      <PageHeader
-        title="Tài khoản và phân quyền"
-        description="Quản lý tài khoản và phạm vi thao tác. Phân quyền chỉ mô phỏng trên giao diện."
-      />
-
-      <Card className="table-card">
-        <CardHead
-          title="Danh sách tài khoản giả lập"
-          sub="07 tài khoản giả lập · Thay đổi quyền chỉ tác động giao diện demo"
-        />
-        <div className="account-search">
-          <FilterField label="Tìm tài khoản">
-            <input
-              aria-label="Tìm tài khoản"
-              placeholder="Tìm tài khoản, vai trò hoặc đơn vị..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </FilterField>
-        </div>
-        <DataTable>
-          <thead>
-            <tr>
-              <th>Tài khoản</th>
-              <th>Vai trò</th>
-              <th>Đơn vị mẫu</th>
-              <th>Trạng thái</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {accounts
-              .filter((a) =>
-                `${a[0]} ${accountRoles[a[0]] || a[1]} ${a[2]}`
-                  .toLowerCase()
-                  .includes(query.trim().toLowerCase()),
-              )
-              .map((a) => (
-                <tr key={a[0]}>
-                  <td>
-                    <b>{a[0]}</b>
-                  </td>
-                  <td>{accountRoles[a[0]] || a[1]}</td>
-                  <td>{a[2]}</td>
-                  <td>
-                    <Badge tone="green">{a[3]}</Badge>
-                  </td>
-                  <td>
-                    <Button
-                      variant="ghost"
-                      onClick={() => onEdit(a[0], accountRoles[a[0]] || a[1])}
-                    >
-                      Sửa vai trò
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </DataTable>
-        {!accounts.some((a) =>
-          `${a[0]} ${accountRoles[a[0]] || a[1]} ${a[2]}`
-            .toLowerCase()
-            .includes(query.trim().toLowerCase()),
-        ) && <EmptyState>Không tìm thấy tài khoản phù hợp.</EmptyState>}
-      </Card>
-      <details className="role-help">
-        <summary>Ma trận vai trò và phạm vi mô phỏng</summary>
-        <div className="role-switcher">
-          <div>
-            <div className="section-title">Vai trò demo hiện tại</div>
-            <p>Mô phỏng quyền thao tác trên giao diện theo từng vai trò.</p>
-          </div>
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            {roles.map((r) => (
-              <option key={r}>{r}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="role-grid">
-          {roles.map((r, i) => (
-            <div
-              className={`role-card ${r === role ? "selected" : ""}`}
-              key={r}
-            >
-              <div className="role-code">{String(i + 1).padStart(2, "0")}</div>
-              <b>{r}</b>
-              <p>
-                {
-                  [
-                    "Quản lý tài khoản và cấu hình; không mặc nhiên xem toàn bộ nội dung nghiệp vụ.",
-                    "Tiếp nhận và tạo phản ánh; không chỉnh sửa phân quyền.",
-                    "Trích xuất, phân tích liên kết và đánh giá cảnh báo.",
-                    "Phân công, cập nhật và hoàn thiện hồ sơ vụ việc.",
-                    "Theo dõi số liệu tổng hợp và tiến độ xử lý.",
-                    "Xem nhật ký; không chỉnh sửa hồ sơ.",
-                  ][i]
-                }
-              </p>
-              {r === role && <Badge tone="blue">Đang sử dụng</Badge>}
-            </div>
-          ))}
-        </div>
-      </details>
-    </div>
   )
 }
 
@@ -3533,7 +3594,7 @@ function CitizenReportView({
             ? "Không phát sinh chuyển tiền"
             : `${report.amount} triệu đồng`}
         </p>
-        <WorkflowBadge value={report.status} />
+        <Badge tone="blue">{report.intakeStatus || "Mới tiếp nhận"}</Badge>
         <p className="intake-content">{report.content}</p>
         <p>Tài liệu: {report.attachment ? "01 ảnh mẫu" : "Không có"}</p>
       </div>
