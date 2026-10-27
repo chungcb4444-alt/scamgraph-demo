@@ -78,6 +78,8 @@ const fs = require("node:fs")
     await btn("Lưu phản ánh").click()
     await btn("Mở chi tiết PA-013").click()
     await btn("Trích xuất thông tin").click()
+    await btn("Hiện Tài khoản ngân hàng trích xuất").click()
+    await btn("Hiện Số điện thoại trích xuất").click()
     await page
       .getByLabel("Tài khoản ngân hàng", { exact: true })
       .fill("DEMO-TK-RIENG")

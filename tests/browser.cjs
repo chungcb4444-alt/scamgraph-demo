@@ -88,6 +88,7 @@ let activePage
       assert.equal((await reports()).find((r) => r.id === "PA-013").amount, 15)
       assert.equal((await cluster("CUM-001")).length, 3)
       await button("Trích xuất thông tin").click()
+      await button("Hiện Số điện thoại trích xuất").click()
       await page
         .getByLabel("Số điện thoại", { exact: true })
         .fill("DEMO-SDT-013")

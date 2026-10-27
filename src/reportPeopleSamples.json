@@ -1,0 +1,184 @@
+{
+  "PA-001": {
+    "senderName": "Trần Thị Mai",
+    "senderContact": "0912 367 281",
+    "people": {
+      "birthYear": 1992,
+      "residence": "Hà Nội",
+      "email": "mai.tran@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Hoàng Anh, tự giới thiệu là nhân viên hỗ trợ tín dụng",
+      "subjectSocial": "Hỗ trợ hồ sơ Hoàng Anh (Zalo)",
+      "currentSituation": "Chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-002": {
+    "senderName": "Lê Văn Phúc",
+    "senderContact": "0905 418 282",
+    "people": {
+      "birthYear": 1987,
+      "residence": "Đà Nẵng",
+      "email": "phuc.le@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Thu Ngân, tự giới thiệu là nhân viên chăm sóc khách hàng",
+      "subjectSocial": "CSKH Thu Ngân (Zalo)",
+      "currentSituation": "Chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-003": {
+    "senderName": "Phạm Thanh Hương",
+    "senderContact": "0936 812 283",
+    "people": {
+      "birthYear": 1990,
+      "residence": "Hải Phòng",
+      "email": "huong.pham@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Hoàng Anh, tự giới thiệu là nhân viên hỗ trợ tín dụng",
+      "subjectSocial": "Hỗ trợ hồ sơ Hoàng Anh (Zalo)",
+      "currentSituation": "Chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-004": {
+    "senderName": "Đỗ Quốc Anh",
+    "senderContact": "0978 501 284",
+    "people": {
+      "birthYear": 1982,
+      "residence": "Hà Nội",
+      "email": "anh.do@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Tự giới thiệu tên Nguyễn Văn Hải, cán bộ điều tra",
+      "subjectSocial": "Chưa cung cấp",
+      "currentSituation": "Chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-005": {
+    "senderName": "Nguyễn Minh Tuấn",
+    "senderContact": "0963 729 285",
+    "people": {
+      "birthYear": 1998,
+      "residence": "Hà Nội",
+      "email": "tuan.nguyen@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Tự xưng cán bộ xử lý vi phạm, không cung cấp họ tên",
+      "subjectSocial": "Chưa cung cấp",
+      "currentSituation": "Chưa nhận được biên nhận xử lý",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-006": {
+    "senderName": "Vũ Thu Hà",
+    "senderContact": "0945 920 286",
+    "people": {
+      "birthYear": 1996,
+      "residence": "Cần Thơ",
+      "email": "ha.vu@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Tự giới thiệu tên Nguyễn Văn Hải, cán bộ điều tra",
+      "subjectSocial": "Chưa cung cấp",
+      "currentSituation": "Chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-007": {
+    "senderName": "Bùi Văn Thành",
+    "senderContact": "0971 204 287",
+    "people": {
+      "birthYear": 1993,
+      "residence": "Bắc Ninh",
+      "email": "thanh.bui@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Người bán chưa cung cấp họ tên",
+      "subjectSocial": "Laptop Minh Phát (Mạng xã hội)",
+      "currentSituation": "Chưa nhận hàng và chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-008": {
+    "senderName": "Hoàng Thị Lan",
+    "senderContact": "0905 631 288",
+    "people": {
+      "birthYear": 1989,
+      "residence": "Đà Nẵng",
+      "email": "lan.hoang@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Người hướng dẫn tự giới thiệu tên Quang",
+      "subjectSocial": "Quang Hỗ Trợ Đầu Tư (Zalo)",
+      "currentSituation": "Chưa rút được tiền đã nạp",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-009": {
+    "senderName": "Trịnh Đức Huy",
+    "senderContact": "0909 412 289",
+    "people": {
+      "birthYear": 1991,
+      "residence": "TP Hồ Chí Minh",
+      "email": "huy.trinh@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Người gọi tự giới thiệu tên Ngọc",
+      "subjectSocial": "Ngọc Hỗ Trợ Nhận Quà",
+      "currentSituation": "Chưa nhận quà và chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-010": {
+    "senderName": "Đặng Ngọc Linh",
+    "senderContact": "0934 551 290",
+    "people": {
+      "birthYear": 1999,
+      "residence": "Hải Phòng",
+      "email": "linh.dang@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Người hướng dẫn tự giới thiệu tên Hồng",
+      "subjectSocial": "Hồng Quản Lý Cộng Tác Viên",
+      "currentSituation": "Chưa rút được tiền đã chuyển",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-011": {
+    "senderName": "Phan Thị Hạnh",
+    "senderContact": "0918 703 291",
+    "people": {
+      "birthYear": 1985,
+      "residence": "Cần Thơ",
+      "email": "hanh.phan@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Người nhắn dùng tên Trần Đức Long, giống tên bạn người gửi",
+      "subjectSocial": "Trần Đức Long (Mạng xã hội)",
+      "currentSituation": "Chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-012": {
+    "senderName": "Lương Quốc Bảo",
+    "senderContact": "0989 614 292",
+    "people": {
+      "birthYear": 1994,
+      "residence": "Bắc Ninh",
+      "email": "bao.luong@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Người gửi tin tự xưng là nhân viên giao hàng",
+      "subjectSocial": "Chưa cung cấp",
+      "currentSituation": "Chưa phát sinh chuyển tiền; cần kiểm tra đường dẫn.",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  },
+  "PA-013": {
+    "senderName": "Nguyễn Hoàng Minh",
+    "senderContact": "0984 712 293",
+    "people": {
+      "birthYear": 1995,
+      "residence": "Hà Nội",
+      "email": "minh.nguyen@example.com",
+      "capacity": "Người trực tiếp gặp sự việc",
+      "subjectName": "Người gọi tự giới thiệu tên Đức, nhân viên ngân hàng",
+      "subjectSocial": "Hỗ Trợ Xác Minh Đức (Zalo)",
+      "currentSituation": "Chưa được hoàn tiền",
+      "followUp": "Tôi đã dừng trao đổi khi thấy dấu hiệu bất thường. Tôi còn lưu nội dung liên lạc và đề nghị cơ quan tiếp nhận kiểm tra, hướng dẫn bổ sung tài liệu; hiện chưa xác định được danh tính thật của người liên hệ."
+    }
+  }
+}

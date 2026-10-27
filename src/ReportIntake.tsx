@@ -34,6 +34,7 @@ type Draft = {
   phone: string
   website: string
   socialAccount: string
+  subjectName: string
   source: string
   sourceOther: string
   attachment: boolean
@@ -56,6 +57,7 @@ const emptyDraft = (): Draft => ({
   phone: "",
   website: "",
   socialAccount: "",
+  subjectName: "",
   source: "",
   sourceOther: "",
   attachment: false,
@@ -215,6 +217,7 @@ export default function ReportIntake({
     setDraft({
       ...emptyDraft(),
       sender: "Nguyễn Hoàng Minh",
+      subjectName: "Người gọi tự giới thiệu tên Đức, nhân viên ngân hàng",
       contact: "DEMO-LIEN-HE-013",
       behavior: "Giả danh ngân hàng",
       title: "Yêu cầu xác minh tài khoản qua website đáng ngờ",
@@ -289,6 +292,9 @@ export default function ReportIntake({
         phone: draft.phone.trim() || undefined,
         website: draft.website.trim() || undefined,
         socialAccount: draft.socialAccount.trim() || undefined,
+        people: draft.subjectName?.trim()
+          ? { subjectName: draft.subjectName.trim() }
+          : undefined,
         attachment: draft.attachment,
         extracted: false,
         reviewed: false,
@@ -590,6 +596,7 @@ export default function ReportIntake({
                 </div>
                 {(
                   [
+                    ["subjectName", "Tên / danh xưng bên bị phản ánh"],
                     ["account", "Tài khoản ngân hàng"],
                     ["bank", "Ngân hàng"],
                     ["phone", "Số điện thoại liên quan"],
@@ -599,7 +606,7 @@ export default function ReportIntake({
                 ).map(([key, label]) => (
                   <Field label={label} key={key}>
                     <input
-                      value={draft[key]}
+                      value={draft[key] || ""}
                       onChange={(e) => set(key, e.target.value)}
                       placeholder="Chỉ nhập nếu bạn biết"
                     />
@@ -715,6 +722,7 @@ export default function ReportIntake({
                       ["Ngân hàng", draft.bank],
                       ["Điện thoại liên quan", draft.phone],
                       ["Website", draft.website],
+                      ["Tên / danh xưng bên bị phản ánh", draft.subjectName],
                       ["Tài khoản mạng xã hội", draft.socialAccount],
                     ].filter(([, value]) => value.trim()),
                     ["Tài liệu", draft.attachment ? "01 ảnh mẫu" : "Không có"],
