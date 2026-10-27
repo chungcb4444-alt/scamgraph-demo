@@ -20,7 +20,7 @@ export const accountSeeds: StaffAccount[] = [
   },
   {
     id: "tiep.nhan.demo",
-    name: "Nguyễn Tiếp Nhận",
+    name: "Trần Minh Tuấn",
     role: R.reception,
     unitId: UNIT,
     active: true,
@@ -28,7 +28,7 @@ export const accountSeeds: StaffAccount[] = [
   },
   {
     id: "phan.tich.demo",
-    name: "Nguyễn Phân Tích",
+    name: "Nguyễn Xuân Sơn",
     role: R.analyst,
     unitId: UNIT,
     active: true,
@@ -52,7 +52,7 @@ export const accountSeeds: StaffAccount[] = [
   },
   {
     id: "lanh.dao.demo",
-    name: "Nguyễn Lãnh Đạo",
+    name: "Nguyễn Duy Hoàng",
     role: R.leader,
     unitId: UNIT,
     active: true,
@@ -60,7 +60,7 @@ export const accountSeeds: StaffAccount[] = [
   },
   {
     id: "giam.sat.demo",
-    name: "Nguyễn Giám Sát",
+    name: "Lê Quốc Bảo",
     role: R.supervisor,
     unitId: UNIT,
     active: true,
@@ -75,6 +75,21 @@ export const accountSeeds: StaffAccount[] = [
     kind: "staff",
   },
 ]
+// Update only former placeholder names; account identity and permissions stay intact.
+const formerStaffNames: Record<string, string> = {
+  "Nguyễn Phân Tích": "Nguyễn Xuân Sơn",
+  "Nguyễn Lãnh Đạo": "Nguyễn Duy Hoàng",
+  "Nguyễn Tiếp Nhận": "Trần Minh Tuấn",
+  "Nguyễn Giám Sát": "Lê Quốc Bảo",
+}
+export function renameStaffAccount(account: StaffAccount): StaffAccount {
+  const seed = accountSeeds.find((a) => a.id === account.id)
+  return account.kind === "staff" &&
+    seed &&
+    formerStaffNames[account.name] === seed.name
+    ? { ...account, name: seed.name }
+    : account
+}
 export const accountForRole = (role: string) =>
   accountSeeds.find((a) => a.role === role)?.id || "phan.tich.demo"
 export function initialAccount() {
@@ -149,6 +164,7 @@ export function migrateCase(c: CaseFile): CaseFile {
   )
   return {
     ...c,
+    officer: formerStaffNames[c.officer] || c.officer,
     unitId: c.unitId || UNIT,
     assignedTo: c.assignedTo || known?.id,
     reportVersions: c.reportVersions || [],
