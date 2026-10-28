@@ -73,6 +73,8 @@ import RoleWork from "./RoleWork"
 import WorkSummary from "./WorkSummary"
 import CaseWorkPanel from "./CaseWorkPanel"
 import AccountManager from "./AccountManager"
+import ReportTabs, { type ReportSection } from "./ReportTabs"
+import ReportHistory from "./ReportHistory"
 
 const reportTemplates: Report[] = [
   {
@@ -550,6 +552,8 @@ export default function App() {
     "scamgraph-demo-selected-report",
     "PA-001",
   )
+  const [reportSection, setReportSection] =
+    useState<ReportSection>("information")
   const [selectedCase, setSelectedCase] = useStoredState(
     "scamgraph-demo-selected-case",
     "HS-001",
@@ -583,6 +587,15 @@ export default function App() {
     permittedCases = cases.filter((c) => canReadCase(actor, c)),
     scopedLogs = visibleLogs(actor, logs)
   const activeScreen = screenAllowed(actor, screen) ? screen : homeScreen(actor)
+  useEffect(() => {
+    if (!dirty || activeScreen !== "report-detail") return
+    const guard = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", guard)
+    return () => window.removeEventListener("beforeunload", guard)
+  }, [dirty, activeScreen])
   const report = permittedReports.find((r) => r.id === selectedReport),
     item = permittedCases.find((c) => c.id === selectedCase)
   const alerts = getAlerts(permittedReports).filter((a) =>
@@ -684,9 +697,11 @@ export default function App() {
   const latestAccounts = () => {
     try {
       return (
-        (JSON.parse(
-          localStorage.getItem("scamgraph-demo-accounts") || "null",
-        ) as StaffAccount[])?.map(renameStaffAccount) || accounts
+        (
+          JSON.parse(
+            localStorage.getItem("scamgraph-demo-accounts") || "null",
+          ) as StaffAccount[]
+        )?.map(renameStaffAccount) || accounts
       )
     } catch {
       return accounts
@@ -741,9 +756,10 @@ export default function App() {
     setDirty(false)
     setScreen(next)
   }
-  const openReport = (id: string) => {
+  const openReport = (id: string, section: ReportSection = "information") => {
     if (!permittedReports.some((r) => r.id === id))
       return notify("Không có quyền xem phản ánh này.", "error")
+    setReportSection(section)
     setSelectedReport(id)
     go("report-detail")
   }
@@ -1090,7 +1106,7 @@ export default function App() {
           </div>
         </header>
         <main
-          className="content"
+          className={`content ${activeScreen === "reports" ? "reports-workspace" : activeScreen === "report-detail" ? "report-detail-workspace" : ""}`}
           key={`${actor.id}:${actor.role}:${actor.unitId}:${viewVersion}`}
           onChangeCapture={(e) => {
             if (
@@ -1133,7 +1149,7 @@ export default function App() {
                 actor={actor}
                 reports={permittedReports}
                 cases={permittedCases}
-                onReport={openReport}
+                onReport={(id) => openReport(id, "processing")}
                 onCase={openCase}
               />
               <details className="role-statistics">
@@ -1158,17 +1174,19 @@ export default function App() {
           )}
           {activeScreen === "reports" && (
             <>
-              <WorkSummary
-                actor={actor}
-                reports={permittedReports}
-                cases={permittedCases}
-              />
               <Reports
                 key={accountId}
                 citizen={citizen}
                 actor={actor}
                 canCreate={permit(actor, "report.create")}
                 reports={permittedReports}
+                summary={
+                  <WorkSummary
+                    actor={actor}
+                    reports={permittedReports}
+                    cases={permittedCases}
+                  />
+                }
                 onNew={() => go("new-report")}
                 onOpen={openReport}
               />
@@ -1191,23 +1209,28 @@ export default function App() {
           {activeScreen === "report-detail" &&
             (report ? (
               citizen ? (
-                <>
-                  <CitizenReportView
-                    report={report}
-                    onBack={() => go("reports")}
-                  />
-                  <ReceptionPanel
-                    report={report}
-                    actor={actor}
-                    accounts={accounts}
-                    cases={cases}
-                    onAction={run}
-                  />
-                </>
+                <CitizenReportView
+                  key={report.id}
+                  report={report}
+                  initialTab={reportSection}
+                  onBack={() => go("reports")}
+                  processing={
+                    <ReceptionPanel
+                      report={report}
+                      actor={actor}
+                      accounts={accounts}
+                      cases={cases}
+                      onAction={run}
+                      showSupplements={false}
+                    />
+                  }
+                />
               ) : (
                 <ReportDetail
                   key={report.id}
                   report={report}
+                  initialTab={reportSection}
+                  logs={scopedLogs.filter((log) => log.target === report.id)}
                   reports={permittedReports}
                   canAnalyze={permit(actor, "report.analyze", report, cases)}
                   canReveal={permit(actor, "sensitive.read", report, cases)}
@@ -1693,6 +1716,7 @@ function Reports({
   actor,
   canCreate,
   reports,
+  summary,
   onNew,
   onOpen,
 }: {
@@ -1700,8 +1724,9 @@ function Reports({
   actor: StaffAccount
   canCreate: boolean
   reports: Report[]
+  summary: React.ReactNode
   onNew: () => void
-  onOpen: (id: string) => void
+  onOpen: (id: string, section?: ReportSection) => void
 }) {
   const [queue, setQueue] = useState(
     actor.role === R.analyst
@@ -1710,6 +1735,7 @@ function Reports({
         ? "waiting"
         : "all",
   )
+  const [advanced, setAdvanced] = useState(false)
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("Tất cả trạng thái")
   const [behavior, setBehavior] = useState("Tất cả loại phản ánh")
@@ -1754,8 +1780,24 @@ function Reports({
       (!from || dayKey(r.receivedAt || "") >= from) &&
       (!to || dayKey(r.receivedAt || "") <= to),
   )
+  const advancedCount =
+    Number(!behavior.startsWith("Tất cả")) +
+    Number(!!source) +
+    Number(!!area) +
+    Number(!!from) +
+    Number(!!to)
+  const resetFilters = () => {
+    setQuery("")
+    setStatus("Tất cả trạng thái")
+    setBehavior("Tất cả loại phản ánh")
+    setSource("")
+    setArea("")
+    setFrom("")
+    setTo("")
+    // Work scope is an independent, account-specific choice; keep it intact.
+  }
   return (
-    <div className="page-stack">
+    <div className="page-stack reports-list-page">
       <PageHeader
         title={
           citizen
@@ -1765,9 +1807,6 @@ function Reports({
               : actor.role === R.analyst
                 ? "Phản ánh cần phân tích"
                 : "Phản ánh liên quan"
-        }
-        description={
-          <> Quản lý, tra cứu và theo dõi toàn bộ phản ánh đã tiếp nhận. </>
         }
         action={
           <>
@@ -1780,11 +1819,13 @@ function Reports({
           </>
         }
       />
-      <div className="status-tabs">
+      {summary}
+      <div className="status-tabs" aria-label="Lọc trạng thái phản ánh">
         {statusOptions.map((value) => (
           <button
             key={value}
             className={status === value ? "active" : ""}
+            aria-pressed={status === value}
             onClick={() => setStatus(value)}
           >
             {value} (
@@ -1797,79 +1838,29 @@ function Reports({
           </button>
         ))}
       </div>
-      <Card className="filter-card reports-filter">
-        <FilterField label="Tìm kiếm · Mã, nội dung, tên người gửi">
-          <div className="search-wrap">
-            <span>⌕</span>
-            <input
-              placeholder="Tìm theo mã hoặc tiêu đề..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-        </FilterField>
-        <FilterField label="Trạng thái">
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            {statusOptions.map((x) => (
-              <option key={x}>{x}</option>
-            ))}
-          </select>
-        </FilterField>
-        <FilterField label="Loại phản ánh">
-          <select
-            value={behavior}
-            onChange={(e) => setBehavior(e.target.value)}
-          >
-            <option>Tất cả loại phản ánh</option>
-            {Array.from(
-              new Set(reports.map((r) => reportTypeLabel(r.behavior))),
-            ).map((x) => (
-              <option key={x}>{x}</option>
-            ))}
-          </select>
-        </FilterField>
-        <FilterField label="Nguồn tiếp nhận">
-          <select
-            aria-label="Nguồn tiếp nhận"
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-          >
-            <option value="">Mọi nguồn tin</option>
-            {Array.from(new Set(reports.map((r) => r.source))).map((value) => (
-              <option key={value}>{value}</option>
-            ))}
-          </select>
-        </FilterField>
-        <FilterField label="Địa bàn">
-          <select
-            aria-label="Địa bàn phản ánh"
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-          >
-            <option value="">Mọi địa bàn</option>
-            {Array.from(new Set(reports.map((r) => r.area))).map((value) => (
-              <option key={value}>{value}</option>
-            ))}
-          </select>
-        </FilterField>
-        <FilterField label="Tiếp nhận từ ngày">
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
-        </FilterField>
-        <FilterField label="Đến ngày">
-          <input
-            type="date"
-            min={from}
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
-        </FilterField>
-      </Card>
-      <Card className="table-card">
-        <div className="table-summary">
+      <Card className="reports-filter-card">
+        <div className="reports-primary-filters">
+          <FilterField label="Tìm kiếm · Mã, nội dung, tên người gửi">
+            <div className="search-wrap">
+              <span>⌕</span>
+              <input
+                placeholder="Tìm theo mã hoặc tiêu đề..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          </FilterField>
+          <FilterField label="Trạng thái">
+            <select
+              aria-label="Trạng thái"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              {statusOptions.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </FilterField>
           <div className="role-queue-filter">
             <Field label="Phạm vi công việc">
               <select value={queue} onChange={(e) => setQueue(e.target.value)}>
@@ -1885,6 +1876,92 @@ function Reports({
               </select>
             </Field>
           </div>
+        </div>
+        <div className="reports-filter-actions">
+          <button
+            type="button"
+            className="reports-advanced-toggle"
+            aria-expanded={advanced}
+            aria-controls="report-advanced-filters"
+            onClick={() => setAdvanced(!advanced)}
+          >
+            Bộ lọc nâng cao{advancedCount ? ` (${advancedCount})` : ""}{" "}
+            <span aria-hidden="true">{advanced ? "⌃" : "⌄"}</span>
+          </button>
+          <button
+            type="button"
+            className="reports-clear-filters"
+            onClick={resetFilters}
+          >
+            Xóa bộ lọc
+          </button>
+        </div>
+        <div
+          id="report-advanced-filters"
+          className="reports-advanced-filters"
+          hidden={!advanced}
+        >
+          <FilterField label="Loại phản ánh">
+            <select
+              aria-label="Loại phản ánh"
+              value={behavior}
+              onChange={(e) => setBehavior(e.target.value)}
+            >
+              <option>Tất cả loại phản ánh</option>
+              {Array.from(
+                new Set(reports.map((r) => reportTypeLabel(r.behavior))),
+              ).map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </FilterField>
+          <FilterField label="Nguồn tiếp nhận">
+            <select
+              aria-label="Nguồn tiếp nhận"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+            >
+              <option value="">Mọi nguồn tin</option>
+              {Array.from(new Set(reports.map((r) => r.source))).map(
+                (value) => (
+                  <option key={value}>{value}</option>
+                ),
+              )}
+            </select>
+          </FilterField>
+          <FilterField label="Địa bàn">
+            <select
+              aria-label="Địa bàn phản ánh"
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+            >
+              <option value="">Mọi địa bàn</option>
+              {Array.from(new Set(reports.map((r) => r.area))).map((value) => (
+                <option key={value}>{value}</option>
+              ))}
+            </select>
+          </FilterField>
+          <FilterField label="Tiếp nhận từ ngày">
+            <input
+              type="date"
+              aria-label="Tiếp nhận từ ngày"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+          </FilterField>
+          <FilterField label="Đến ngày">
+            <input
+              type="date"
+              aria-label="Đến ngày"
+              min={from}
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
+          </FilterField>
+        </div>
+      </Card>
+      <Card className="table-card">
+        <div className="table-summary">
           <span>
             Hiển thị <b>{filtered.length}</b> phản ánh
           </span>
@@ -1902,7 +1979,7 @@ function ReportTable({
   compact = false,
 }: {
   reports: Report[]
-  onOpen: (id: string) => void
+  onOpen: (id: string, section?: ReportSection) => void
   compact?: boolean
 }) {
   return (
@@ -1990,9 +2067,16 @@ function ReportTable({
               </td>
               {!compact && (
                 <td>
-                  <Button variant="ghost" onClick={() => onOpen(r.id)}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onOpen(r.id, "processing")
+                    }}
+                  >
                     Kiểm tra phản ánh
-                  </Button>
+                  </button>
                 </td>
               )}
             </tr>
@@ -2008,6 +2092,8 @@ function ReportTable({
 
 function ReportDetail({
   report,
+  initialTab,
+  logs,
   reports,
   canAnalyze,
   canReveal,
@@ -2022,6 +2108,8 @@ function ReportDetail({
   notify,
 }: {
   report: Report
+  initialTab: ReportSection
+  logs: LogItem[]
   reports: Report[]
   canAnalyze: boolean
   canReveal: boolean
@@ -2178,367 +2266,425 @@ function ReportDetail({
             <Button onClick={onGraph}>Xem sơ đồ {report.cluster} →</Button>
           )}
         </div>
-        <ReportPeople report={report} />
-        <ReceptionPanel
-          report={report}
-          actor={actor}
-          accounts={accounts}
-          cases={cases}
-          onAction={onAction}
-        />
-        {!canAnalyze && (
-          <p className="access-note">
-            Chỉ xem thông tin phân tích.{" "}
-            {actor.role === R.analyst
-              ? "Phiếu cần được tiếp nhận bàn giao và giao cho tài khoản này trước khi chỉnh sửa."
-              : "Quyền chỉnh sửa thực thể và xác nhận liên kết thuộc cán bộ phân tích được giao."}
-          </p>
-        )}
-        <div className="detail-grid">
-          <div className="page-stack">
-            <Card className="detail-card">
-              <CardHead
-                title="Nội dung gốc"
-                sub="Dữ liệu giả lập do người gửi cung cấp"
-              />
-              <ReportStatement report={report} />
-            </Card>
-            <Card className="detail-card">
-              <CardHead title="Thông tin chung" />
-              {report.initialBehavior &&
-                (report.initialBehavior !== report.behavior ||
-                  (report.initialBehaviorOther || "") !==
-                    (report.behaviorOther || "")) && (
-                  <p className="classification-note">
-                    Phân loại đã được cán bộ cập nhật; phân loại ban đầu của
-                    người gửi được giữ ở thông tin bên dưới.
-                  </p>
-                )}
-              <DetailRows
-                rows={[
-                  [
-                    "Phát sinh sự việc",
-                    report.occurredTimeUnknown
-                      ? "Không nhớ chính xác"
-                      : formatDateTime(report.occurredAt),
-                  ],
-                  ["Tiếp nhận phản ánh", formatDateTime(report.receivedAt)],
-                  ["Địa bàn", report.area],
-                  [
-                    "Tình trạng theo lời khai",
-                    report.transferStatus === "Không"
-                      ? "Chưa phát sinh chuyển tiền"
-                      : reportPeople(report).currentSituation ||
-                        "Chưa cung cấp",
-                  ],
-                  [
-                    "Số tiền",
-                    report.transferStatus === "Không"
-                      ? "Không phát sinh chuyển tiền"
-                      : report.transferStatus === "Chưa rõ"
-                        ? "Chưa xác định"
-                        : `${report.amount} triệu đồng`,
-                  ],
-                  [
-                    "Loại phản ánh",
-                    reportTypeLabel(report.behavior) +
-                      (report.behaviorOther ? ": " + report.behaviorOther : ""),
-                  ],
-                  [
-                    "Phân loại ban đầu",
-                    reportTypeLabel(report.initialBehavior || report.behavior) +
-                      (report.initialBehaviorOther
-                        ? ": " + report.initialBehaviorOther
-                        : ""),
-                  ],
-                  [
-                    "Kênh tiếp nhận",
-                    report.source +
-                      (report.sourceOther ? ": " + report.sourceOther : ""),
-                  ],
-                ]}
-              />
-            </Card>
-            <Card className="detail-card">
-              <CardHead title="Tài liệu đính kèm" />
-              {report.attachment ? (
-                <div className="file-row">
-                  <b>anh-chuyen-khoan-mau.png</b>
-                  <Button variant="secondary" onClick={() => setPreview(true)}>
-                    Xem trước
-                  </Button>
+        <ReportTabs
+          initialTab={initialTab}
+          pending={
+            permit(actor, "report.receive", report, cases)
+              ? "Phiếu đang chờ kiểm tra tiếp nhận hoặc bổ sung thông tin."
+              : canAnalyze && (!report.reviewed || !report.cluster)
+                ? "Phiếu được giao: kiểm tra trích xuất và xem xét căn cứ liên kết."
+                : undefined
+          }
+          information={
+            <div className="page-stack">
+              <ReportPeople report={report} />
+              <div className="report-information-grid">
+                <Card className="detail-card">
+                  <CardHead
+                    title="Nội dung gốc"
+                    sub="Dữ liệu giả lập do người gửi cung cấp"
+                  />
+                  <ReportStatement report={report} />
+                </Card>
+                <Card className="detail-card">
+                  <CardHead title="Thông tin chung" />
+                  {report.initialBehavior &&
+                    (report.initialBehavior !== report.behavior ||
+                      (report.initialBehaviorOther || "") !==
+                        (report.behaviorOther || "")) && (
+                      <p className="classification-note">
+                        Phân loại đã được cán bộ cập nhật; phân loại ban đầu của
+                        người gửi được giữ ở thông tin bên dưới.
+                      </p>
+                    )}
+                  <DetailRows
+                    rows={[
+                      [
+                        "Phát sinh sự việc",
+                        report.occurredTimeUnknown
+                          ? "Không nhớ chính xác"
+                          : formatDateTime(report.occurredAt),
+                      ],
+                      ["Tiếp nhận phản ánh", formatDateTime(report.receivedAt)],
+                      ["Địa bàn", report.area],
+                      [
+                        "Tình trạng theo lời khai",
+                        report.transferStatus === "Không"
+                          ? "Chưa phát sinh chuyển tiền"
+                          : reportPeople(report).currentSituation ||
+                            "Chưa cung cấp",
+                      ],
+                      [
+                        "Số tiền",
+                        report.transferStatus === "Không"
+                          ? "Không phát sinh chuyển tiền"
+                          : report.transferStatus === "Chưa rõ"
+                            ? "Chưa xác định"
+                            : `${report.amount} triệu đồng`,
+                      ],
+                      [
+                        "Loại phản ánh",
+                        reportTypeLabel(report.behavior) +
+                          (report.behaviorOther
+                            ? ": " + report.behaviorOther
+                            : ""),
+                      ],
+                      [
+                        "Phân loại ban đầu",
+                        reportTypeLabel(
+                          report.initialBehavior || report.behavior,
+                        ) +
+                          (report.initialBehaviorOther
+                            ? ": " + report.initialBehaviorOther
+                            : ""),
+                      ],
+                      [
+                        "Kênh tiếp nhận",
+                        report.source +
+                          (report.sourceOther ? ": " + report.sourceOther : ""),
+                      ],
+                    ]}
+                  />
+                </Card>
+                <Card className="detail-card">
+                  <CardHead title="Tài liệu đính kèm" />
+                  {report.attachment ? (
+                    <div className="file-row">
+                      <b>anh-chuyen-khoan-mau.png</b>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setPreview(true)}
+                      >
+                        Xem trước
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="empty">Không có tài liệu đính kèm.</div>
+                  )}
+                </Card>
+              </div>
+            </div>
+          }
+          processing={
+            <div className="page-stack">
+              {permit(actor, "report.receive", report, cases) ? (
+                <div>
+                  <ReceptionPanel
+                    report={report}
+                    actor={actor}
+                    accounts={accounts}
+                    cases={cases}
+                    onAction={onAction}
+                    showSupplements={false}
+                  />
                 </div>
               ) : (
-                <div className="empty">Không có tài liệu đính kèm.</div>
-              )}
-            </Card>
-            {extracted && report.reviewed && !dirty && (
-              <Card className="detail-card evidence-card">
-                <CardHead
-                  title="Căn cứ liên kết mô phỏng"
-                  sub="Đối chiếu chính xác thực thể đã lưu; cần cán bộ xác nhận, không tự động gán cụm."
-                />
-                {evidence.map(({ cluster, matches }) => (
-                  <div className="candidate" key={cluster.id}>
-                    <b>
-                      {cluster.id} · {cluster.name}
-                    </b>
-                    {matches.map((match) => (
-                      <p key={match.report.id}>
-                        <strong>{match.report.id}</strong> ·{" "}
-                        {match.fields.map((key) => (
-                          <span className="evidence-field" key={key}>
-                            {
-                              {
-                                account: "Tài khoản",
-                                phone: "Điện thoại",
-                                website: "Website",
-                              }[key]
-                            }
-                            :{" "}
-                            {key === "website" ? (
-                              report[key]
-                            ) : (
-                              <SensitiveValue
-                                value={report[key]}
-                                label={`${key === "account" ? "tài khoản" : "điện thoại"} trong căn cứ liên kết`}
-                                name={key}
-                                inline
-                              />
-                            )}
-                          </span>
-                        ))}
-                      </p>
-                    ))}
-                    {report.cluster === cluster.id ? (
-                      <Badge tone="green">Đã xác nhận liên kết</Badge>
-                    ) : report.rejectedClusters?.includes(cluster.id) ? (
-                      <>
-                        <Badge tone="gray">Đã loại bỏ đề xuất</Badge>
-                        {actor.role === R.analyst && (
-                          <Button
-                            variant="ghost"
-                            disabled={!canAnalyze}
-                            onClick={() => {
-                              onUpdate({
-                                ...report,
-                                rejectedClusters:
-                                  report.rejectedClusters?.filter(
-                                    (id) => id !== cluster.id,
-                                  ),
-                              })
-                              onLog(
-                                "Khôi phục đề xuất",
-                                report.id,
-                                `Trước: loại bỏ ${cluster.id}; sau: chờ xem xét`,
-                              )
-                            }}
-                          >
-                            Xem xét lại {cluster.id}
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        {actor.role === R.analyst && (
-                          <Button
-                            disabled={!canAnalyze || !report.reviewed || dirty}
-                            onClick={() => {
-                              onUpdate({
-                                ...report,
-                                cluster: cluster.id,
-                                updatedAt: nowISO(),
-                                status: "Có liên quan",
-                              })
-                              onLog(
-                                "Xác nhận liên kết",
-                                report.id,
-                                `Trước: ${report.cluster || "chưa liên kết"}; sau: ${cluster.id}; căn cứ ${matches.map((m) => m.report.id).join(", ")}`,
-                              )
-                            }}
-                          >
-                            Xác nhận liên kết {cluster.id}
-                          </Button>
-                        )}
-                        {actor.role === R.analyst && (
-                          <Button
-                            variant="secondary"
-                            disabled={!canAnalyze}
-                            onClick={() => {
-                              onUpdate({
-                                ...report,
-                                rejectedClusters: [
-                                  ...(report.rejectedClusters || []),
-                                  cluster.id,
-                                ],
-                              })
-                              onLog(
-                                "Loại bỏ đề xuất liên kết",
-                                report.id,
-                                `Trước: đề xuất ${cluster.id}; sau: loại bỏ. Không thay đổi thành viên cụm.`,
-                              )
-                            }}
-                          >
-                            Loại bỏ đề xuất {cluster.id}
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
-                {!evidence.length && (
-                  <p className="muted">
-                    Chưa có thực thể trùng khớp. Phản ánh được theo dõi độc lập.
-                  </p>
-                )}
-                {(!report.reviewed || dirty) && (
-                  <p className="extraction-note">
-                    Lưu thông tin đã kiểm tra trước khi xác nhận liên kết.
-                  </p>
-                )}
-              </Card>
-            )}
-          </div>
-          <Card className="extraction">
-            <CardHead
-              title="Thông tin trích xuất"
-              sub="Mô phỏng theo kịch bản mẫu, không sử dụng OCR/AI hay API."
-            />
-            {!extracted ? (
-              <>
-                {actor.role === R.analyst && (
-                  <Button
-                    disabled={!canAnalyze}
-                    onClick={() => {
-                      setExtracted(true)
-                      onUpdate({ ...report, extracted: true }, "extract-start")
-                      onLog("Trích xuất mô phỏng", report.id)
-                    }}
-                  >
-                    Trích xuất thông tin
-                  </Button>
-                )}
-              </>
-            ) : (
-              <div className="entity-form">
-                <p className="people-privacy-note">
-                  Bấm Xem ở tài khoản / số điện thoại trước khi kiểm tra hoặc
-                  sửa.
-                </p>
-                <Field label="Tên / danh xưng bên bị phản ánh">
-                  <input
-                    value={draft.subjectName}
-                    readOnly={!canAnalyze}
-                    onChange={(e) => {
-                      setDraft({ ...draft, subjectName: e.target.value })
-                      setDirty(true)
-                    }}
+                <details className="report-handoff-summary">
+                  <summary>
+                    Tiến độ tiếp nhận · {report.intakeStatus || "Mới tiếp nhận"}
+                  </summary>
+                  <ReceptionPanel
+                    report={report}
+                    actor={actor}
+                    accounts={accounts}
+                    cases={cases}
+                    onAction={onAction}
+                    showSupplements={false}
                   />
-                </Field>
-                <SensitiveInput
-                  label="Mạng xã hội bên bị phản ánh"
-                  name="subjectSocial"
-                  value={draft.socialAccount}
-                  canEdit={canAnalyze}
-                  onChange={(value) => {
-                    setDraft({ ...draft, socialAccount: value })
-                    setDirty(true)
-                  }}
-                />
-                <Field label="Loại phản ánh">
-                  <select
-                    value={draft.behavior}
-                    disabled={!canAnalyze}
-                    onChange={(e) => {
-                      setDraft({ ...draft, behavior: e.target.value })
-                      setDirty(true)
-                    }}
-                  >
-                    {Array.from(new Set([...REPORT_TYPES, draft.behavior])).map(
-                      (type) => (
-                        <option key={type}>{type}</option>
-                      ),
-                    )}
-                  </select>
-                </Field>
-                {draft.behavior === "Khác" && (
-                  <Field label="Mô tả loại phản ánh">
-                    <input
-                      value={draft.behaviorOther}
-                      readOnly={!canAnalyze}
-                      onChange={(e) => {
-                        setDraft({ ...draft, behaviorOther: e.target.value })
-                        setDirty(true)
-                      }}
-                    />
-                  </Field>
-                )}
-                {(
-                  [
-                    ["account", "Tài khoản ngân hàng"],
-                    ["bank", "Ngân hàng"],
-                    ["phone", "Số điện thoại"],
-                    ["website", "Website"],
-                    ["amount", "Số tiền (triệu đồng)"],
-                  ] as const
-                ).map(([key, label]) =>
-                  key === "account" || key === "phone" ? (
-                    <SensitiveInput
-                      key={key}
-                      name={key}
-                      label={label}
-                      value={draft[key]}
-                      canEdit={canAnalyze}
-                      onChange={(value) => {
-                        setDraft({ ...draft, [key]: value })
-                        setDirty(true)
-                      }}
-                    />
+                </details>
+              )}
+
+              {!canAnalyze && (
+                <p className="access-note">
+                  Chỉ xem thông tin phân tích.{" "}
+                  {actor.role === R.analyst
+                    ? "Phiếu cần được tiếp nhận bàn giao và giao cho tài khoản này trước khi chỉnh sửa."
+                    : "Quyền chỉnh sửa thực thể và xác nhận liên kết thuộc cán bộ phân tích được giao."}
+                </p>
+              )}
+              <div className="report-processing-grid">
+                <Card className="extraction">
+                  <CardHead
+                    title="Thông tin trích xuất"
+                    sub="Mô phỏng theo kịch bản mẫu, không sử dụng OCR/AI hay API."
+                  />
+                  {!extracted ? (
+                    <>
+                      {actor.role === R.analyst && (
+                        <Button
+                          disabled={!canAnalyze}
+                          onClick={() => {
+                            setExtracted(true)
+                            onUpdate(
+                              { ...report, extracted: true },
+                              "extract-start",
+                            )
+                            onLog("Trích xuất mô phỏng", report.id)
+                          }}
+                        >
+                          Trích xuất thông tin
+                        </Button>
+                      )}
+                    </>
                   ) : (
-                    <Field label={label} key={key}>
-                      <input
-                        type={key === "amount" ? "number" : "text"}
-                        min={key === "amount" ? 0 : undefined}
-                        step={key === "amount" ? "any" : undefined}
-                        value={draft[key]}
-                        readOnly={!canAnalyze}
-                        onChange={(e) => {
-                          setDraft({ ...draft, [key]: e.target.value })
+                    <div className="entity-form">
+                      <p className="people-privacy-note">
+                        Bấm Xem ở tài khoản / số điện thoại trước khi kiểm tra
+                        hoặc sửa.
+                      </p>
+                      <Field label="Tên / danh xưng bên bị phản ánh">
+                        <input
+                          value={draft.subjectName}
+                          readOnly={!canAnalyze}
+                          onChange={(e) => {
+                            setDraft({ ...draft, subjectName: e.target.value })
+                            setDirty(true)
+                          }}
+                        />
+                      </Field>
+                      <SensitiveInput
+                        label="Mạng xã hội bên bị phản ánh"
+                        name="subjectSocial"
+                        value={draft.socialAccount}
+                        canEdit={canAnalyze}
+                        onChange={(value) => {
+                          setDraft({ ...draft, socialAccount: value })
                           setDirty(true)
                         }}
                       />
-                    </Field>
-                  ),
-                )}
-                {error && (
-                  <div role="alert" className="error-box">
-                    {error}
-                  </div>
-                )}
-                <p className="extraction-note">
-                  Lưu thông tin đã kiểm tra để xem đề xuất liên kết. Kết quả chỉ
-                  hỗ trợ xác minh; không phải kết luận vi phạm.
-                </p>
-                <Field label="Nhận định phân tích">
-                  <textarea
-                    rows={3}
-                    value={draft.analysisNote}
-                    readOnly={!canAnalyze}
-                    onChange={(e) => {
-                      setDraft({ ...draft, analysisNote: e.target.value })
-                      setDirty(true)
-                    }}
-                  />
-                </Field>
-                {actor.role === R.analyst && (
-                  <Button disabled={!canAnalyze} onClick={save}>
-                    Lưu thông tin đã kiểm tra
-                  </Button>
-                )}
+                      <Field label="Loại phản ánh">
+                        <select
+                          value={draft.behavior}
+                          disabled={!canAnalyze}
+                          onChange={(e) => {
+                            setDraft({ ...draft, behavior: e.target.value })
+                            setDirty(true)
+                          }}
+                        >
+                          {Array.from(
+                            new Set([...REPORT_TYPES, draft.behavior]),
+                          ).map((type) => (
+                            <option key={type}>{type}</option>
+                          ))}
+                        </select>
+                      </Field>
+                      {draft.behavior === "Khác" && (
+                        <Field label="Mô tả loại phản ánh">
+                          <input
+                            value={draft.behaviorOther}
+                            readOnly={!canAnalyze}
+                            onChange={(e) => {
+                              setDraft({
+                                ...draft,
+                                behaviorOther: e.target.value,
+                              })
+                              setDirty(true)
+                            }}
+                          />
+                        </Field>
+                      )}
+                      {(
+                        [
+                          ["account", "Tài khoản ngân hàng"],
+                          ["bank", "Ngân hàng"],
+                          ["phone", "Số điện thoại"],
+                          ["website", "Website"],
+                          ["amount", "Số tiền (triệu đồng)"],
+                        ] as const
+                      ).map(([key, label]) =>
+                        key === "account" || key === "phone" ? (
+                          <SensitiveInput
+                            key={key}
+                            name={key}
+                            label={label}
+                            value={draft[key]}
+                            canEdit={canAnalyze}
+                            onChange={(value) => {
+                              setDraft({ ...draft, [key]: value })
+                              setDirty(true)
+                            }}
+                          />
+                        ) : (
+                          <Field label={label} key={key}>
+                            <input
+                              type={key === "amount" ? "number" : "text"}
+                              min={key === "amount" ? 0 : undefined}
+                              step={key === "amount" ? "any" : undefined}
+                              value={draft[key]}
+                              readOnly={!canAnalyze}
+                              onChange={(e) => {
+                                setDraft({ ...draft, [key]: e.target.value })
+                                setDirty(true)
+                              }}
+                            />
+                          </Field>
+                        ),
+                      )}
+                      {error && (
+                        <div role="alert" className="error-box">
+                          {error}
+                        </div>
+                      )}
+                      <p className="extraction-note">
+                        Lưu thông tin đã kiểm tra để xem đề xuất liên kết. Kết
+                        quả chỉ hỗ trợ xác minh; không phải kết luận vi phạm.
+                      </p>
+                      <Field label="Nhận định phân tích">
+                        <textarea
+                          rows={3}
+                          value={draft.analysisNote}
+                          readOnly={!canAnalyze}
+                          onChange={(e) => {
+                            setDraft({ ...draft, analysisNote: e.target.value })
+                            setDirty(true)
+                          }}
+                        />
+                      </Field>
+                      {actor.role === R.analyst && (
+                        <Button disabled={!canAnalyze} onClick={save}>
+                          Lưu thông tin đã kiểm tra
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </Card>
+                <div className="page-stack">
+                  {" "}
+                  {extracted && report.reviewed && !dirty && (
+                    <Card className="detail-card evidence-card">
+                      <CardHead
+                        title="Căn cứ liên kết mô phỏng"
+                        sub="Đối chiếu chính xác thực thể đã lưu; cần cán bộ xác nhận, không tự động gán cụm."
+                      />
+                      {evidence.map(({ cluster, matches }) => (
+                        <div className="candidate" key={cluster.id}>
+                          <b>
+                            {cluster.id} · {cluster.name}
+                          </b>
+                          {matches.map((match) => (
+                            <p key={match.report.id}>
+                              <strong>{match.report.id}</strong> ·{" "}
+                              {match.fields.map((key) => (
+                                <span className="evidence-field" key={key}>
+                                  {
+                                    {
+                                      account: "Tài khoản",
+                                      phone: "Điện thoại",
+                                      website: "Website",
+                                    }[key]
+                                  }
+                                  :{" "}
+                                  {key === "website" ? (
+                                    report[key]
+                                  ) : (
+                                    <SensitiveValue
+                                      value={report[key]}
+                                      label={`${key === "account" ? "tài khoản" : "điện thoại"} trong căn cứ liên kết`}
+                                      name={key}
+                                      inline
+                                    />
+                                  )}
+                                </span>
+                              ))}
+                            </p>
+                          ))}
+                          {report.cluster === cluster.id ? (
+                            <Badge tone="green">Đã xác nhận liên kết</Badge>
+                          ) : report.rejectedClusters?.includes(cluster.id) ? (
+                            <>
+                              <Badge tone="gray">Đã loại bỏ đề xuất</Badge>
+                              {actor.role === R.analyst && (
+                                <Button
+                                  variant="ghost"
+                                  disabled={!canAnalyze}
+                                  onClick={() => {
+                                    onUpdate({
+                                      ...report,
+                                      rejectedClusters:
+                                        report.rejectedClusters?.filter(
+                                          (id) => id !== cluster.id,
+                                        ),
+                                    })
+                                    onLog(
+                                      "Khôi phục đề xuất",
+                                      report.id,
+                                      `Trước: loại bỏ ${cluster.id}; sau: chờ xem xét`,
+                                    )
+                                  }}
+                                >
+                                  Xem xét lại {cluster.id}
+                                </Button>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {actor.role === R.analyst && (
+                                <Button
+                                  disabled={
+                                    !canAnalyze || !report.reviewed || dirty
+                                  }
+                                  onClick={() => {
+                                    onUpdate({
+                                      ...report,
+                                      cluster: cluster.id,
+                                      updatedAt: nowISO(),
+                                      status: "Có liên quan",
+                                    })
+                                    onLog(
+                                      "Xác nhận liên kết",
+                                      report.id,
+                                      `Trước: ${report.cluster || "chưa liên kết"}; sau: ${cluster.id}; căn cứ ${matches.map((m) => m.report.id).join(", ")}`,
+                                    )
+                                  }}
+                                >
+                                  Xác nhận liên kết {cluster.id}
+                                </Button>
+                              )}
+                              {actor.role === R.analyst && (
+                                <Button
+                                  variant="secondary"
+                                  disabled={!canAnalyze}
+                                  onClick={() => {
+                                    onUpdate({
+                                      ...report,
+                                      rejectedClusters: [
+                                        ...(report.rejectedClusters || []),
+                                        cluster.id,
+                                      ],
+                                    })
+                                    onLog(
+                                      "Loại bỏ đề xuất liên kết",
+                                      report.id,
+                                      `Trước: đề xuất ${cluster.id}; sau: loại bỏ. Không thay đổi thành viên cụm.`,
+                                    )
+                                  }}
+                                >
+                                  Loại bỏ đề xuất {cluster.id}
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ))}
+                      {!evidence.length && (
+                        <p className="muted">
+                          Chưa có thực thể trùng khớp. Phản ánh được theo dõi
+                          độc lập.
+                        </p>
+                      )}
+                      {(!report.reviewed || dirty) && (
+                        <p className="extraction-note">
+                          Lưu thông tin đã kiểm tra trước khi xác nhận liên kết.
+                        </p>
+                      )}
+                    </Card>
+                  )}
+                </div>
               </div>
-            )}
-          </Card>
-        </div>
+            </div>
+          }
+          history={<ReportHistory report={report} logs={logs} />}
+        />
         {preview && (
           <Modal
             title="Bằng chứng giao dịch mô phỏng"
@@ -3566,41 +3712,72 @@ function DetailRows({ rows }: { rows: string[][] }) {
 
 function CitizenReportView({
   report,
+  initialTab,
+  processing,
   onBack,
 }: {
   report: Report
+  initialTab: ReportSection
+  processing: React.ReactNode
   onBack: () => void
 }) {
   return (
-    <section className="report-intake">
-      <button className="intake-link" onClick={onBack}>
-        ← Xem danh sách phản ánh
-      </button>
-      <div className="intake-card">
-        <h1>
-          {report.id} · {report.title}
-        </h1>
-        <p>
-          Loại phản ánh: {reportTypeLabel(report.behavior)}
-          {report.behaviorOther ? ": " + report.behaviorOther : ""}
-        </p>
-        <p>
-          Phát sinh:{" "}
-          {report.occurredTimeUnknown
-            ? "Không nhớ chính xác"
-            : formatDateTime(report.occurredAt)}
-        </p>
-        <p>Tiếp nhận: {formatDateTime(report.receivedAt)} · Giờ Việt Nam</p>
-        <p>
-          Số tiền:{" "}
-          {report.transferStatus === "Không"
-            ? "Không phát sinh chuyển tiền"
-            : `${report.amount} triệu đồng`}
-        </p>
-        <Badge tone="blue">{report.intakeStatus || "Mới tiếp nhận"}</Badge>
-        <p className="intake-content">{report.content}</p>
-        <p>Tài liệu: {report.attachment ? "01 ảnh mẫu" : "Không có"}</p>
-      </div>
-    </section>
+    <ReportPrivacy>
+      <section className="report-intake report-detail-page citizen-report-detail">
+        <button className="intake-link" onClick={onBack}>
+          ← Xem danh sách phản ánh
+        </button>
+        <div className="detail-hero">
+          <div>
+            <div className="detail-code">{report.id}</div>
+            <h1 className="page-heading">{report.title}</h1>
+            <Badge tone="blue">{report.intakeStatus || "Mới tiếp nhận"}</Badge>
+          </div>
+        </div>
+        <ReportTabs
+          initialTab={initialTab}
+          pending={
+            report.intakeStatus === "Chờ bổ sung"
+              ? "Phản ánh đang cần bạn bổ sung thông tin."
+              : undefined
+          }
+          information={
+            <div className="intake-card">
+              <h2>
+                {report.id} · {report.title}
+              </h2>
+              <p>
+                Loại phản ánh: {reportTypeLabel(report.behavior)}
+                {report.behaviorOther ? ": " + report.behaviorOther : ""}
+              </p>
+              <p>
+                Phát sinh:{" "}
+                {report.occurredTimeUnknown
+                  ? "Không nhớ chính xác"
+                  : formatDateTime(report.occurredAt)}
+              </p>
+              <p>
+                Tiếp nhận: {formatDateTime(report.receivedAt)} · Giờ Việt Nam
+              </p>
+              <p>
+                Số tiền:{" "}
+                {report.transferStatus === "Không"
+                  ? "Không phát sinh chuyển tiền"
+                  : `${report.amount} triệu đồng`}
+              </p>
+              <Badge tone="blue">
+                {report.intakeStatus || "Mới tiếp nhận"}
+              </Badge>
+              <div className="intake-content">
+                <ReportStatement report={report} />
+              </div>
+              <p>Tài liệu: {report.attachment ? "01 ảnh mẫu" : "Không có"}</p>
+            </div>
+          }
+          processing={processing}
+          history={<ReportHistory report={report} logs={[]} />}
+        />
+      </section>
+    </ReportPrivacy>
   )
 }

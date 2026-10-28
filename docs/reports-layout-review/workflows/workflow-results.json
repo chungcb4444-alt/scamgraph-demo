@@ -1,0 +1,44 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "seven distinct roles and menus",
+      "citizen ownership",
+      "supplement separate from original",
+      "reception-to-analysis handoff",
+      "review/reject/restore/link four/60",
+      "case snapshot four and waiting assignment",
+      "leader assignment; assigned worker only",
+      "draft/submit/reject/correct/approve",
+      "immutable approved report and next version",
+      "case-specific HS-002/30 and CUM-002/25",
+      "unsaved work survives tabs; switch confirmation",
+      "audit role snapshots and admin scope",
+      "real account role mutation",
+      "reload re-hides sensitive data",
+      "no page overflow, external API or browser errors"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "seven distinct roles and menus",
+      "citizen ownership",
+      "supplement separate from original",
+      "reception-to-analysis handoff",
+      "review/reject/restore/link four/60",
+      "case snapshot four and waiting assignment",
+      "leader assignment; assigned worker only",
+      "draft/submit/reject/correct/approve",
+      "immutable approved report and next version",
+      "case-specific HS-002/30 and CUM-002/25",
+      "unsaved work survives tabs; switch confirmation",
+      "audit role snapshots and admin scope",
+      "real account role mutation",
+      "reload re-hides sensitive data",
+      "no page overflow, external API or browser errors"
+    ]
+  }
+]
