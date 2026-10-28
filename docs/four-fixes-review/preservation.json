@@ -1,0 +1,237 @@
+{
+  "baseline": "f9676a0",
+  "result": "PASS",
+  "files": [
+    {
+      "file": "src/access.ts",
+      "unchanged": true,
+      "sha256": "90c3c62734d18b2d847f60e8b50448df434c8780c379b8885f88e90fc1fd8bfe"
+    },
+    {
+      "file": "src/types.ts",
+      "unchanged": true,
+      "sha256": "aab50e91c67c38bb5d9fbfb3195ce0660efa0b0ac2268cb08d0c0d7107d1af47"
+    },
+    {
+      "file": "src/intakeModel.ts",
+      "unchanged": true,
+      "sha256": "255bf147681882066da32eae4046c261740257f5706a0aa2dfe9ac12bfac7a5f"
+    },
+    {
+      "file": "src/demoTime.ts",
+      "unchanged": true,
+      "sha256": "77b81a77b025331bdf8fb95c6844d9ec3460e3620a4b48a6e176ca9aee1ce36a"
+    },
+    {
+      "file": "src/Login.tsx",
+      "unchanged": true,
+      "sha256": "b7e58369d2f924adad540166cd9cb760e4c174d123ce164abb3caeeebbfa896f"
+    },
+    {
+      "file": "src/login.css",
+      "unchanged": true,
+      "sha256": "0187214f18cbfd0054a194bde1b37175527750a248b553943452d9c16efa3005"
+    },
+    {
+      "file": "src/BrandMark.tsx",
+      "unchanged": true,
+      "sha256": "27c7243427c2cd1b219724c303f143225d7239e542158c8140b7f7f6cb4c6878"
+    },
+    {
+      "file": "src/ReportIntake.tsx",
+      "unchanged": true,
+      "sha256": "9faf7fe71c0db3e3b0309ff10c12ab9e79a83a9ba717089c89362bc7093d5e31"
+    },
+    {
+      "file": "src/LinkGraph.tsx",
+      "unchanged": true,
+      "sha256": "2b775bcca913f77ed6a10abfbd3c351f8ab761cc1cd48c2aeaf2f7bdd4546d84"
+    },
+    {
+      "file": "src/linkGraph.css",
+      "unchanged": true,
+      "sha256": "cd53937b3c8a05a72d65f6dc89a208fef6cd6fb2a067becbc527c507a051e37a"
+    },
+    {
+      "file": "src/AccountManager.tsx",
+      "unchanged": true,
+      "sha256": "b6edaaf7a1e51d4c3dd3a4ea8faf02d48e389fc6ce6516e9e348870371bdffc6"
+    },
+    {
+      "file": "src/RoleWork.tsx",
+      "unchanged": true,
+      "sha256": "db9496fc06201d64998ada02bb4800ea917370b2b18be7b6fc46d2f9f7bef1e3"
+    },
+    {
+      "file": "src/WorkSummary.tsx",
+      "unchanged": true,
+      "sha256": "e6e13579383d86d3144729cbd52bd49b467fb728f781832d9915cf49347cef44"
+    },
+    {
+      "file": "src/ReportPeople.tsx",
+      "unchanged": true,
+      "sha256": "c9df0a39b28adad2deb3095ef1d2cff70d0f70e786bf0b3f32603d7feab55264"
+    },
+    {
+      "file": "src/ReportPrivacy.tsx",
+      "unchanged": true,
+      "sha256": "123d9faf6f78ca1f82e12c3005095a93140ea6393c1e5787331d248a636bc73b"
+    },
+    {
+      "file": "src/ReportStatement.tsx",
+      "unchanged": true,
+      "sha256": "7bf3bd99d2e3ce0f39eaa8cab6d2adc236f4f9fefdd67ef29a3c076e7109925d"
+    },
+    {
+      "file": "src/SensitiveInput.tsx",
+      "unchanged": true,
+      "sha256": "415dc6ae161afe721b2c331b505d7b6f8e73384dc8308d4089bc889b6dedd6e5"
+    },
+    {
+      "file": "src/SensitiveValue.tsx",
+      "unchanged": true,
+      "sha256": "2c6f9bd5c568d2121fda8cc83012539b2ba12e723206f359df536e401ea2f214"
+    },
+    {
+      "file": "src/ReceptionPanel.tsx",
+      "unchanged": true,
+      "sha256": "17a8780a5d3e989fad75725b217429e7ad2e10acbeebb441da84bb9f7158e08d"
+    },
+    {
+      "file": "src/index.css",
+      "unchanged": true,
+      "sha256": "a56f2e90615f48219554d24ef4fb49ca3694fcf438da086f3645bcd92aadd425"
+    },
+    {
+      "file": "src/sample-theme.css",
+      "unchanged": true,
+      "sha256": "35c1801d82ada82264185ae0427b614ad1a7f34a6f0d3ca64dfc6387f9f66581"
+    },
+    {
+      "file": "src/reportPeople.css",
+      "unchanged": true,
+      "sha256": "c81a72cf4ee38d800be9b68543b15eeb44e88addacf709b2205eeaef861e5df2"
+    },
+    {
+      "file": "src/roleWork.css",
+      "unchanged": true,
+      "sha256": "db254bedd453bb1bbac455d8c00eba3fb3f6b041f9a7c8d7f658d81cdfff3ea9"
+    },
+    {
+      "file": "src/reportsLayout.css",
+      "unchanged": true,
+      "sha256": "3cfb3e911e443f634821b6ecf730923e45510e273936a8459adae2c84b5b5aae"
+    },
+    {
+      "file": "pnpm-lock.yaml",
+      "unchanged": true,
+      "sha256": "4898ab91c6fe90782fb79b43995ba987b2b648464db013df5c770c0370959931"
+    },
+    {
+      "file": "package.json",
+      "unchanged": true,
+      "sha256": "846cd9af725691a65dcf9f1e609c32f135cfb8cfc5c513f33cdc3bad834828ab"
+    },
+    {
+      "file": "vercel.json",
+      "unchanged": true,
+      "sha256": "e7a3d58407f9d0d63aa9b82d91ae21cdc9249461ff741aaefb208a828ab3acff"
+    }
+  ],
+  "appBindings": [
+    {
+      "name": "reportTemplates",
+      "unchanged": true
+    },
+    {
+      "name": "caseTemplates",
+      "unchanged": true
+    },
+    {
+      "name": "logTemplates",
+      "unchanged": true
+    },
+    {
+      "name": "useStoredState",
+      "unchanged": true
+    },
+    {
+      "name": "getAlerts",
+      "unchanged": true
+    },
+    {
+      "name": "commit",
+      "unchanged": true
+    },
+    {
+      "name": "addLog",
+      "unchanged": true
+    },
+    {
+      "name": "submitIntake",
+      "unchanged": true
+    },
+    {
+      "name": "updateReport",
+      "unchanged": true
+    },
+    {
+      "name": "reset",
+      "unchanged": true
+    }
+  ],
+  "operations": [
+    {
+      "name": "receive",
+      "unchanged": true
+    },
+    {
+      "name": "supplement",
+      "unchanged": true
+    },
+    {
+      "name": "extract-start",
+      "unchanged": true
+    },
+    {
+      "name": "extract-save",
+      "unchanged": true
+    },
+    {
+      "name": "link",
+      "unchanged": true
+    },
+    {
+      "name": "proposal",
+      "unchanged": true
+    },
+    {
+      "name": "assign",
+      "unchanged": true
+    },
+    {
+      "name": "work",
+      "unchanged": true
+    },
+    {
+      "name": "source-request",
+      "unchanged": true
+    },
+    {
+      "name": "report-draft",
+      "unchanged": true
+    },
+    {
+      "name": "report-submit",
+      "unchanged": true
+    },
+    {
+      "name": "report-review",
+      "unchanged": true
+    },
+    {
+      "name": "account-update",
+      "unchanged": true
+    }
+  ]
+}

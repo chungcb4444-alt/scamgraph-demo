@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
 import type { CaseFile, StaffAccount, ReportVersion } from "./types"
 import type { Operation } from "./operations"
 import { R, permit } from "./access"
@@ -32,6 +32,7 @@ export default function CaseWorkPanel({
     ),
     [review, setReview] = useState(""),
     [newVersion, setNewVersion] = useState(false)
+  const [bodyBaseline, setBodyBaseline] = useState(body)
   const latest = item.reportVersions?.at(-1),
     assign = permit(actor, "case.assign", item),
     work = permit(actor, "case.work", item),
@@ -45,36 +46,27 @@ export default function CaseWorkPanel({
     setPriority(item.priority)
   }, [item.assignedTo, item.note, item.status, item.priority])
   useEffect(() => {
-    setBody(latest?.content || item.note)
+    const saved = latest?.content || item.note
+    setBody(saved)
+    setBodyBaseline(saved)
     setNewVersion(false)
-  }, [latest?.id, latest?.updated])
-  useEffect(() => {
-    onDraftChange(
-      assignedTo !== (item.assignedTo || "") ||
+  }, [latest?.id, latest?.updated, latest?.content])
+  const isDirty =
+    (assign &&
+      (assignedTo !== (item.assignedTo || "") ||
         priority !== item.priority ||
-        !!directive.trim() ||
-        note !== item.note ||
+        directive !== "")) ||
+    (own &&
+      (note !== item.note ||
         status !== item.status ||
-        !!content.trim() ||
-        attachment ||
-        !!request.trim() ||
-        !!review.trim() ||
-        (own && body !== (latest?.content || item.note)),
-    )
-  }, [
-    assignedTo,
-    priority,
-    directive,
-    note,
-    status,
-    content,
-    attachment,
-    request,
-    review,
-    body,
-    item.updated,
-    latest?.updated,
-  ])
+        content !== "" ||
+        attachment)) ||
+    (permit(actor, "case.request", item) && request !== "") ||
+    (canReview && review !== "") ||
+    (own && body !== bodyBaseline)
+  useLayoutEffect(() => {
+    onDraftChange(isDirty)
+  }, [isDirty, onDraftChange])
   return (
     <div className="page-stack case-work">
       <Card className="role-panel">

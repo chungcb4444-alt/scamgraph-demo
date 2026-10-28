@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 
 import {
   PageHeader,
@@ -46,7 +46,13 @@ import {
   vietnamInput,
 } from "./demoTime"
 import LinkGraph from "./LinkGraph"
-import { WorkflowBadge, workflowLabel } from "./workflow"
+import ReportStatusBadges from "./ReportStatusBadges"
+import { reportStages } from "./reportStages"
+import {
+  relatedSourceCases,
+  sameReportIds,
+  duplicateConsentKey,
+} from "./caseSources"
 
 import {
   R,
@@ -484,8 +490,6 @@ function statusTone(
   return "gray"
 }
 
-const reportWorkflowStatus = workflowLabel
-
 function OperationsTabs({
   active,
   onReports,
@@ -587,8 +591,9 @@ export default function App() {
     permittedCases = cases.filter((c) => canReadCase(actor, c)),
     scopedLogs = visibleLogs(actor, logs)
   const activeScreen = screenAllowed(actor, screen) ? screen : homeScreen(actor)
-  useEffect(() => {
-    if (!dirty || activeScreen !== "report-detail") return
+  useLayoutEffect(() => {
+    if (!dirty || !["report-detail", "case-detail"].includes(activeScreen))
+      return
     const guard = (event: BeforeUnloadEvent) => {
       event.preventDefault()
       event.returnValue = ""
@@ -716,7 +721,8 @@ export default function App() {
         nowISO(),
       )
       commit(next.reports, next.cases, next.accounts, [next.log, ...logs])
-      setDirty(false)
+      // The case panel owns the aggregate of its independent unsaved forms.
+      if (activeScreen !== "case-detail") setDirty(false)
       notify("Đã lưu: " + next.log.action)
       if (op.type === "create-case") {
         setSelectedCase(next.log.target)
@@ -1111,7 +1117,7 @@ export default function App() {
           onChangeCapture={(e) => {
             if (
               (e.target as HTMLElement).closest(
-                ".entity-form,.case-work,.reception-panel .role-form,.report-intake .intake-card,.modal",
+                ".entity-form,.reception-panel .role-form,.report-intake .intake-card,.modal",
               )
             )
               setDirty(true)
@@ -1275,26 +1281,22 @@ export default function App() {
                 Không có cụm liên kết trong phạm vi tài khoản.
               </EmptyState>
             ))}
-          {activeScreen === "alerts" &&
-            (alerts.length ? (
-              <Alerts
-                alerts={alerts}
-                reports={permittedReports}
-                selectedId={selectedAlert}
-                onOpen={openAlert}
-                onGraph={openGraph}
-                allowCreate={permit(actor, "case.create")}
-                onCreate={(id) => {
-                  if (id) setSelectedCluster(id)
-                  if (!permit(actor, "case.create")) return
-                  setCaseModal(true)
-                }}
-              />
-            ) : (
-              <EmptyState>
-                Không có cảnh báo trong phạm vi tài khoản.
-              </EmptyState>
-            ))}
+          {activeScreen === "alerts" && (
+            <Alerts
+              alerts={alerts}
+              reports={permittedReports}
+              selectedId={selectedAlert}
+              onOpen={openAlert}
+              onSelectionChange={setSelectedAlert}
+              onGraph={openGraph}
+              allowCreate={permit(actor, "case.create")}
+              onCreate={(id) => {
+                if (id) setSelectedCluster(id)
+                if (!permit(actor, "case.create")) return
+                setCaseModal(true)
+              }}
+            />
+          )}
           {activeScreen === "cases" && (
             <>
               <WorkSummary
@@ -1355,6 +1357,15 @@ export default function App() {
           reportIds={clusterReports.map((r) => r.id)}
           reportCount={clusterReports.length}
           total={clusterTotal}
+          relatedCases={relatedSourceCases(
+            permittedCases,
+            actor,
+            activeCluster.id,
+          )}
+          onOpenRelated={(id) => {
+            setCaseModal(false)
+            openCase(id)
+          }}
           onClusterChange={setSelectedCluster}
           onClose={() => setCaseModal(false)}
           onCreate={(data) =>
@@ -1362,6 +1373,7 @@ export default function App() {
               type: "create-case",
               name: data.name,
               clusterId: data.clusterId,
+              duplicateConsent: data.duplicateConsent,
             })
           }
         />
@@ -1550,7 +1562,9 @@ function Dashboard({
           <button className="btn btn-secondary" onClick={onReports}>
             {
               reports.filter(
-                (r) => reportWorkflowStatus(r.status) === "Chờ kiểm tra",
+                (r) =>
+                  reportStages(r).analysis !== "Đã kiểm tra" &&
+                  reportStages(r).intake !== "Không hợp lệ",
               ).length
             }{" "}
             phản ánh chờ kiểm tra →
@@ -1754,9 +1768,7 @@ function Reports({
       ]
     : ["Tất cả trạng thái", "Chờ phân tích", "Đang phân tích", "Đã kiểm tra"]
   const statusOf = (r: Report) =>
-    intakeFilter
-      ? r.intakeStatus || "Mới tiếp nhận"
-      : r.analysisStatus || "Chờ phân tích"
+    intakeFilter ? reportStages(r).intake : reportStages(r).analysis
   const filtered = reports.filter(
     (r) =>
       (queue === "all" ||
@@ -2056,14 +2068,7 @@ function ReportTable({
                 </b>
               </td>
               <td>
-                <span className="status-pair">
-                  <Badge tone="blue">{r.intakeStatus || "Mới tiếp nhận"}</Badge>
-                  <Badge
-                    tone={r.analysisStatus === "Đã kiểm tra" ? "green" : "gray"}
-                  >
-                    {r.analysisStatus || "Chờ phân tích"}
-                  </Badge>
-                </span>
+                <ReportStatusBadges report={r} />
               </td>
               {!compact && (
                 <td>
@@ -2256,7 +2261,7 @@ function ReportDetail({
             <div className="detail-code">{report.id}</div>
             <h1 className="page-heading">{report.title}</h1>
             <div className="hero-meta">
-              <WorkflowBadge value={report.status} />
+              <ReportStatusBadges report={report} detailed />
               <span>
                 {report.source} · Tiếp nhận {formatDateTime(report.receivedAt)}
               </span>
@@ -2720,6 +2725,7 @@ function Alerts({
   alerts,
   reports,
   selectedId,
+  onSelectionChange,
   onOpen,
   onGraph,
   onCreate,
@@ -2728,6 +2734,7 @@ function Alerts({
   alerts: AlertItem[]
   reports: Report[]
   selectedId: string
+  onSelectionChange: (id: string) => void
   onOpen: (id: string) => void
   onGraph: (clusterId: string) => void
   allowCreate?: boolean
@@ -2742,13 +2749,15 @@ function Alerts({
   )
   const requested = alerts.find((alert) => alert.id === selectedId)
   const selected =
-    filtered.find((alert) => alert.id === requested?.id) ||
-    filtered[0] ||
-    requested ||
-    alerts[0]
-  const related = selected.clusterId
-    ? reports.filter((report) => report.cluster === selected.clusterId)
-    : reports.filter((report) => report.id === selected.reportId)
+    filtered.find((alert) => alert.id === requested?.id) || filtered[0]
+  useEffect(() => {
+    if (selected && selected.id !== selectedId) onSelectionChange(selected.id)
+  }, [selected?.id, selectedId, onSelectionChange])
+  const related = !selected
+    ? []
+    : selected.clusterId
+      ? reports.filter((report) => report.cluster === selected.clusterId)
+      : reports.filter((report) => report.id === selected.reportId)
   const total = related.reduce((sum, report) => sum + report.amount, 0)
   return (
     <div className="page-stack">
@@ -2763,7 +2772,7 @@ function Alerts({
         }
         action={<> </>}
       />
-      <div className="alert-layout" data-priority={selected.level}>
+      <div className="alert-layout" data-priority={selected?.level}>
         <Card className="alert-list">
           <div className="alert-list-head">
             <span>{alerts.length} cảnh báo đang mở</span>
@@ -2786,9 +2795,9 @@ function Alerts({
             return (
               <button
                 className={`alert-row ${
-                  selected.id === alert.id ? "active" : ""
+                  selected?.id === alert.id ? "active" : ""
                 }`}
-                aria-pressed={selected.id === alert.id}
+                aria-pressed={selected?.id === alert.id}
                 onClick={() => onOpen(alert.id)}
                 key={alert.id}
               >
@@ -2842,58 +2851,68 @@ function Alerts({
             <div className="empty">Không có kết quả phù hợp.</div>
           )}
         </Card>
-        <Card className="alert-side">
-          <div
-            className="score-ring"
-            style={{
-              background: `conic-gradient(var(--priority-color, var(--red)) 0 ${selected.score}%,#e9edf1 ${selected.score}%)`,
-            }}
-          >
-            <div>
-              <b>{selected.score}</b>
-              <span>/100</span>
+        {selected ? (
+          <Card className="alert-side">
+            <div
+              className="score-ring"
+              style={{
+                background: `conic-gradient(var(--priority-color, var(--red)) 0 ${selected.score}%,#e9edf1 ${selected.score}%)`,
+              }}
+            >
+              <div>
+                <b>{selected.score}</b>
+                <span>/100</span>
+              </div>
             </div>
-          </div>
-          <div className="risk-title">Mức rủi ro {selected.level}</div>
-          <p className="muted center">
-            {selected.subjectId} · {selected.title}
-          </p>
-          <div className="factor-mini">
-            <span>{selected.description}</span>
-            <b>Đã ghi nhận</b>
-          </div>
-          <div className="factor-mini">
-            <span>Số phản ánh liên quan</span>
-            <b>{related.length}</b>
-          </div>
-          <div className="factor-mini">
-            <span>Tổng số tiền phản ánh</span>
-            <b>{total} triệu</b>
-          </div>
-          <Button className="full" onClick={() => onOpen(selected.id)}>
-            Xem lý do cảnh báo
-          </Button>
-          {selected.clusterId && (
-            <>
-              <Button
-                variant="secondary"
-                className="full"
-                onClick={() => onGraph(selected.clusterId!)}
-              >
-                Mở sơ đồ liên kết
-              </Button>
-              {allowCreate && (
+            <div className="risk-title">Mức rủi ro {selected.level}</div>
+            <p className="muted center">
+              {selected.subjectId} · {selected.title}
+            </p>
+            <div className="factor-mini">
+              <span>{selected.description}</span>
+              <b>Đã ghi nhận</b>
+            </div>
+            <div className="factor-mini">
+              <span>Số phản ánh liên quan</span>
+              <b>{related.length}</b>
+            </div>
+            <div className="factor-mini">
+              <span>Tổng số tiền phản ánh</span>
+              <b>{total} triệu</b>
+            </div>
+            <Button className="full" onClick={() => onOpen(selected.id)}>
+              Xem lý do cảnh báo
+            </Button>
+            {selected.clusterId && (
+              <>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   className="full"
-                  onClick={() => onCreate(selected.clusterId)}
+                  onClick={() => onGraph(selected.clusterId!)}
                 >
-                  Tạo hồ sơ
+                  Mở sơ đồ liên kết
                 </Button>
-              )}
-            </>
-          )}
-        </Card>
+                {allowCreate && (
+                  <Button
+                    variant="ghost"
+                    className="full"
+                    onClick={() => onCreate(selected.clusterId)}
+                  >
+                    Tạo hồ sơ
+                  </Button>
+                )}
+              </>
+            )}
+          </Card>
+        ) : (
+          <Card className="alert-side alert-empty">
+            <EmptyState>
+              {alerts.length
+                ? "Không có cảnh báo phù hợp bộ lọc. Chọn mức độ khác để xem chi tiết."
+                : "Không có cảnh báo trong phạm vi tài khoản."}
+            </EmptyState>
+          </Card>
+        )}
       </div>
     </div>
   )
@@ -3015,6 +3034,8 @@ function CreateCaseModal({
   reportIds,
   reportCount,
   total,
+  relatedCases,
+  onOpenRelated,
   onClose,
   onCreate,
   onClusterChange,
@@ -3024,6 +3045,8 @@ function CreateCaseModal({
   reportIds: string[]
   reportCount: number
   total: number
+  relatedCases: CaseFile[]
+  onOpenRelated: (id: string) => void
   onClose: () => void
   onCreate: (value: {
     name: string
@@ -3031,13 +3054,41 @@ function CreateCaseModal({
     priority: string
     clusterId: string
     reportIds: string[]
-  }) => void
+    duplicateConsent?: string
+  }) => boolean
 }) {
   const [name, setName] = useState(
     `Xác minh ${cluster.name.toLowerCase()} ${cluster.id}`,
   )
-  const [officer, setOfficer] = useState("Nguyễn Xuân Sơn")
-  const [priority, setPriority] = useState(cluster.risk)
+  const signature = duplicateConsentKey(cluster.id, reportIds, relatedCases)
+  const hasDuplicate = relatedCases.some((c) =>
+    sameReportIds(c.reportIds, reportIds),
+  )
+  const [acknowledged, setAcknowledged] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const submitLock = useRef(false)
+  useEffect(() => {
+    setAcknowledged(null)
+  }, [signature])
+  const create = () => {
+    if (submitLock.current || (hasDuplicate && acknowledged !== signature))
+      return
+    submitLock.current = true
+    setSubmitting(true)
+    const success = onCreate({
+      name: name.trim(),
+      officer: "Chưa phân công",
+      priority: cluster.risk,
+      clusterId: cluster.id,
+      reportIds,
+      duplicateConsent: hasDuplicate ? acknowledged! : undefined,
+    })
+    if (!success) {
+      submitLock.current = false
+      setSubmitting(false)
+      setAcknowledged(null)
+    }
+  }
   return (
     <Modal
       title={`Tạo hồ sơ từ cụm ${cluster.id}`}
@@ -3048,16 +3099,13 @@ function CreateCaseModal({
             Hủy
           </Button>
           <Button
-            disabled={!name.trim() || !reportIds.length}
-            onClick={() =>
-              onCreate({
-                name: name.trim(),
-                officer,
-                priority,
-                clusterId: cluster.id,
-                reportIds,
-              })
+            disabled={
+              submitting ||
+              !name.trim() ||
+              !reportIds.length ||
+              (hasDuplicate && acknowledged !== signature)
             }
+            onClick={create}
           >
             Xác nhận tạo hồ sơ
           </Button>
@@ -3086,6 +3134,43 @@ function CreateCaseModal({
           {cluster.risk}
         </small>
       </div>
+      {!!relatedCases.length && (
+        <section
+          className="related-source-cases"
+          aria-label="Hồ sơ liên quan đã tồn tại"
+        >
+          <h3>Hồ sơ liên quan đã tồn tại</h3>
+          {relatedCases.map((c) => (
+            <article key={c.id}>
+              <b>
+                {c.id} · {c.name}
+              </b>
+              <p>
+                {c.status} ·{" "}
+                {sameReportIds(c.reportIds, reportIds)
+                  ? "Cùng bộ phản ánh"
+                  : "Khác bộ phản ánh"}
+              </p>
+              <small>Nguồn đã lưu: {c.reportIds.join(", ")}</small>
+              <Button variant="secondary" onClick={() => onOpenRelated(c.id)}>
+                Mở hồ sơ {c.id}
+              </Button>
+            </article>
+          ))}
+        </section>
+      )}
+      {hasDuplicate && (
+        <label className="duplicate-case-consent">
+          <input
+            type="checkbox"
+            checked={acknowledged === signature}
+            onChange={(e) =>
+              setAcknowledged(e.target.checked ? signature : null)
+            }
+          />
+          Tôi đã kiểm tra hồ sơ cùng bộ phản ánh và vẫn muốn tạo hồ sơ mới.
+        </label>
+      )}
       <Field label="Tên hồ sơ" required>
         <input value={name} onChange={(event) => setName(event.target.value)} />
       </Field>

@@ -6,6 +6,11 @@ import type {
   ReportVersion,
 } from "./types"
 import { R, UNIT, permit, canReadReport, canReadCase } from "./access.ts"
+import {
+  relatedSourceCases,
+  sameReportIds,
+  duplicateConsentKey,
+} from "./caseSources.ts"
 export type Operation =
   | {
       type: "receive"
@@ -19,7 +24,12 @@ export type Operation =
   | { type: "extract-save"; id: string; patch: Partial<Report> }
   | { type: "link"; id: string; clusterId: string }
   | { type: "proposal"; id: string; clusterId: string; restore: boolean }
-  | { type: "create-case"; name: string; clusterId: string }
+  | {
+      type: "create-case"
+      name: string
+      clusterId: string
+      duplicateConsent?: string
+    }
   | {
       type: "assign"
       id: string
@@ -303,6 +313,24 @@ export function applyOperation(
         )
       )
         throw Error("Nguồn cụm chưa đủ điều kiện tạo hồ sơ.")
+      const sourceIds = source.map((r) => r.id)
+      const related = relatedSourceCases(cases, actor, op.clusterId)
+      const duplicates = related.filter((c) =>
+        sameReportIds(c.reportIds, sourceIds),
+      )
+      const expectedConsent = duplicateConsentKey(
+        op.clusterId,
+        sourceIds,
+        related,
+      )
+      if (op.duplicateConsent && op.duplicateConsent !== expectedConsent)
+        throw Error(
+          "Nguồn hoặc hồ sơ liên quan đã thay đổi. Hãy xem lại và xác nhận mới.",
+        )
+      if (duplicates.length && op.duplicateConsent !== expectedConsent)
+        throw Error(
+          "Đã có hồ sơ cùng cụm và cùng bộ phản ánh. Cần xác nhận tạo hồ sơ mới có chủ đích.",
+        )
       const id = `HS-${String(Math.max(0, ...cases.map((c) => Number(c.id.match(/^HS-(\d+)$/)?.[1]) || 0)) + 1).padStart(3, "0")}`
       const c: CaseFile = {
         id,
