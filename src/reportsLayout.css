@@ -362,3 +362,47 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Keep both workflow stages on the same two tracks in every report row. */
+.table-scroll .report-status-column {
+  --status-padding: 7px;
+  --status-dot-width: 5px;
+  --status-dot-gap: 5px;
+  width: 320px;
+  min-width: 320px;
+}
+.report-status-column .report-status-heading,
+.report-status-column > .status-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-items: center;
+}
+.report-status-heading > span {
+  padding-left: calc(
+    var(--status-padding) + var(--status-dot-width) + var(--status-dot-gap)
+  );
+}
+.report-status-column > .status-pair > span {
+  display: block;
+  min-width: 0;
+}
+.report-status-column .badge {
+  width: 100%;
+  padding: 4px var(--status-padding);
+  gap: var(--status-dot-gap);
+  white-space: nowrap;
+  justify-content: flex-start;
+}
+.report-status-column .badge-dot {
+  flex: 0 0 var(--status-dot-width);
+  width: var(--status-dot-width);
+}
+.reports-table-scroll tbody td {
+  vertical-align: middle;
+}
+/* The pinned action heading must stay readable on its light background. */
+.reports-list-page .reports-table-scroll th:last-child {
+  color: var(--report-accent);
+}
