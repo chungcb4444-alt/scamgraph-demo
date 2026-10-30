@@ -78,6 +78,13 @@ import ReceptionPanel from "./ReceptionPanel"
 import RoleWork from "./RoleWork"
 import WorkSummary from "./WorkSummary"
 import CaseWorkPanel from "./CaseWorkPanel"
+import CaseMessages from "./CaseMessages"
+import SourceRequests from "./SourceRequests"
+import {
+  caseReceiptLabel,
+  openSourceRequests,
+  pendingOpinions,
+} from "./receiptWorkflow"
 import AccountManager from "./AccountManager"
 import ReportTabs, { type ReportSection } from "./ReportTabs"
 import ReportHistory from "./ReportHistory"
@@ -558,6 +565,7 @@ export default function App() {
   )
   const [reportSection, setReportSection] =
     useState<ReportSection>("information")
+  const [caseSection, setCaseSection] = useState("Tổng quan")
   const [selectedCase, setSelectedCase] = useStoredState(
     "scamgraph-demo-selected-case",
     "HS-001",
@@ -574,6 +582,9 @@ export default function App() {
     [toastType, setToastType] = useState<"success" | "error">("success"),
     [dirty, setDirty] = useState(false),
     [viewVersion, setViewVersion] = useState(0)
+  const committedState = useRef({ reports, cases, accounts, logs })
+  committedState.current = { reports, cases, accounts, logs }
+  const operationLocks = useRef(new Set<string>())
   const actor = accounts.find((a) => a.id === accountId) || {
     id: accountId,
     name: "Tài khoản không tồn tại",
@@ -674,6 +685,12 @@ export default function App() {
       }
       throw e
     }
+    committedState.current = {
+      reports: nextReports,
+      cases: nextCases,
+      accounts: nextAccounts,
+      logs: nextLogs,
+    }
     setReports(nextReports)
     setCases(nextCases)
     setAccounts(nextAccounts)
@@ -684,21 +701,24 @@ export default function App() {
     target: string,
     detail = "",
     result = "Thành công",
-  ) =>
-    setLogs((v) => [
-      {
-        time: nowISO(),
-        user: actor.id,
-        role: actor.role,
-        unitId: actor.unitId,
-        category: admin ? "Quản trị" : "Nghiệp vụ",
-        action,
-        target,
-        detail,
-        result,
-      },
-      ...v,
-    ])
+  ) => {
+    const log: LogItem = {
+      time: nowISO(),
+      user: actor.id,
+      role: actor.role,
+      unitId: actor.unitId,
+      category: admin ? "Quản trị" : "Nghiệp vụ",
+      action,
+      target,
+      detail,
+      result,
+    }
+    committedState.current = {
+      ...committedState.current,
+      logs: [log, ...committedState.current.logs],
+    }
+    setLogs(committedState.current.logs)
+  }
   const latestAccounts = () => {
     try {
       return (
@@ -713,18 +733,31 @@ export default function App() {
     }
   }
   const run = (op: Operation) => {
+    const key = JSON.stringify(op)
+    if (operationLocks.current.has(key)) return false
+    operationLocks.current.add(key)
     try {
+      const current = committedState.current
       const next = applyOperation(
-        { reports, cases, accounts: latestAccounts() },
+        {
+          reports: current.reports,
+          cases: current.cases,
+          accounts: latestAccounts(),
+        },
         accountId,
         op,
         nowISO(),
       )
-      commit(next.reports, next.cases, next.accounts, [next.log, ...logs])
+      commit(next.reports, next.cases, next.accounts, [
+        next.log,
+        ...current.logs,
+      ])
       // The case panel owns the aggregate of its independent unsaved forms.
-      if (activeScreen !== "case-detail") setDirty(false)
+      if (activeScreen !== "case-detail" && op.type !== "report-accept")
+        setDirty(false)
       notify("Đã lưu: " + next.log.action)
       if (op.type === "create-case") {
+        setCaseSection("Tổng quan")
         setSelectedCase(next.log.target)
         setCaseModal(false)
         setScreen("case-detail")
@@ -744,6 +777,8 @@ export default function App() {
         "error",
       )
       return false
+    } finally {
+      queueMicrotask(() => operationLocks.current.delete(key))
     }
   }
   const go = (next: Screen) => {
@@ -769,9 +804,10 @@ export default function App() {
     setSelectedReport(id)
     go("report-detail")
   }
-  const openCase = (id: string) => {
+  const openCase = (id: string, section = "Tổng quan") => {
     if (!permittedCases.some((c) => c.id === id))
       return notify("Không có quyền xem hồ sơ này.", "error")
+    setCaseSection(section)
     setSelectedCase(id)
     go("case-detail")
   }
@@ -855,6 +891,7 @@ export default function App() {
         id: payload.sample ? "PA-013" : nextReportId(reports),
         submittedBy: actor.id,
         unitId: actor.unitId,
+        receiptWorkflow: 2,
         intakeStatus: "Mới tiếp nhận",
         analysisStatus: "Chờ phân tích",
         people: {
@@ -1318,6 +1355,7 @@ export default function App() {
               <CaseDetail
                 key={item.id}
                 item={item}
+                initialTab={caseSection}
                 reports={permittedReports}
                 actor={actor}
                 accounts={accounts}
@@ -1749,6 +1787,7 @@ function Reports({
         ? "waiting"
         : "all",
   )
+  const [receiptFilter, setReceiptFilter] = useState("")
   const [advanced, setAdvanced] = useState(false)
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("Tất cả trạng thái")
@@ -1762,6 +1801,7 @@ function Reports({
     ? [
         "Tất cả trạng thái",
         "Mới tiếp nhận",
+        "Đang kiểm tra",
         "Chờ bổ sung",
         "Chuyển phân tích",
         "Không hợp lệ",
@@ -1773,7 +1813,9 @@ function Reports({
     (r) =>
       (queue === "all" ||
         (queue === "waiting"
-          ? ["Mới tiếp nhận", "Chờ bổ sung"].includes(r.intakeStatus || "")
+          ? ["Mới tiếp nhận", "Đang kiểm tra", "Chờ bổ sung"].includes(
+              r.intakeStatus || "",
+            )
           : r.intakeStatus === "Chuyển phân tích" &&
             (!r.analysisAssignee || r.analysisAssignee === actor.id))) &&
       reportSearchText(r).includes(
@@ -1787,6 +1829,10 @@ function Reports({
       (status.startsWith("Tất cả") || statusOf(r) === status) &&
       (behavior.startsWith("Tất cả") ||
         reportTypeLabel(r.behavior) === behavior) &&
+      (!receiptFilter ||
+        (receiptFilter === "pending"
+          ? r.receiptWorkflow === 2 && !r.intakeReceipt
+          : !!r.intakeReceipt)) &&
       (!source || r.source === source) &&
       (!area || r.area === area) &&
       (!from || dayKey(r.receivedAt || "") >= from) &&
@@ -1794,12 +1840,14 @@ function Reports({
   )
   const advancedCount =
     Number(!behavior.startsWith("Tất cả")) +
+    Number(!!receiptFilter) +
     Number(!!source) +
     Number(!!area) +
     Number(!!from) +
     Number(!!to)
   const resetFilters = () => {
     setQuery("")
+    setReceiptFilter("")
     setStatus("Tất cả trạng thái")
     setBehavior("Tất cả loại phản ánh")
     setSource("")
@@ -1913,6 +1961,17 @@ function Reports({
           className="reports-advanced-filters"
           hidden={!advanced}
         >
+          <FilterField label="Xác nhận tiếp nhận">
+            <select
+              aria-label="Xác nhận tiếp nhận"
+              value={receiptFilter}
+              onChange={(e) => setReceiptFilter(e.target.value)}
+            >
+              <option value="">Tất cả thông tin tiếp nhận</option>
+              <option value="pending">Chờ cán bộ tiếp nhận</option>
+              <option value="accepted">Đã xác nhận tiếp nhận</option>
+            </select>
+          </FilterField>
           <FilterField label="Loại phản ánh">
             <select
               aria-label="Loại phản ánh"
@@ -2283,6 +2342,7 @@ function ReportDetail({
         <ReportTabs
           initialTab={initialTab}
           pending={
+            permit(actor, "report.accept", report, cases) ||
             permit(actor, "report.receive", report, cases)
               ? "Phiếu đang chờ kiểm tra tiếp nhận hoặc bổ sung thông tin."
               : canAnalyze && (!report.reviewed || !report.cluster)
@@ -2381,7 +2441,8 @@ function ReportDetail({
           }
           processing={
             <div className="page-stack">
-              {permit(actor, "report.receive", report, cases) ? (
+              {permit(actor, "report.accept", report, cases) ||
+              permit(actor, "report.receive", report, cases) ? (
                 <div>
                   <ReceptionPanel
                     report={report}
@@ -3204,12 +3265,17 @@ function Cases({
   canCreate?: boolean
   onCreate: () => void
 }) {
+  const [receiptFilter, setReceiptFilter] = useState("")
+  const [reviewFilter, setReviewFilter] = useState("")
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("Tất cả trạng thái")
   const filtered = cases.filter(
     (item) =>
       `${item.id} ${item.name}`.toLowerCase().includes(query.toLowerCase()) &&
-      (status === "Tất cả trạng thái" || item.status === status),
+      (status === "Tất cả trạng thái" || item.status === status) &&
+      (!receiptFilter || caseReceiptLabel(item) === receiptFilter) &&
+      (!reviewFilter ||
+        (item.reportVersions?.at(-1)?.state || "Chưa trình") === reviewFilter),
   )
   return (
     <div className="page-stack">
@@ -3265,6 +3331,41 @@ function Cases({
             <option>Hoàn tất phân tích</option>
           </select>
         </FilterField>
+        <FilterField label="Nhận xử lý">
+          <select
+            aria-label="Nhận xử lý"
+            value={receiptFilter}
+            onChange={(e) => setReceiptFilter(e.target.value)}
+          >
+            <option value="">Tất cả nhận việc</option>
+            {[
+              "Chưa phân công",
+              "Chờ nhận xử lý",
+              "Đã nhận xử lý",
+              "Dữ liệu cũ chưa ghi nhận nhận việc",
+            ].map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </FilterField>
+        <FilterField label="Xem xét báo cáo">
+          <select
+            aria-label="Xem xét báo cáo"
+            value={reviewFilter}
+            onChange={(e) => setReviewFilter(e.target.value)}
+          >
+            <option value="">Tất cả báo cáo</option>
+            {[
+              "Chưa trình",
+              "Bản nháp",
+              "Chờ xem xét",
+              "Yêu cầu chỉnh sửa",
+              "Đã phê duyệt",
+            ].map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </FilterField>
       </Card>
       <Card className="table-card">
         <DataTable>
@@ -3312,13 +3413,19 @@ function Cases({
                   <td>
                     <Badge tone={statusTone(c.priority)}>{c.priority}</Badge>
                   </td>
-                  <td>{c.officer}</td>
+                  <td>
+                    {c.officer}
+                    <span className="cell-sub">{caseReceiptLabel(c)}</span>
+                  </td>
                   <td>
                     <Badge tone={statusTone(c.status)}>
                       {c.status === "Hoàn tất phân tích"
                         ? "Hoàn tất rà soát"
                         : c.status}
                     </Badge>
+                    <span className="cell-sub">
+                      Báo cáo: {c.reportVersions?.at(-1)?.state || "Chưa trình"}
+                    </span>
                   </td>
                   <td>{formatDateTime(c.updated)}</td>
                   <td>
@@ -3341,6 +3448,7 @@ function Cases({
 
 function CaseDetail({
   item,
+  initialTab,
   reports,
   actor,
   accounts,
@@ -3351,6 +3459,7 @@ function CaseDetail({
   onDraftChange,
 }: {
   item: CaseFile
+  initialTab: string
   reports: Report[]
   actor: StaffAccount
   accounts: StaffAccount[]
@@ -3360,12 +3469,20 @@ function CaseDetail({
   onReport: (id: string) => void
   onDraftChange: (value: boolean) => void
 }) {
-  const [tab, setTab] = useState("Tổng quan"),
+  const [tab, setTab] = useState(initialTab),
     [preview, setPreview] = useState<{ version?: ReportVersion } | null>(null)
+  const [workDirty, setWorkDirty] = useState(false),
+    [sourceDirty, setSourceDirty] = useState(false),
+    [opinionDirty, setOpinionDirty] = useState(false)
+  useLayoutEffect(
+    () => onDraftChange(workDirty || sourceDirty || opinionDirty),
+    [workDirty, sourceDirty, opinionDirty, onDraftChange],
+  )
   const related = reports.filter((r) => item.reportIds.includes(r.id))
   const total = related.reduce((n, r) => n + r.amount, 0)
   const tabs = [
     "Tổng quan",
+    "Ý kiến / Yêu cầu",
     "Phản ánh liên quan",
     "Thực thể",
     "Tài liệu",
@@ -3405,18 +3522,44 @@ function CaseDetail({
           </Button>
         </div>
       </div>
+      <div className="receipt-case-summary">
+        <span>{caseReceiptLabel(item)}</span>
+        <span>
+          {openSourceRequests(item).length} yêu cầu nguồn đang mở ·{" "}
+          {pendingOpinions(item).length} kiến nghị chờ xem xét
+        </span>
+      </div>
       <Tabs items={tabs} active={tab} onChange={setTab} />
       <div style={{ display: tab === "Tổng quan" ? "block" : "none" }}>
         <CaseWorkPanel
           item={item}
+          reports={reports}
           actor={actor}
           accounts={accounts}
           onAction={onAction}
-          onDraftChange={onDraftChange}
+          onDraftChange={setWorkDirty}
           onPreview={(version) => setPreview({ version })}
         />
       </div>
-      {tab !== "Tổng quan" && (
+      <div
+        className="page-stack"
+        style={{ display: tab === "Ý kiến / Yêu cầu" ? "flex" : "none" }}
+      >
+        <SourceRequests
+          item={item}
+          actor={actor}
+          onAction={onAction}
+          onDraftChange={setSourceDirty}
+        />
+        <CaseMessages
+          item={item}
+          actor={actor}
+          accounts={accounts}
+          onAction={onAction}
+          onDraftChange={setOpinionDirty}
+        />
+      </div>
+      {tab !== "Tổng quan" && tab !== "Ý kiến / Yêu cầu" && (
         <CaseTab
           tab={tab}
           item={item}

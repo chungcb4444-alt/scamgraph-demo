@@ -1,0 +1,103 @@
+.receipt-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.receipt-summary .btn {
+  align-self: flex-start;
+}
+.receipt-summary :is(p, small) {
+  margin: 0;
+}
+.receipt-case-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 12px;
+}
+.receipt-table-note {
+  display: block;
+  padding-left: 17px;
+  font-size: 10px;
+  line-height: 1.5;
+  margin-top: 4px;
+  white-space: normal;
+  color: var(--muted);
+}
+.report-status-column > .status-pair {
+  align-items: start;
+}
+.workflow-entry {
+  border-top: 1px solid var(--line);
+  padding: 16px 0;
+  font-size: 13px;
+}
+.workflow-entry h3 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+.workflow-entry p {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.workflow-entry .role-actions {
+  margin-top: 12px;
+}
+.workflow-entry-title {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.workflow-warning {
+  border: 1px solid #be8735;
+  background: #fff8e8;
+  color: #80580d;
+  padding: 12px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  margin: 12px 0;
+}
+:root[data-theme="dark"] .workflow-warning {
+  background: #2b251c;
+  color: #f5cd83;
+}
+:root[data-theme="dark"] .receipt-table-note {
+  color: #a7b8ce;
+}
+.opinion-content {
+  white-space: pre-wrap;
+}
+.opinion-editor {
+  margin-bottom: 18px;
+}
+.case-messages details section {
+  padding: 10px 14px;
+  border-left: 2px solid var(--line);
+  margin: 8px 0;
+}
+/* Keep the new case filters on one row on the review desktops. */
+.case-filter {
+  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(150px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1000px) {
+  .case-filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .case-filter {
+    grid-template-columns: 1fr;
+  }
+}

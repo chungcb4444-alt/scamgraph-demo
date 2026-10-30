@@ -1,7 +1,47 @@
+export type ActionStamp = {
+  by: string
+  name: string
+  role: string
+  unitId: string
+  at: string
+}
+export type CaseAssignment = {
+  id: string
+  assignee: string
+  assigneeName?: string
+  assigned: ActionStamp
+  received?: ActionStamp
+}
+export type CaseMessageVersion = {
+  recipientId: string
+  version: number
+  content: string
+  state:
+    | "Bản nháp"
+    | "Đã gửi"
+    | "Đã tiếp nhận"
+    | "Yêu cầu chỉnh sửa"
+    | "Đã duyệt"
+    | "Không chấp thuận"
+  created: ActionStamp
+  submitted?: ActionStamp
+  received?: ActionStamp
+  decision?: { actor: ActionStamp; reason: string }
+}
+export type CaseMessage = {
+  id: string
+  kind: "Ghi chú" | "Kiến nghị"
+  recipientId: string
+  requiresReceipt: boolean
+  versions: CaseMessageVersion[]
+}
 export type Report = {
+  receiptWorkflow?: 2
+  intakeReceipt?: ActionStamp
   unitId?: string
   intakeStatus?:
     | "Mới tiếp nhận"
+    | "Đang kiểm tra"
     | "Chờ bổ sung"
     | "Chuyển phân tích"
     | "Không hợp lệ"
@@ -62,6 +102,9 @@ export type Report = {
 }
 
 export type CaseFile = {
+  receiptWorkflow?: 2
+  assignments?: CaseAssignment[]
+  messages?: CaseMessage[]
   unitId?: string
   assignedTo?: string
   directives?: { time: string; author: string; content: string }[]
@@ -71,6 +114,10 @@ export type CaseFile = {
     content: string
     attachment: boolean
     kind: "Tiến độ" | "Yêu cầu xem xét lại"
+    requestId?: string
+    requestState?: "Chờ tiếp nhận" | "Đang xử lý" | "Đã hoàn thành"
+    received?: ActionStamp
+    response?: { actor: ActionStamp; content: string }
   }[]
   reportVersions?: ReportVersion[]
   id: string
@@ -117,6 +164,17 @@ export type ReportVersion = {
   reviewer?: string
   reviewNote?: string
   content: string
+  previousSubmissions?: {
+    author: string
+    content: string
+    snapshot: ReportVersion["snapshot"]
+    submittedAt?: string
+    reviewedAt?: string
+    reviewer?: string
+    reviewNote?: string
+    state: ReportVersion["state"]
+    updated: string
+  }[]
   snapshot: {
     caseId: string
     name: string

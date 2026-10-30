@@ -102,6 +102,8 @@ fs.mkdirSync(out, { recursive: true })
       assert.equal(await page.locator(".report-people").count(), 0)
       await account("tiep.nhan.demo")
       await openReport("PA-013")
+      assert.equal(await btn("Chuyển phân tích").count(), 0)
+      await btn("Xác nhận tiếp nhận").click()
       assert.equal(await btn("Trích xuất thông tin").count(), 0)
       assert.equal(await btn("Xác nhận liên kết CUM-001").count(), 0)
       await label("Ghi chú tiếp nhận / Lý do").fill(
@@ -198,6 +200,8 @@ fs.mkdirSync(out, { recursive: true })
         0,
       )
       await openCase(caseId)
+      assert.equal(await btn("Lưu tiến độ và nhận định").count(), 0)
+      await btn("Nhận xử lý hồ sơ").click()
       assert.equal(await label("Cán bộ phụ trách").count(), 0)
       await label("Trạng thái xử lý").selectOption("Đang xác minh")
       await label("Nhận định cán bộ").fill(

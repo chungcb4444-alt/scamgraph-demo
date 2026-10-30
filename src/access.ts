@@ -1,4 +1,5 @@
 import type { StaffAccount, Report, CaseFile, LogItem } from "./types"
+import { caseReceiptAllowsWork, currentAssignment } from "./receiptWorkflow.ts"
 export const R = {
   citizen: "Người dân / Tổ chức",
   reception: "Cán bộ tiếp nhận",
@@ -231,12 +232,16 @@ export function canReadReport(a: StaffAccount, r: Report, cases: CaseFile[]) {
 }
 export type Permission =
   | "report.create"
+  | "report.accept"
   | "report.receive"
   | "report.supplement"
   | "report.analyze"
   | "report.link"
   | "case.create"
   | "case.assign"
+  | "case.accept"
+  | "case.discuss"
+  | "case.source.handle"
   | "case.work"
   | "case.report"
   | "case.review"
@@ -263,16 +268,25 @@ export function permit(
     item?.assignedTo === a.id &&
     a.role === R.worker &&
     item.status !== "Đã đóng" &&
+    caseReceiptAllowsWork(item) &&
     latest?.state !== "Chờ xem xét" &&
     latest?.state !== "Đã phê duyệt"
   switch (p) {
     case "report.create":
       return a.kind === "citizen" || a.role === R.reception
+    case "report.accept":
+      return (
+        reportRead &&
+        a.role === R.reception &&
+        report?.intakeStatus !== "Chuyển phân tích" &&
+        !report?.intakeReceipt
+      )
     case "report.receive":
       return (
         reportRead &&
         a.role === R.reception &&
-        report?.intakeStatus !== "Chuyển phân tích"
+        report?.intakeStatus !== "Chuyển phân tích" &&
+        (report.receiptWorkflow !== 2 || !!report.intakeReceipt)
       )
     case "report.supplement":
       return (
@@ -302,11 +316,34 @@ export function permit(
         latest?.state !== "Chờ xem xét" &&
         latest?.state !== "Đã phê duyệt"
       )
+    case "case.accept":
+      return (
+        caseRead &&
+        a.role === R.worker &&
+        item?.assignedTo === a.id &&
+        item.receiptWorkflow === 2 &&
+        !!currentAssignment(item) &&
+        !currentAssignment(item)?.received
+      )
+    case "case.source.handle":
+      return caseRead && a.role === R.analyst
+    case "case.discuss":
+      return (
+        caseRead &&
+        item?.status !== "Đã đóng" &&
+        [R.analyst, R.worker, R.leader].includes(a.role as never) &&
+        (a.role !== R.worker || caseReceiptAllowsWork(item!))
+      )
     case "case.work":
     case "case.report":
       return !!mutableCase
     case "case.request":
-      return caseRead && a.role === R.worker && item?.assignedTo === a.id
+      return (
+        caseRead &&
+        a.role === R.worker &&
+        item?.assignedTo === a.id &&
+        caseReceiptAllowsWork(item)
+      )
     case "case.review":
       return caseRead && a.role === R.leader && latest?.state === "Chờ xem xét"
     case "sensitive.read":
