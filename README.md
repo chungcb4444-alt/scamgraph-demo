@@ -79,3 +79,20 @@ Dùng `CHROMIUM_PATH=/duong/dan/chromium` khi khác mặc định. Các kiểm t
 ## Preview trên Vercel
 
 Xem [hướng dẫn kết nối GitHub và deploy đúng nhánh sửa](docs/VERCEL-PREVIEW.md). `vercel.json` đã cấu hình Vite, pnpm 11.25.0 và thư mục output `dist`; Node được cố định 24.x. Không cần backend hoặc biến môi trường bí mật. Nhánh review là **`feat/improve-demo`**; không dùng nhầm deployment của `main` (bản gốc).
+
+## Bản sửa theo note: thời gian và sơ đồ
+
+Xem [nguyên nhân, cách sửa, migration và kiểm thử mới](docs/NOTE-REVISION.md), ảnh mới ở [docs/review-v2](docs/review-v2). Nhánh `feat/demo-time-graph-status` phát triển từ bản V1; GitHub hiện đặt tên nhánh V1 là `improve-demo_V1`. Chưa merge hoặc triển khai Production.
+
+- Thời gian hiển thị `dd/MM/yyyy HH:mm`, múi giờ Việt Nam; phát sinh lấy từ biểu mẫu, tiếp nhận lấy lúc gửi. Mẫu khởi tạo/reset theo ngày hiện tại; không đổi ngày khi tải lại. Biểu đồ là bảy ngày lịch gần nhất, ngày trống bằng 0.
+- Phiên cũ được chuyển cấu trúc và giữ nguyên bản ghi, số tiền, hồ sơ, nhật ký cùng backup localStorage. Các ngày lịch sử cũ không tự đổi thành hôm nay. Reset có xác nhận để tạo lại bộ mẫu mới; không reset nếu đang cần giữ tiến độ.
+- Sơ đồ mặc định gom nhóm theo hành vi; chọn nhóm → **Mở rộng nhóm**, chọn nút/cạnh → xem ý nghĩa và nguồn. Có tìm/lọc, phân trang và thử tải riêng 1.000 phản ánh; tắt thử tải để về bộ demo. Nhóm/lọc không làm thay đổi hồ sơ.
+- Trạng thái kiểm tra và mức rủi ro tách biệt; cùng trạng thái luôn cùng màu. PA-013 vẫn mặc định 15 triệu; sửa 19 triệu sẽ có tổng cụm 64 triệu sau xác nhận và ghi nhật ký.
+
+```bash
+node tests/time.mjs
+TZ=America/New_York node tests/time.mjs
+PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/revision.cjs
+```
+
+Runner mới có cùng các tùy chọn `DEMO_URL`, `TEST_OUTPUT`, `CHROMIUM_PATH` như các runner trước. Để xem bản sửa trên Vercel, dùng Preview Deployment của **nhánh mới**; không tự đổi production branch hoặc merge.
