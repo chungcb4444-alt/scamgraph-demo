@@ -41,7 +41,7 @@ fs.mkdirSync(out, { recursive: true })
         waitUntil: "networkidle",
       })
       await p.screenshot({ path: `${out}/${width}-login.png` })
-      await btn("Đăng nhập demo →").click()
+      await btn("Đăng nhập").click()
       await shot("dashboard")
       assert.equal(
         await p.locator("h1").evaluate((e) => getComputedStyle(e).fontSize),

@@ -72,9 +72,6 @@ export default function Modal({
       >
         <div className="modal-head">
           <div>
-            <div className="eyebrow">
-              Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
-            </div>
             <div className="modal-title">{title}</div>
           </div>
           <button

@@ -115,3 +115,5 @@ PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/intake.c
 Runner có cùng `DEMO_URL`, `TEST_OUTPUT`, `CHROMIUM_PATH` với các runner trước. Chưa bổ sung upload tài liệu thật, backend hoặc API. Chưa merge/triển khai Production; chọn Preview của nhánh mới khi muốn review.
 
 Bản đồng bộ giao diện các trang: xem [hướng dẫn, thay đổi và kiểm thử](docs/UNIFIED-DESIGN.md), cùng [ảnh review](docs/design-review/). Nhánh `feat/unified-workspace-design` kế thừa đầy đủ bản tiếp nhận phản ánh mới nhất.
+
+Thiết kế mới theo mẫu Login.html: [thay đổi, cách chạy và kiểm thử](docs/FLUENT-LOGIN-REDESIGN.md); [ảnh giao diện mới](docs/fluent-review/). Nhánh `feat/fluent-login-refresh` kế thừa bản đồng bộ giao diện trước đó.

@@ -42,7 +42,7 @@ const results = []
       }
       await page.clock.install({ time: new Date("2026-10-22T16:59:00Z") })
       await page.goto(root, { waitUntil: "networkidle" })
-      await btn("Đăng nhập demo →").click()
+      await btn("Đăng nhập").click()
       const initial = await get("reports")
       assert.equal(initial.length, 12)
       const initialAudit = await get("logs")

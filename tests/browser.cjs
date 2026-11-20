@@ -48,7 +48,7 @@ let activePage
         waitUntil: "networkidle",
       })
       await snap("01-login")
-      await button("Đăng nhập demo →").click()
+      await button("Đăng nhập").click()
       assert.equal((await reports()).length, 12)
       const cluster = async (id) =>
         (await reports()).filter((r) => r.cluster === id)

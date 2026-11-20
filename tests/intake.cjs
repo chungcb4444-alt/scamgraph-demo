@@ -67,8 +67,8 @@ fs.mkdirSync(out, { recursive: true })
       await page.goto(process.env.DEMO_URL || "http://127.0.0.1:8444/", {
         waitUntil: "networkidle",
       })
-      await button("Người dân / Tổ chức").click()
-      await button("Đăng nhập demo →").click()
+      await page.getByLabel("Vai trò demo", {exact:true}).selectOption({label:"Người dân / Tổ chức"})
+      await button("Đăng nhập").click()
       assert.equal(
         await page.locator(".report-intake h1").innerText(),
         "Gửi phản ánh",
