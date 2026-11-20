@@ -1,0 +1,104 @@
+[
+  {
+    "width": 1920,
+    "height": 1080,
+    "theme": "dark",
+    "result": "PASS",
+    "intakeX": 1375.859375,
+    "analysisX": 1529.859375,
+    "checks": [
+      "all 12 intake and analysis values align with their headings",
+      "different label lengths do not shift tracks",
+      "same vertical center on every row",
+      "full labels fit without clipping",
+      "seven original columns and correct detail navigation",
+      "business storage and audit unchanged",
+      "no page overflow or browser error"
+    ]
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "theme": "light",
+    "result": "PASS",
+    "intakeX": 1375.859375,
+    "analysisX": 1529.859375,
+    "checks": [
+      "all 12 intake and analysis values align with their headings",
+      "different label lengths do not shift tracks",
+      "same vertical center on every row",
+      "full labels fit without clipping",
+      "seven original columns and correct detail navigation",
+      "business storage and audit unchanged",
+      "no page overflow or browser error"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "theme": "dark",
+    "result": "PASS",
+    "intakeX": 1006.875,
+    "analysisX": 1160.875,
+    "checks": [
+      "all 12 intake and analysis values align with their headings",
+      "different label lengths do not shift tracks",
+      "same vertical center on every row",
+      "full labels fit without clipping",
+      "seven original columns and correct detail navigation",
+      "business storage and audit unchanged",
+      "no page overflow or browser error"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "theme": "light",
+    "result": "PASS",
+    "intakeX": 1006.875,
+    "analysisX": 1160.875,
+    "checks": [
+      "all 12 intake and analysis values align with their headings",
+      "different label lengths do not shift tracks",
+      "same vertical center on every row",
+      "full labels fit without clipping",
+      "seven original columns and correct detail navigation",
+      "business storage and audit unchanged",
+      "no page overflow or browser error"
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "theme": "dark",
+    "result": "PASS",
+    "intakeX": 1000.875,
+    "analysisX": 1154.875,
+    "checks": [
+      "all 12 intake and analysis values align with their headings",
+      "different label lengths do not shift tracks",
+      "same vertical center on every row",
+      "full labels fit without clipping",
+      "seven original columns and correct detail navigation",
+      "business storage and audit unchanged",
+      "no page overflow or browser error"
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "theme": "light",
+    "result": "PASS",
+    "intakeX": 1000.875,
+    "analysisX": 1154.875,
+    "checks": [
+      "all 12 intake and analysis values align with their headings",
+      "different label lengths do not shift tracks",
+      "same vertical center on every row",
+      "full labels fit without clipping",
+      "seven original columns and correct detail navigation",
+      "business storage and audit unchanged",
+      "no page overflow or browser error"
+    ]
+  }
+]

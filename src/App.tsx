@@ -2004,7 +2004,16 @@ function ReportTable({
             <th scope="col">Nội dung / Loại phản ánh</th>
             <th scope="col">Thời gian</th>
             <th scope="col">Số tiền</th>
-            <th scope="col">Tiếp nhận / Phân tích</th>
+            <th
+              scope="col"
+              className="report-status-column"
+              aria-label="Tiếp nhận / Phân tích"
+            >
+              <span className="report-status-heading">
+                <span>Tiếp nhận</span>
+                <span>Phân tích</span>
+              </span>
+            </th>
             {!compact && <th scope="col">Thao tác</th>}
           </tr>
         </thead>
@@ -2067,7 +2076,7 @@ function ReportTable({
                         : "—"}
                 </b>
               </td>
-              <td>
+              <td className="report-status-column">
                 <ReportStatusBadges report={r} />
               </td>
               {!compact && (
