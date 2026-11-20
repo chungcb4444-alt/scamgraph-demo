@@ -10,14 +10,17 @@ const PrivacyContext = createContext({
   visible: new Set<string>(),
   toggle: (_key: string, _label: string) => {},
   hide: () => {},
+  allowReveal: true,
 })
 export const useReportPrivacy = () => useContext(PrivacyContext)
 
 export default function ReportPrivacy({
   children,
   onReveal,
+  allowReveal = true,
 }: {
   children: ReactNode
+  allowReveal?: boolean
   onReveal?: (label: string) => void
 }) {
   const [visible, setVisible] = useState(new Set<string>())
@@ -42,6 +45,7 @@ export default function ReportPrivacy({
     }
   }, [visible])
   const toggle = (key: string, label: string) => {
+    if (!allowReveal) return
     if (!visible.has(key)) onReveal?.(label)
     setVisible((current) => {
       const next = new Set(current)
@@ -51,7 +55,7 @@ export default function ReportPrivacy({
     })
   }
   return (
-    <PrivacyContext.Provider value={{ visible, toggle, hide }}>
+    <PrivacyContext.Provider value={{ visible, toggle, hide, allowReveal }}>
       {children}
     </PrivacyContext.Provider>
   )

@@ -1,123 +1,82 @@
 # Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao
 
-Bản demo React 19 + TypeScript + Vite 8 phục vụ review nghiệp vụ. **Demo — dữ liệu giả lập.** Không tiếp nhận tố giác thật, không kết nối VNeID, backend, OCR/AI hay API bên ngoài. Vai trò và phân quyền chỉ mô phỏng trên giao diện; không dùng bản này để bảo vệ hoặc xử lý dữ liệu thật.
+Ứng dụng React 19 + TypeScript + Vite 8 dùng dữ liệu hư cấu để review nghiệp vụ. Có phân quyền theo tài khoản, vai trò, đơn vị, người được giao và trạng thái xử lý. Không kết nối backend, VNeID, OCR/AI hoặc API bên ngoài.
 
 ## Chạy dự án
 
-Đã kiểm tra với Node.js **24.19.0**, pnpm **11.25.0**, Linux và Chromium. Vite 8 cần Node.js 20.19+ hoặc 22.12+; ưu tiên dùng Node 24 như môi trường kiểm thử.
+Yêu cầu Node.js 24 và pnpm 11.25.0:
 
-```bash
-# Trong thư mục gốc repository scamgraph-demo
+```sh
 pnpm install --frozen-lockfile
-pnpm dev
+pnpm dev --host 0.0.0.0
 ```
 
-Vite dùng cổng 8443 mặc định. Có thể đổi bằng `PORT=5173 pnpm dev`. Mở địa chỉ mà Vite thông báo trên máy của bạn. Không cần biến môi trường bí mật hoặc tài khoản thật. Tài khoản/mật khẩu hiển thị là mẫu chỉ đọc; chọn vai trò rồi bấm **Đăng nhập demo**.
+Mở địa chỉ Vite in ra ở terminal. Để chạy bản build:
 
-Cấu hình `.figma/make/site.json` được đưa vào repository để một checkout mới có thể build, có tiêu đề tiếng Việt và `noindex`. Không cần chạy trong Figma Make. Không có file `.mise.toml` dù hướng dẫn scaffold cũ có nhắc tới.
-
-```bash
+```sh
 pnpm exec tsc --noEmit
 pnpm build
-PORT=8444 pnpm preview
+pnpm preview --host 0.0.0.0 --port 8444
 ```
 
-Không mở `dist/index.html` trực tiếp bằng `file://`; dùng `pnpm preview` để chạy bản build. In báo cáo bằng nút **In báo cáo**, sau đó chọn **Lưu dưới dạng PDF** trong hộp thoại của trình duyệt.
+## Tài khoản và công việc
 
-## Kịch bản review khoảng 5–7 phút
+Giữ giao diện đăng nhập hiện có. Các lựa chọn cán bộ tại login mở tài khoản mẫu tương ứng; quyền thực tế được lấy từ hồ sơ tài khoản đã lưu. Trong ứng dụng, **Tài khoản thử nghiệm** cho phép chuyển danh tính để kiểm tra quy trình, độc lập với việc quản trị phân quyền.
 
-1. Đăng nhập vai trò **Người dân / Tổ chức**; cổng gửi phản ánh có bố cục riêng, không hiển thị menu hồ sơ nghiệp vụ. Bấm **Đặt lại demo** và xác nhận để bắt đầu từ 12 phản ánh. Đặt lại sẽ xóa tiến độ giả lập, hồ sơ mới, quyền đã sửa và đề xuất đã loại bỏ; giữ vai trò hiện tại và ghi một nhật ký đặt lại.
-2. Bấm **Dùng tình huống mẫu**. Mẫu PA-013 có số tiền 15.000.000 đồng, định danh và ảnh chuyển khoản giả lập. Đi qua 4 bước, chọn ảnh mẫu rồi **Gửi phản ánh**. Hiển thị tiếp nhận thành công; hệ thống có 13 phản ánh. Không cho gửi PA-013 lần thứ hai.
-3. Dùng bộ chọn **Chuyển vai trò demo** ở thanh đầu trang để chuyển sang **Cán bộ phân tích**. Vào **Phản ánh**, tìm `PA-013` rồi mở chi tiết. CUM-001 lúc này vẫn chỉ có PA-001/002/003, tổng **45 triệu**.
-4. Bấm **Trích xuất thông tin**; so sánh nội dung gốc và **Xem trước** bằng chứng. Sửa một trường, ví dụ điện thoại thành `DEMO-SDT-013`, rồi **Lưu thông tin đã kiểm tra**. Căn cứ đề xuất chỉ xuất hiện sau bước này, với trường trùng khớp và từng mã phản ánh nguồn. Có thể **Loại bỏ đề xuất**, tải lại để thấy trạng thái còn giữ, rồi **Xem xét lại**.
-5. Bấm **Xác nhận liên kết CUM-001**. Cụm mới trở thành **4 phản ánh / 60 triệu**. Mở sơ đồ; chọn nút để xem nguồn của quan hệ, mở phản ánh nguồn hoặc xem lý do cảnh báo. Quan hệ chỉ diễn tả thông tin được nhắc đến, không xác nhận danh tính hay quyền sở hữu tài khoản.
-6. Bấm **Tạo hồ sơ từ cụm** → xác nhận. Hồ sơ mới là **HS-003**, chứa đủ PA-001, PA-002, PA-003, PA-013. Phân công cán bộ, đổi trạng thái, viết nhận định và **Lưu thay đổi**. **Xem báo cáo** dùng các giá trị đã lưu; lưu trước khi mở để đưa thay đổi vào báo cáo. Có thể xem trước/in/lưu PDF.
-7. Kiểm tra đối chứng: **CUM-002** có PA-004/005/006, tổng **25 triệu**; **HS-002** chỉ chứa **PA-008**, tổng **30 triệu**, không có tài khoản ngân hàng hay thực thể của CUM-001. Trong hộp thoại tạo hồ sơ có thể chọn cụm nguồn khác.
-8. Chuyển sang **Quản trị hệ thống**, tìm tài khoản và sửa vai trò mẫu; chỉ vai trò quản trị được lưu thay đổi này. Mở **Nhật ký hệ thống**, tìm `PA-013`, mở một dòng để đọc người thao tác, thời gian, đối tượng và giá trị trước/sau. Chuyển vai trò chỉ xem để kiểm tra thao tác lưu hồ sơ bị từ chối.
+| Vai trò | Công việc chính |
+| --- | --- |
+| Người dân / Tổ chức | Gửi, xem phản ánh của mình, bổ sung thông tin khi được yêu cầu |
+| Cán bộ tiếp nhận | Kiểm tra, ghi chú, yêu cầu bổ sung, đánh dấu không hợp lệ, chuyển phân tích |
+| Cán bộ phân tích | Kiểm tra trích xuất, ghi nhận định, xác nhận/loại bỏ liên kết, tạo hồ sơ chờ phân công |
+| Cán bộ xử lý hồ sơ | Xử lý hồ sơ được giao, ghi tiến độ/nhận định, lập và trình báo cáo |
+| Lãnh đạo | Phân công, ưu tiên, chỉ đạo, yêu cầu chỉnh sửa hoặc phê duyệt báo cáo |
+| Kiểm tra, giám sát | Tra cứu nhật ký và lịch sử thay đổi trong đơn vị; không sửa nghiệp vụ |
+| Quản trị hệ thống | Quản lý quyền, đơn vị, trạng thái tài khoản nội bộ và xem nhật ký quản trị |
 
-Dữ liệu phản ánh, hồ sơ, nhật ký, quyền mẫu, vai trò, màn hình đang mở và tiến độ biểu mẫu được lưu trong `localStorage` theo origin. Chạy cùng ứng dụng ở cổng khác tạo kho dữ liệu riêng. Đổi tên tài khoản/quyền trong danh sách là minh họa quản trị; bộ chọn vai trò vẫn là công cụ độc lập phục vụ trình diễn, không phải xác thực thật.
+Có hai tài khoản xử lý để thể hiện phạm vi hồ sơ được giao: **Lê Minh Anh** (`xu.ly.demo`) và **Trần Quốc Huy** (`xu.ly.huy`). HS-001 ban đầu thuộc Lê Minh Anh, HS-002 thuộc Trần Quốc Huy. Hồ sơ mới chưa được tự phân công.
 
-## Kiểm thử tự động bằng trình duyệt
+Chi tiết quyền, chuyển trạng thái, ảnh và kết quả kiểm tra: [docs/ROLE-WORKSPACES.md](docs/ROLE-WORKSPACES.md).
 
-Các script dùng Playwright nhưng không thay đổi lockfile của ứng dụng. Cài công cụ kiểm thử riêng trong thư mục được Git bỏ qua:
+## Luồng kiểm tra nghiệp vụ
 
-```bash
-npm install --prefix .test-tools playwright@1.56.1 --no-audit --no-fund
-# Nếu máy chưa có Chromium, cài bằng công cụ hệ điều hành hoặc:
-.test-tools/node_modules/.bin/playwright install chromium
-```
+1. Người dân gửi tình huống mẫu PA-013; có thể tạo phản ánh nhập tay riêng. PA-013 không được tạo sẵn.
+2. Cán bộ tiếp nhận mở phiếu, ghi chú và chọn cán bộ nhận phân tích. Có thể yêu cầu người gửi bổ sung trước khi bàn giao.
+3. Cán bộ phân tích được giao kiểm tra trích xuất, lưu thông tin và xác nhận liên kết khi đủ căn cứ.
+4. Cán bộ phân tích tạo hồ sơ từ cụm. Lãnh đạo phân công người xử lý.
+5. Người được giao cập nhật nhận định, lưu bản nháp và trình báo cáo. Lãnh đạo yêu cầu chỉnh sửa hoặc phê duyệt.
+6. Sau phê duyệt, sửa tiếp phải tạo phiên bản mới. Giám sát đối chiếu toàn bộ nhật ký.
 
-Các script mặc định dùng `/usr/bin/chromium`. Nếu dùng Chromium do Playwright cài, lấy đường dẫn bằng:
+Ban đầu có 12 phản ánh. CUM-001 có 3 phản ánh/45 triệu đồng; tạo PA-013 thêm 15 triệu thành 13 phản ánh, chỉ sau xác nhận liên kết cụm mới thành 4/60 triệu. CUM-002 giữ 3/25 triệu. PA-008 và HS-002 độc lập, báo cáo HS-002 lấy đúng 1 phản ánh/30 triệu.
 
-```bash
-node -e "console.log(require('./.test-tools/node_modules/playwright').chromium.executablePath())"
-```
+## Dữ liệu trình duyệt
 
-Chạy ứng dụng ở một terminal, rồi trong terminal khác:
+Phản ánh, hồ sơ, phiên bản báo cáo, tài khoản và nhật ký được lưu trong localStorage theo origin. Bản nháp tiếp nhận được lưu riêng theo tài khoản. Dữ liệu phiên cũ được bổ sung trường mới; tên người phụ trách chưa định danh được giữ lại và không tự gán cho người đăng nhập.
 
-```bash
-PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/browser.cjs
-PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/edge.cjs
-```
+Đặt lại dữ liệu thử nghiệm chỉ nằm trong tiện ích của quản trị, có xác nhận, giữ nguyên tài khoản và nhật ký cũ. Các lần đăng nhập/chuyển tài khoản không tự đặt lại dữ liệu.
 
-Dùng `CHROMIUM_PATH=/duong/dan/chromium` khi khác mặc định. Các kiểm thử là demo cục bộ, Chromium chạy headless với `--no-sandbox` để tương thích container; không dùng runner này để mở nội dung không tin cậy. Có thể dùng `DEMO_URL=http://127.0.0.1:8444/` để kiểm thử production preview. Đặt `TEST_OUTPUT` để chọn thư mục ảnh, PDF và JSON (mặc định `/tmp/scamgraph-results`). Mỗi bài dùng browser context riêng, không sửa dữ liệu trong phiên review của bạn.
+## Kiểm thử hiện tại
 
-- `tests/browser.cjs`: luồng chính ở **1440 × 900** và **1280 × 720**, kiểm tra dữ liệu trước/sau liên kết, hồ sơ, quyền mẫu, localStorage, nhật ký và reset; lưu screenshot/PDF.
-- `tests/edge.cjs`: trường bắt buộc, số âm, gửi trùng, loại dữ liệu không khớp, gỡ liên kết cũ sau khi sửa, quyền chỉ xem, bộ lọc, điều hướng đúng nguồn và không gọi API bên ngoài.
-- [Kết quả kiểm tra](docs/TEST-RESULTS.md); [ảnh và kết quả JSON](docs/review).
-
-## Thay đổi và giới hạn
-
-- Sáu màn hình dùng nền xanh đen, khối navy, nút tím/xanh, chữ rõ hơn; cổng người dân tách bố cục nghiệp vụ. Giữ sơ đồ, cảnh báo, hồ sơ và báo cáo.
-- Thông tin trích xuất có thể chỉnh đủ các trường; căn cứ phải được kiểm tra, xác nhận hoặc loại bỏ. Sửa thực thể trong phản ánh đã liên kết sẽ gỡ liên kết cũ để yêu cầu kiểm tra lại.
-- Thành viên cụm được lưu trong phản ánh; hồ sơ giữ danh sách mã phản ánh lúc tạo. Các tổng tiền, biểu đồ và báo cáo đọc từ bộ dữ liệu này, không tăng bộ đếm riêng.
-- Điểm cảnh báo là quy tắc minh họa của kịch bản, không phải điểm AI hay kết luận điều tra. Trích xuất cũng chạy theo mẫu, không suy ra thực thể từ mọi văn bản tùy ý.
-- PA-013 là tình huống mẫu dành riêng cho luồng ngân hàng. Biểu mẫu mới cho tạo thêm phản ánh tự nhập với mã duy nhất; không cần đặt lại demo để gửi phiếu khác. Ảnh bằng chứng là minh họa HTML, không phải quy trình tải/chấm chứng từ thật.
-- Dữ liệu chỉ lưu trên một trình duyệt, không đồng bộ nhiều người; xóa dữ liệu trình duyệt hoặc chặn localStorage sẽ ảnh hưởng lưu tiến độ. Không có cơ chế bảo mật, chữ ký số hay nhật ký chống sửa phục vụ vận hành thật.
-- Tối ưu desktop theo hai kích thước yêu cầu; chưa chứng nhận giao diện mobile, kiểm thử bảo mật hoặc độ giống từng pixel. Không triển khai website ra dịch vụ bên ngoài.
-
-## Preview trên Vercel
-
-Xem [hướng dẫn kết nối GitHub và deploy đúng nhánh sửa](docs/VERCEL-PREVIEW.md). `vercel.json` đã cấu hình Vite, pnpm 11.25.0 và thư mục output `dist`; Node được cố định 24.x. Không cần backend hoặc biến môi trường bí mật. Nhánh review là **`feat/improve-demo`**; không dùng nhầm deployment của `main` (bản gốc).
-
-## Bản sửa theo note: thời gian và sơ đồ
-
-Xem [nguyên nhân, cách sửa, migration và kiểm thử mới](docs/NOTE-REVISION.md), ảnh mới ở [docs/review-v2](docs/review-v2). Nhánh `feat/demo-time-graph-status` phát triển từ bản V1; GitHub hiện đặt tên nhánh V1 là `improve-demo_V1`. Chưa merge hoặc triển khai Production.
-
-- Thời gian hiển thị `dd/MM/yyyy HH:mm`, múi giờ Việt Nam; phát sinh lấy từ biểu mẫu, tiếp nhận lấy lúc gửi. Mẫu khởi tạo/reset theo ngày hiện tại; không đổi ngày khi tải lại. Biểu đồ là bảy ngày lịch gần nhất, ngày trống bằng 0.
-- Phiên cũ được chuyển cấu trúc và giữ nguyên bản ghi, số tiền, hồ sơ, nhật ký cùng backup localStorage. Các ngày lịch sử cũ không tự đổi thành hôm nay. Reset có xác nhận để tạo lại bộ mẫu mới; không reset nếu đang cần giữ tiến độ.
-- Sơ đồ mặc định gom nhóm theo hành vi; chọn nhóm → **Mở rộng nhóm**, chọn nút/cạnh → xem ý nghĩa và nguồn. Có tìm/lọc, phân trang và thử tải riêng 1.000 phản ánh; tắt thử tải để về bộ demo. Nhóm/lọc không làm thay đổi hồ sơ.
-- Trạng thái kiểm tra và mức rủi ro tách biệt; cùng trạng thái luôn cùng màu. PA-013 vẫn mặc định 15 triệu; sửa 19 triệu sẽ có tổng cụm 64 triệu sau xác nhận và ghi nhật ký.
-
-```bash
-node tests/time.mjs
+```sh
+node tests/access.mjs
+node tests/intake-model.mjs
 TZ=America/New_York node tests/time.mjs
-PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/revision.cjs
 ```
 
-Runner mới có cùng các tùy chọn `DEMO_URL`, `TEST_OUTPUT`, `CHROMIUM_PATH` như các runner trước. Để xem bản sửa trên Vercel, dùng Preview Deployment của **nhánh mới**; không tự đổi production branch hoặc merge.
+Kiểm thử trình duyệt dùng công cụ riêng, không thay lockfile ứng dụng:
 
-
-## Biểu mẫu tiếp nhận mới
-
-Nhánh `feat/report-intake-redesign` phát triển từ bản V2 (`feat/demo-time-graph-statusV_2` trên GitHub). Xem [hướng dẫn và kết quả sửa biểu mẫu](docs/INTAKE-REDESIGN.md), [ảnh trước/sau](docs/intake-review).
-
-- Người dân: **Gửi phản ánh**; cán bộ: **Tiếp nhận phản ánh / Lưu phản ánh**. Bốn bước **Người gửi → Sự việc → Tài liệu → Xem lại và gửi**. Mỗi bước giữ bản nháp khi quay lại hoặc tải lại.
-- Chọn loại phản ánh hoặc **Chưa xác định**; **Khác** phải có mô tả. Không nhớ thời gian có lựa chọn riêng; không chuyển tiền thì không phải nhập số tiền/tài khoản.
-- Tình huống mẫu vẫn là PA-013/15 triệu, chưa tự xác nhận liên kết. Phiếu tự nhập có mã riêng (bỏ qua PA-013 nếu chưa có để giữ mã này cho mẫu). Phiếu mới chỉ báo thành công sau khi lưu được; bấm **Mở chi tiết** để xem hoặc **Gửi phản ánh khác** để tạo tiếp.
-- **Xem danh sách phản ánh**: người dân xem phiếu do vai trò người dân gửi và mẫu PA-013, với chi tiết chỉ đọc; cán bộ xem danh sách nghiệp vụ. Đây là giới hạn UI mô phỏng, không phải phân quyền bảo mật thật.
-- Phân loại dùng trường `behavior` đã có; giữ phân loại ban đầu và nhật ký trước/sau khi cán bộ điều chỉnh. Dữ liệu cũ vẫn đọc được.
-
-```bash
-PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/intake.cjs
+```sh
+npm install --prefix .test-tools playwright@1.56.1 --no-audit --no-fund
+.test-tools/node_modules/.bin/playwright install chromium
+DEMO_URL=http://127.0.0.1:8444/ PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/roles.cjs
+DEMO_URL=http://127.0.0.1:8444/ PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/roles-negative.cjs
 ```
 
-Runner có cùng `DEMO_URL`, `TEST_OUTPUT`, `CHROMIUM_PATH` với các runner trước. Chưa bổ sung upload tài liệu thật, backend hoặc API. Chưa merge/triển khai Production; chọn Preview của nhánh mới khi muốn review.
+Các script dùng Chromium hệ thống nếu có `/usr/bin/chromium`; có thể chỉ định `CHROMIUM_PATH`, nếu không sẽ dùng Chromium của Playwright. `TEST_OUTPUT` đổi nơi lưu ảnh/JSON. Mỗi lần chạy dùng phiên trình duyệt riêng.
 
-Bản đồng bộ giao diện các trang: xem [hướng dẫn, thay đổi và kiểm thử](docs/UNIFIED-DESIGN.md), cùng [ảnh review](docs/design-review/). Nhánh `feat/unified-workspace-design` kế thừa đầy đủ bản tiếp nhận phản ánh mới nhất.
+`roles.cjs` kiểm tra luồng xuyên suốt và giao diện 1440×900, 1280×720. `roles-negative.cjs` kiểm tra ngoài phạm vi, phiên cũ, bản nháp, tài khoản khóa, lỗi lưu và đặt lại có xác nhận. Các script giao diện trước đợt phân quyền được giữ để tham khảo lịch sử; chúng giả định bộ chọn vai trò và quyền sửa chung cũ, không phải bộ kiểm thử chấp nhận cho phiên bản này.
 
-Thiết kế mới theo mẫu Login.html: [thay đổi, cách chạy và kiểm thử](docs/FLUENT-LOGIN-REDESIGN.md); [ảnh giao diện mới](docs/fluent-review/). Nhánh `feat/fluent-login-refresh` kế thừa bản đồng bộ giao diện trước đó.
+## Giới hạn
 
-Bản giao diện sáng theo ảnh Ravao: [hướng dẫn, thay đổi và kiểm thử](docs/RAVAO-LIGHT-DESIGN.md), [ảnh giao diện](docs/ravao-review/). Nhánh `feat/ravao-light-workspace` giữ nguyên các tệp nghiệp vụ và dữ liệu của bản trước; có bằng chứng đối chiếu trong thư mục review.
+Quyền được kiểm tra trong ứng dụng phía trình duyệt, không phải cơ chế bảo mật máy chủ. Bộ chọn tài khoản phục vụ thử nghiệm, không phải xác thực thật. Dữ liệu không đồng bộ giữa người dùng/máy khác; chưa hỗ trợ sửa đồng thời trên nhiều tab. Tài liệu đính kèm và trích xuất vẫn là mô phỏng. Không dùng ứng dụng này để tiếp nhận thông tin thật.
 
-Bản bám `scamgraph.html`: [thiết kế, hiệu ứng, cách chạy và kiểm thử](docs/HTML-SAMPLE-FIDELITY.md), [ảnh sáng/tối](docs/html-sample-review/). Chọn “Tài khoản Cán bộ” để mở hộp xác thực; vẫn có đủ vai trò và luồng nghiệp vụ gốc.
+Chưa tự merge hoặc chạy lệnh triển khai Production. Cấu hình Vercel hiện có được giữ nguyên.

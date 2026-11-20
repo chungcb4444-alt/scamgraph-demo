@@ -11,7 +11,7 @@ export default function SensitiveValue({
   name: string
   inline?: boolean
 }) {
-  const { visible, toggle } = useReportPrivacy()
+  const { visible, toggle, allowReveal } = useReportPrivacy()
   if (!value) return <span className="people-missing">Chưa cung cấp</span>
   const revealed = visible.has(name)
   return (
@@ -21,6 +21,7 @@ export default function SensitiveValue({
       data-revealed={revealed}
       aria-label={`${revealed ? "Ẩn" : "Hiện"} ${label}`}
       aria-pressed={revealed}
+      disabled={!allowReveal}
       onClick={() => toggle(name, label)}
     >
       <span className="sensitive-text">{revealed ? value : "•••• ••••"}</span>

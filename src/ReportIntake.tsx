@@ -77,10 +77,10 @@ const hints: Record<string, string> = {
   "Chiếm đoạt tài khoản mạng xã hội":
     "Tài khoản nào có dấu hiệu bị chiếm đoạt? Có tin nhắn mượn tiền, đường link hoặc thay đổi truy cập không?",
 }
-function readDraft(): Draft {
+function readDraft(storagePrefix: string): Draft {
   try {
     const old = JSON.parse(
-      localStorage.getItem("scamgraph-demo-wizard-form") || "null",
+      localStorage.getItem(`${storagePrefix}:form`) || "null",
     )
     if (!old || typeof old !== "object") return emptyDraft()
     return {
@@ -129,17 +129,19 @@ export default function ReportIntake({
   onSubmit,
   onOpen,
   onList,
+  storagePrefix = "scamgraph-demo-wizard",
 }: {
   citizen: boolean
+  storagePrefix?: string
   reports: Report[]
   onSubmit: (payload: IntakePayload) => IntakeResult
   onOpen: (id: string) => void
   onList: () => void
 }) {
-  const [draft, setDraft] = useState(readDraft)
+  const [draft, setDraft] = useState(() => readDraft(storagePrefix))
   const [step, setStep] = useState(() => {
     try {
-      const n = Number(localStorage.getItem("scamgraph-demo-wizard-step"))
+      const n = Number(localStorage.getItem(`${storagePrefix}:step`))
       return [1, 2, 3, 4].includes(n) ? n : 1
     } catch {
       return 1
@@ -162,8 +164,8 @@ export default function ReportIntake({
   }
   useEffect(() => {
     try {
-      localStorage.setItem("scamgraph-demo-wizard-form", JSON.stringify(draft))
-      localStorage.setItem("scamgraph-demo-wizard-step", String(step))
+      localStorage.setItem(`${storagePrefix}:form`, JSON.stringify(draft))
+      localStorage.setItem(`${storagePrefix}:step`, String(step))
     } catch {
       setStorageNote(
         "Không lưu được bản nháp trên trình duyệt này. Dữ liệu đang nhập vẫn giữ trong phiên hiện tại.",

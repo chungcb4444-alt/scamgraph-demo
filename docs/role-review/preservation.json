@@ -1,0 +1,73 @@
+{
+  "baseline": "81887aa",
+  "files": {
+    "src/Login.tsx": {
+      "unchanged": true,
+      "sha256": "b7e58369d2f924adad540166cd9cb760e4c174d123ce164abb3caeeebbfa896f"
+    },
+    "src/login.css": {
+      "unchanged": true,
+      "sha256": "0187214f18cbfd0054a194bde1b37175527750a248b553943452d9c16efa3005"
+    },
+    "src/BrandMark.tsx": {
+      "unchanged": true,
+      "sha256": "27c7243427c2cd1b219724c303f143225d7239e542158c8140b7f7f6cb4c6878"
+    },
+    "src/AppearanceToggle.tsx": {
+      "unchanged": true,
+      "sha256": "084e67c1e4da8b53157399a930eed826f5798730eec2e803926d267dd664f577"
+    },
+    "src/index.css": {
+      "unchanged": true,
+      "sha256": "a56f2e90615f48219554d24ef4fb49ca3694fcf438da086f3645bcd92aadd425"
+    },
+    "src/sample-theme.css": {
+      "unchanged": true,
+      "sha256": "35c1801d82ada82264185ae0427b614ad1a7f34a6f0d3ca64dfc6387f9f66581"
+    },
+    "src/workspace-polish.css": {
+      "unchanged": true,
+      "sha256": "4408940c8b3d9b85463ad02bd5fcdf05d141bc33a2772c8010f0f08613d49a49"
+    },
+    "src/reportPeople.css": {
+      "unchanged": true,
+      "sha256": "c81a72cf4ee38d800be9b68543b15eeb44e88addacf709b2205eeaef861e5df2"
+    },
+    "src/reportPeople.ts": {
+      "unchanged": true,
+      "sha256": "fbe3d30bcee2893ea33816b27a9f9c1b5151502a1dff0c1db531c373c3f10dd5"
+    },
+    "src/reportPeopleSamples.json": {
+      "unchanged": true,
+      "sha256": "2676b2c90ddf9b816267d8833857c8b1811a03d2ee91c3cb6f66119be1c1c1db"
+    },
+    "src/ReportPeople.tsx": {
+      "unchanged": true,
+      "sha256": "c9df0a39b28adad2deb3095ef1d2cff70d0f70e786bf0b3f32603d7feab55264"
+    },
+    "src/ReportStatement.tsx": {
+      "unchanged": true,
+      "sha256": "7bf3bd99d2e3ce0f39eaa8cab6d2adc236f4f9fefdd67ef29a3c076e7109925d"
+    },
+    "src/demoTime.ts": {
+      "unchanged": true,
+      "sha256": "77b81a77b025331bdf8fb95c6844d9ec3460e3620a4b48a6e176ca9aee1ce36a"
+    },
+    "src/workflow.tsx": {
+      "unchanged": true,
+      "sha256": "67980a007754e007910af47cab4eadb2c368e271e1d82f9884da0db0b77c4fbb"
+    },
+    "package.json": {
+      "unchanged": true,
+      "sha256": "846cd9af725691a65dcf9f1e609c32f135cfb8cfc5c513f33cdc3bad834828ab"
+    },
+    "pnpm-lock.yaml": {
+      "unchanged": true,
+      "sha256": "4898ab91c6fe90782fb79b43995ba987b2b648464db013df5c770c0370959931"
+    },
+    "vercel.json": {
+      "unchanged": true,
+      "sha256": "e7a3d58407f9d0d63aa9b82d91ae21cdc9249461ff741aaefb208a828ab3acff"
+    }
+  }
+}
