@@ -53,6 +53,7 @@ import {
   accountForRole,
   initialAccount,
   migrateAccounts,
+  renameStaffAccount,
   migrateReport,
   migrateCase,
   allowedScreens,
@@ -371,6 +372,8 @@ function useStoredState<T>(key: string, initial: T) {
         return migrated.map(migrateReport) as T
       if (key === "scamgraph-demo-cases" && Array.isArray(migrated))
         return migrated.map(migrateCase) as T
+      if (key === "scamgraph-demo-accounts" && Array.isArray(migrated))
+        return migrated.map(renameStaffAccount) as T
       return migrated as T
     } catch {
       return initial
@@ -615,7 +618,7 @@ export default function App() {
     const changed = (e: StorageEvent) => {
       if (e.key === "scamgraph-demo-accounts" && e.newValue) {
         try {
-          setAccounts(JSON.parse(e.newValue))
+          setAccounts(JSON.parse(e.newValue).map(renameStaffAccount))
         } catch {
           /* Keep current data if malformed. */
         }
@@ -683,7 +686,7 @@ export default function App() {
       return (
         (JSON.parse(
           localStorage.getItem("scamgraph-demo-accounts") || "null",
-        ) as StaffAccount[]) || accounts
+        ) as StaffAccount[])?.map(renameStaffAccount) || accounts
       )
     } catch {
       return accounts
@@ -2887,7 +2890,7 @@ function CreateCaseModal({
   const [name, setName] = useState(
     `Xác minh ${cluster.name.toLowerCase()} ${cluster.id}`,
   )
-  const [officer, setOfficer] = useState("Nguyễn Phân Tích")
+  const [officer, setOfficer] = useState("Nguyễn Xuân Sơn")
   const [priority, setPriority] = useState(cluster.risk)
   return (
     <Modal
