@@ -10,6 +10,16 @@ export type Report = {
   timeMigration?: string
   amount: number
   status: string
+  senderName?: string
+  senderContact?: string
+  submittedBy?: string
+  sourceOther?: string
+  behaviorOther?: string
+  initialBehavior?: string
+  initialBehaviorOther?: string
+  occurredTimeUnknown?: boolean
+  transferStatus?: "Có" | "Không" | "Chưa rõ"
+  socialAccount?: string
   behavior: string
   content: string
   account?: string

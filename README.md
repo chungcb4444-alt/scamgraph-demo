@@ -72,7 +72,7 @@ Dùng `CHROMIUM_PATH=/duong/dan/chromium` khi khác mặc định. Các kiểm t
 - Thông tin trích xuất có thể chỉnh đủ các trường; căn cứ phải được kiểm tra, xác nhận hoặc loại bỏ. Sửa thực thể trong phản ánh đã liên kết sẽ gỡ liên kết cũ để yêu cầu kiểm tra lại.
 - Thành viên cụm được lưu trong phản ánh; hồ sơ giữ danh sách mã phản ánh lúc tạo. Các tổng tiền, biểu đồ và báo cáo đọc từ bộ dữ liệu này, không tăng bộ đếm riêng.
 - Điểm cảnh báo là quy tắc minh họa của kịch bản, không phải điểm AI hay kết luận điều tra. Trích xuất cũng chạy theo mẫu, không suy ra thực thể từ mọi văn bản tùy ý.
-- PA-013 là tình huống tạo mới duy nhất để review; đặt lại trước khi trình diễn lại. Ảnh bằng chứng là minh họa HTML, không phải quy trình tải/chấm chứng từ thật.
+- PA-013 là tình huống mẫu dành riêng cho luồng ngân hàng. Biểu mẫu mới cho tạo thêm phản ánh tự nhập với mã duy nhất; không cần đặt lại demo để gửi phiếu khác. Ảnh bằng chứng là minh họa HTML, không phải quy trình tải/chấm chứng từ thật.
 - Dữ liệu chỉ lưu trên một trình duyệt, không đồng bộ nhiều người; xóa dữ liệu trình duyệt hoặc chặn localStorage sẽ ảnh hưởng lưu tiến độ. Không có cơ chế bảo mật, chữ ký số hay nhật ký chống sửa phục vụ vận hành thật.
 - Tối ưu desktop theo hai kích thước yêu cầu; chưa chứng nhận giao diện mobile, kiểm thử bảo mật hoặc độ giống từng pixel. Không triển khai website ra dịch vụ bên ngoài.
 
@@ -96,3 +96,20 @@ PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/revision
 ```
 
 Runner mới có cùng các tùy chọn `DEMO_URL`, `TEST_OUTPUT`, `CHROMIUM_PATH` như các runner trước. Để xem bản sửa trên Vercel, dùng Preview Deployment của **nhánh mới**; không tự đổi production branch hoặc merge.
+
+
+## Biểu mẫu tiếp nhận mới
+
+Nhánh `feat/report-intake-redesign` phát triển từ bản V2 (`feat/demo-time-graph-statusV_2` trên GitHub). Xem [hướng dẫn và kết quả sửa biểu mẫu](docs/INTAKE-REDESIGN.md), [ảnh trước/sau](docs/intake-review).
+
+- Người dân: **Gửi phản ánh**; cán bộ: **Tiếp nhận phản ánh / Lưu phản ánh**. Bốn bước **Người gửi → Sự việc → Tài liệu → Xem lại và gửi**. Mỗi bước giữ bản nháp khi quay lại hoặc tải lại.
+- Chọn loại phản ánh hoặc **Chưa xác định**; **Khác** phải có mô tả. Không nhớ thời gian có lựa chọn riêng; không chuyển tiền thì không phải nhập số tiền/tài khoản.
+- Tình huống mẫu vẫn là PA-013/15 triệu, chưa tự xác nhận liên kết. Phiếu tự nhập có mã riêng (bỏ qua PA-013 nếu chưa có để giữ mã này cho mẫu). Phiếu mới chỉ báo thành công sau khi lưu được; bấm **Mở chi tiết** để xem hoặc **Gửi phản ánh khác** để tạo tiếp.
+- **Xem danh sách phản ánh**: người dân xem phiếu do vai trò người dân gửi và mẫu PA-013, với chi tiết chỉ đọc; cán bộ xem danh sách nghiệp vụ. Đây là giới hạn UI mô phỏng, không phải phân quyền bảo mật thật.
+- Phân loại dùng trường `behavior` đã có; giữ phân loại ban đầu và nhật ký trước/sau khi cán bộ điều chỉnh. Dữ liệu cũ vẫn đọc được.
+
+```bash
+PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/intake.cjs
+```
+
+Runner có cùng `DEMO_URL`, `TEST_OUTPUT`, `CHROMIUM_PATH` với các runner trước. Chưa bổ sung upload tài liệu thật, backend hoặc API. Chưa merge/triển khai Production; chọn Preview của nhánh mới khi muốn review.
