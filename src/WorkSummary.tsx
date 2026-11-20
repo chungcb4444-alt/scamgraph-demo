@@ -1,4 +1,9 @@
 import type { StaffAccount, Report, CaseFile } from "./types"
+import {
+  openSourceRequests,
+  pendingOpinions,
+  caseReceiptLabel,
+} from "./receiptWorkflow"
 import { R } from "./access"
 export default function WorkSummary({
   actor,
@@ -41,9 +46,7 @@ export default function WorkSummary({
                 "chờ phân tích",
               ],
               [
-                cases.filter((c) =>
-                  c.workItems?.some((w) => w.kind === "Yêu cầu xem xét lại"),
-                ).length,
+                cases.filter((c) => openSourceRequests(c).length > 0).length,
                 "hồ sơ có yêu cầu xem xét lại",
               ],
             ]
@@ -68,6 +71,42 @@ export default function WorkSummary({
           <b>{n}</b> {label}
         </span>
       ))}
+      {actor.role === R.reception && (
+        <span>
+          <b>
+            {reports.filter((r) => r.intakeStatus === "Đang kiểm tra").length}
+          </b>{" "}
+          đang kiểm tra
+        </span>
+      )}
+      {actor.role === R.reception && (
+        <span>
+          <b>
+            {
+              reports.filter((r) => r.receiptWorkflow === 2 && !r.intakeReceipt)
+                .length
+            }
+          </b>{" "}
+          chờ xác nhận tiếp nhận
+        </span>
+      )}
+      {[R.worker, R.leader].includes(actor.role as never) && (
+        <span>
+          <b>
+            {
+              cases.filter((c) => caseReceiptLabel(c) === "Chờ nhận xử lý")
+                .length
+            }
+          </b>{" "}
+          hồ sơ chờ nhận
+        </span>
+      )}
+      {actor.role === R.leader && (
+        <span>
+          <b>{cases.reduce((n, c) => n + pendingOpinions(c).length, 0)}</b> kiến
+          nghị chờ xem xét
+        </span>
+      )}
       <small>
         {actor.kind === "citizen"
           ? "Dữ liệu thuộc tài khoản"

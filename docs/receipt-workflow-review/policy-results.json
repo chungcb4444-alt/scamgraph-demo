@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "checks": [
+    "new report receipt gate, ownership, double acknowledgement, distinct receivedAt and supplement retention",
+    "legacy records remain operational without fabricated receipts",
+    "new assignments require correct recipient; reassign history and same-person edits preserved",
+    "legacy and new source requests receive/respond/complete with correct owner",
+    "ordinary notes never enter approval; recipient-only acknowledgements",
+    "formal opinions draft/submit/receive/revise/approve/reject and immutable prior versions",
+    "private drafts and wrong roles/units denied without mutation",
+    "report staleness detects business values, not discussion or timestamps",
+    "returned report submission snapshots archived and approved versions preserved",
+    "original sources, testimony, case IDs and audit identities retained"
+  ]
+}

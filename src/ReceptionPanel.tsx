@@ -3,6 +3,7 @@ import type { Report, StaffAccount, CaseFile } from "./types"
 import type { Operation } from "./operations"
 import { R, permit } from "./access"
 import { Card, CardHead, Field, Button, Badge } from "./ui"
+import { reportReceiptLabel } from "./receiptWorkflow"
 import { formatDateTime } from "./demoTime"
 export default function ReceptionPanel({
   report,
@@ -42,9 +43,33 @@ export default function ReceptionPanel({
         }
         sub="Lời khai ban đầu được giữ nguyên; thông tin bổ sung được lưu riêng."
       />
+      <div className="receipt-summary">
+        <b>{reportReceiptLabel(report)}</b>
+        {report.intakeReceipt && (
+          <span>
+            {actor.kind === "citizen"
+              ? "Bộ phận tiếp nhận"
+              : report.intakeReceipt.name}{" "}
+            · {formatDateTime(report.intakeReceipt.at)}
+          </span>
+        )}
+        {permit(actor, "report.accept", report, cases) && (
+          <Button
+            onClick={() => onAction({ type: "report-accept", id: report.id })}
+          >
+            Xác nhận tiếp nhận
+          </Button>
+        )}
+        {report.receiptWorkflow === 2 && !report.intakeReceipt && (
+          <small>
+            Hệ thống đã nhận phiếu. Cán bộ xác nhận tiếp nhận trước khi kiểm tra
+            và bàn giao.
+          </small>
+        )}
+      </div>
       <div className="workflow-track">
         <span>
-          Tiếp nhận{" "}
+          Kiểm tra phiếu{" "}
           <Badge tone="blue">{report.intakeStatus || "Mới tiếp nhận"}</Badge>
         </span>
         {actor.kind !== "citizen" && (
@@ -188,12 +213,13 @@ export default function ReceptionPanel({
           )}
         </div>
       )}
-      {actor.role === R.reception && !receive && (
-        <p className="access-note">
-          Phiếu đã chuyển phân tích. Cán bộ tiếp nhận chỉ xem tiến độ và thông
-          tin đã lưu.
-        </p>
-      )}
+      {actor.role === R.reception &&
+        report.intakeStatus === "Chuyển phân tích" && (
+          <p className="access-note">
+            Phiếu đã chuyển phân tích. Cán bộ tiếp nhận chỉ xem tiến độ và thông
+            tin đã lưu.
+          </p>
+        )}
       {showSupplements && !!report.supplements?.length && (
         <div className="supplement-list">
           <h3>Thông tin bổ sung</h3>

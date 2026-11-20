@@ -1,4 +1,5 @@
 import type { StaffAccount, Report, CaseFile } from "./types"
+import { pendingOpinions, caseReceiptLabel } from "./receiptWorkflow"
 import { R, roleTask } from "./access"
 import { Card, PageHeader, Badge, Button, EmptyState } from "./ui"
 export default function RoleWork({
@@ -12,9 +13,11 @@ export default function RoleWork({
   reports: Report[]
   cases: CaseFile[]
   onReport: (id: string) => void
-  onCase: (id: string) => void
+  onCase: (id: string, section?: string) => void
 }) {
-  const waiting = reports.filter((r) => r.intakeStatus === "Mới tiếp nhận"),
+  const waiting = reports.filter((r) =>
+      ["Mới tiếp nhận", "Đang kiểm tra"].includes(r.intakeStatus || ""),
+    ),
     analysis = reports.filter(
       (r) =>
         r.intakeStatus === "Chuyển phân tích" &&
@@ -107,7 +110,8 @@ export default function RoleWork({
                   {c.id} · {c.name}
                 </b>
                 <p>
-                  {c.officer} · {c.reportIds.length} phản ánh
+                  {c.officer} · {c.reportIds.length} phản ánh ·{" "}
+                  {caseReceiptLabel(c)}
                 </p>
               </div>
               <Badge tone="blue">
@@ -115,6 +119,14 @@ export default function RoleWork({
                   ? "Chờ phân công"
                   : c.reportVersions?.at(-1)?.state || c.status}
               </Badge>
+              {pendingOpinions(c).length > 0 && (
+                <Button
+                  variant="secondary"
+                  onClick={() => onCase(c.id, "Ý kiến / Yêu cầu")}
+                >
+                  {pendingOpinions(c).length} kiến nghị chờ xem xét
+                </Button>
+              )}
               <Button variant="secondary" onClick={() => onCase(c.id)}>
                 Mở hồ sơ
               </Button>

@@ -2,6 +2,8 @@
 
 Bản sửa dựa trên commit `81887aa`, nhánh GitHub `Hệ-Thống-Truy-Vết-Demo`. Mục tiêu là phân biệt trách nhiệm ngay trong trang nghiệp vụ và kiểm tra quyền ở cả giao diện lẫn hàm thực hiện thay đổi. Giao diện login giữ nguyên.
 
+Bổ sung hiện tại: [Tiếp nhận, nhận việc và xem xét ý kiến](RECEIPT-OPINION-WORKFLOW.md), gồm điều kiện cho phiếu/phân công mới và cách giữ dữ liệu cũ. Bảng dưới mô tả nền phân quyền; quyền bổ sung được ghi trong tài liệu mới.
+
 ## Bảng quyền đã thực hiện
 
 | Vai trò | Phạm vi dữ liệu | Thao tác được phép | Các thao tác bị chặn |
@@ -89,5 +91,5 @@ Xem [README](../README.md) để chạy dự án và bộ kiểm thử. Trong ti
 - localStorage thuộc từng origin/trình duyệt. Không đồng bộ giữa người dùng và chưa xử lý sửa đồng thời nhiều tab. Dùng một tab để review quy trình.
 - Đính kèm/bổ sung tài liệu dùng đối tượng mẫu, không lưu file thật. Trích xuất và điểm cảnh báo vẫn là mô phỏng.
 - Chưa có quản lý danh mục đơn vị/cấp tài khoản mới, hạn xử lý, chữ ký số, gửi thông báo hoặc giao việc nhiều cấp.
-- Yêu cầu xem xét lại nguồn được ghi vào hồ sơ và hiện cho bộ phận phân tích; chưa có quy trình đóng yêu cầu riêng. Giám sát hiện chỉ đọc, chưa có biểu mẫu nhận xét kiểm tra riêng.
+- Yêu cầu nguồn đã có tiếp nhận, phản hồi và hoàn thành; xem tài liệu bổ sung ở đầu trang. Giám sát vẫn chỉ đọc, chưa có biểu mẫu nhận xét kiểm tra riêng.
 - Chưa kiểm tra trực quan Safari/Firefox. Không đổi giao diện login, không tự merge hoặc chạy lệnh triển khai Production.

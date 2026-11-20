@@ -1,0 +1,78 @@
+[
+  {
+    "width": 1280,
+    "height": 720,
+    "theme": "dark",
+    "result": "PASS",
+    "checks": [
+      "new report acknowledgement is explicit, once, timestamp distinct and source untouched",
+      "legacy data unchanged on viewing; new assignment gates and reassignment receipts preserve history",
+      "same-person priority edit retains receipt and old assignee loses access",
+      "cross-tab unsaved drafts survive saving another form",
+      "private formal drafts hidden; notes acknowledged without approval",
+      "source requests claimed, answered and closed with pending counts updated",
+      "leader queue deep link; receipt/revision/approval apply to exact opinion versions",
+      "stale report blocked until explicit refresh without replacing text",
+      "returned report submissions previewable and previous snapshots preserved",
+      "supervisor/admin cannot act; view-only storage stays identical",
+      "original twelve reports and independent HS-002 unchanged"
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "theme": "light",
+    "result": "PASS",
+    "checks": [
+      "new report acknowledgement is explicit, once, timestamp distinct and source untouched",
+      "legacy data unchanged on viewing; new assignment gates and reassignment receipts preserve history",
+      "same-person priority edit retains receipt and old assignee loses access",
+      "cross-tab unsaved drafts survive saving another form",
+      "private formal drafts hidden; notes acknowledged without approval",
+      "source requests claimed, answered and closed with pending counts updated",
+      "leader queue deep link; receipt/revision/approval apply to exact opinion versions",
+      "stale report blocked until explicit refresh without replacing text",
+      "returned report submissions previewable and previous snapshots preserved",
+      "supervisor/admin cannot act; view-only storage stays identical",
+      "original twelve reports and independent HS-002 unchanged"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "theme": "dark",
+    "result": "PASS",
+    "checks": [
+      "new report acknowledgement is explicit, once, timestamp distinct and source untouched",
+      "legacy data unchanged on viewing; new assignment gates and reassignment receipts preserve history",
+      "same-person priority edit retains receipt and old assignee loses access",
+      "cross-tab unsaved drafts survive saving another form",
+      "private formal drafts hidden; notes acknowledged without approval",
+      "source requests claimed, answered and closed with pending counts updated",
+      "leader queue deep link; receipt/revision/approval apply to exact opinion versions",
+      "stale report blocked until explicit refresh without replacing text",
+      "returned report submissions previewable and previous snapshots preserved",
+      "supervisor/admin cannot act; view-only storage stays identical",
+      "original twelve reports and independent HS-002 unchanged"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "theme": "light",
+    "result": "PASS",
+    "checks": [
+      "new report acknowledgement is explicit, once, timestamp distinct and source untouched",
+      "legacy data unchanged on viewing; new assignment gates and reassignment receipts preserve history",
+      "same-person priority edit retains receipt and old assignee loses access",
+      "cross-tab unsaved drafts survive saving another form",
+      "private formal drafts hidden; notes acknowledged without approval",
+      "source requests claimed, answered and closed with pending counts updated",
+      "leader queue deep link; receipt/revision/approval apply to exact opinion versions",
+      "stale report blocked until explicit refresh without replacing text",
+      "returned report submissions previewable and previous snapshots preserved",
+      "supervisor/admin cannot act; view-only storage stays identical",
+      "original twelve reports and independent HS-002 unchanged"
+    ]
+  }
+]

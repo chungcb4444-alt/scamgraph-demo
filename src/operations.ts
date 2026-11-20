@@ -4,6 +4,8 @@ import type {
   LogItem,
   StaffAccount,
   ReportVersion,
+  ActionStamp,
+  CaseMessage,
 } from "./types"
 import { R, UNIT, permit, canReadReport, canReadCase } from "./access.ts"
 import {
@@ -11,6 +13,12 @@ import {
   sameReportIds,
   duplicateConsentKey,
 } from "./caseSources.ts"
+import {
+  caseReceiptAllowsWork,
+  currentAssignment,
+  requestKey,
+} from "./receiptWorkflow.ts"
+import { reportSnapshotStale } from "./reportSnapshot.ts"
 export type Operation =
   | {
       type: "receive"
@@ -18,6 +26,33 @@ export type Operation =
       step: "note" | "request" | "reject" | "transfer"
       note: string
       assignee?: string
+    }
+  | { type: "report-accept"; id: string }
+  | { type: "case-accept"; id: string }
+  | { type: "source-receive"; id: string; requestKey: string }
+  | {
+      type: "source-complete"
+      id: string
+      requestKey: string
+      response: string
+    }
+  | {
+      type: "message-save"
+      id: string
+      messageId?: string
+      kind: "Ghi chú" | "Kiến nghị"
+      recipientId: string
+      requiresReceipt: boolean
+      content: string
+    }
+  | { type: "message-submit"; id: string; messageId: string }
+  | { type: "message-receive"; id: string; messageId: string }
+  | {
+      type: "message-review"
+      id: string
+      messageId: string
+      decision: "Đã duyệt" | "Yêu cầu chỉnh sửa" | "Không chấp thuận"
+      reason: string
     }
   | { type: "supplement"; id: string; content: string; attachment: boolean }
   | { type: "extract-start"; id: string }
@@ -69,6 +104,13 @@ export function applyOperation(
 ): OperationState & { log: LogItem } {
   const actor = state.accounts.find((a) => a.id === actorId)
   if (!actor?.active) throw Error("Tài khoản không hoạt động.")
+  const stamp = (): ActionStamp => ({
+    by: actor.id,
+    name: actor.name,
+    role: actor.role,
+    unitId: actor.unitId,
+    at: time,
+  })
   let { reports, cases, accounts } = state
   const report = "id" in op ? reports.find((r) => r.id === op.id) : undefined
   const item = "id" in op ? cases.find((c) => c.id === op.id) : undefined
@@ -131,6 +173,225 @@ export function applyOperation(
     )
   }
   switch (op.type) {
+    case "report-accept":
+      requirePermission("report.accept", report)
+      action = "Xác nhận tiếp nhận phản ánh"
+      detail =
+        "Cán bộ tiếp nhận phiếu; không xác nhận tính đúng đắn hoặc liên kết."
+      updateReport({
+        intakeReceipt: stamp(),
+        ...(report?.intakeStatus === "Mới tiếp nhận"
+          ? { intakeStatus: "Đang kiểm tra" as const }
+          : {}),
+      })
+      break
+    case "case-accept": {
+      requirePermission("case.accept", item)
+      const assignment = currentAssignment(item!)!
+      action = "Nhận xử lý hồ sơ"
+      detail = `Nhận lần phân công ${assignment.id}; người nhận ${actor.id}`
+      updateCase({
+        assignments: item!.assignments!.map((a) =>
+          a.id === assignment.id ? { ...a, received: stamp() } : a,
+        ),
+      })
+      break
+    }
+    case "source-receive":
+    case "source-complete": {
+      requirePermission("case.source.handle", item)
+      const index =
+        item!.workItems?.findIndex(
+          (_, i) => requestKey(item!, i) === op.requestKey,
+        ) ?? -1
+      const request = item!.workItems?.[index]
+      if (!request || request.kind !== "Yêu cầu xem xét lại")
+        throw Error("Yêu cầu không tồn tại.")
+      if (op.type === "source-receive") {
+        if (request.received || request.requestState === "Đã hoàn thành")
+          throw Error("Yêu cầu đã được tiếp nhận.")
+        action = "Tiếp nhận yêu cầu xem xét nguồn"
+        detail = op.requestKey
+        updateCase({
+          workItems: item!.workItems!.map((w, i) =>
+            i === index
+              ? {
+                  ...w,
+                  requestId: op.requestKey,
+                  requestState: "Đang xử lý",
+                  received: stamp(),
+                }
+              : w,
+          ),
+        })
+      } else {
+        if (
+          request.requestState !== "Đang xử lý" ||
+          request.received?.by !== actor.id
+        )
+          throw Error("Chỉ cán bộ đã tiếp nhận được hoàn thành yêu cầu.")
+        const content = nonempty(
+          op.response,
+          "Nhập phản hồi trước khi hoàn thành.",
+        )
+        action = "Hoàn thành yêu cầu xem xét nguồn"
+        detail = op.requestKey
+        updateCase({
+          workItems: item!.workItems!.map((w, i) =>
+            i === index
+              ? {
+                  ...w,
+                  requestState: "Đã hoàn thành",
+                  response: { actor: stamp(), content },
+                }
+              : w,
+          ),
+        })
+      }
+      break
+    }
+    case "message-save": {
+      requirePermission("case.discuss", item)
+      if (!["Ghi chú", "Kiến nghị"].includes(op.kind))
+        throw Error("Loại ý kiến không hợp lệ.")
+      const receiver = accounts.find(
+        (a) =>
+          a.id === op.recipientId &&
+          a.active &&
+          canReadCase(a, item!) &&
+          [R.analyst, R.worker, R.leader].includes(a.role as never),
+      )
+      if (
+        !receiver ||
+        receiver.id === actor.id ||
+        (op.kind === "Kiến nghị" && receiver.role !== R.leader)
+      )
+        throw Error("Chọn người nhận phù hợp trong đơn vị và phạm vi hồ sơ.")
+      const content = nonempty(op.content, "Nhập nội dung ý kiến.")
+      const old = item!.messages?.find((m) => m.id === op.messageId)
+      const last = old?.versions.at(-1)
+      if (
+        op.messageId &&
+        (!old ||
+          old.kind !== "Kiến nghị" ||
+          op.kind !== old.kind ||
+          last?.created.by !== actor.id)
+      )
+        throw Error("Không được sửa ý kiến của tài khoản khác.")
+      if (last && ["Đã gửi", "Đã tiếp nhận"].includes(last.state))
+        throw Error("Nội dung đã trình đang chờ xem xét, không được sửa đè.")
+      const freshVersion = last && last.state !== "Bản nháp"
+      const version = {
+        version: !last ? 1 : freshVersion ? last.version + 1 : last.version,
+        recipientId: receiver.id,
+        content,
+        state:
+          op.kind === "Ghi chú" ? ("Đã gửi" as const) : ("Bản nháp" as const),
+        created: stamp(),
+        ...(op.kind === "Ghi chú" ? { submitted: stamp() } : {}),
+      }
+      const message: CaseMessage = {
+        id: old?.id || `YK-${item!.id}-${(item!.messages?.length || 0) + 1}`,
+        kind: op.kind,
+        recipientId: receiver.id,
+        requiresReceipt: op.kind === "Kiến nghị" || op.requiresReceipt,
+        versions: !old
+          ? [version]
+          : freshVersion
+            ? [...old.versions, version]
+            : old.versions.map((v) =>
+                v.version === version.version ? version : v,
+              ),
+      }
+      updateCase({
+        messages: old
+          ? item!.messages!.map((m) => (m.id === old.id ? message : m))
+          : [...(item!.messages || []), message],
+      })
+      action =
+        op.kind === "Ghi chú" ? "Gửi ghi chú nội bộ" : "Lưu bản nháp kiến nghị"
+      detail = `${message.id}; phiên bản ${version.version}; người nhận ${receiver.id}`
+      break
+    }
+    case "message-submit":
+    case "message-receive":
+    case "message-review": {
+      if (!item || !canReadCase(actor, item))
+        throw Error("Không có quyền xem ý kiến của hồ sơ.")
+      const message = item.messages?.find((m) => m.id === op.messageId)
+      const last = message?.versions.at(-1)
+      if (!message || !last) throw Error("Ý kiến không tồn tại.")
+      let patch: Partial<typeof last> = {}
+      if (op.type === "message-submit") {
+        requirePermission("case.discuss", item)
+        const receiver = accounts.find(
+          (a) =>
+            a.id === last.recipientId &&
+            a.active &&
+            a.role === R.leader &&
+            canReadCase(a, item),
+        )
+        if (
+          message.kind !== "Kiến nghị" ||
+          last.state !== "Bản nháp" ||
+          last.created.by !== actor.id ||
+          !receiver ||
+          receiver.id === actor.id
+        )
+          throw Error("Chỉ tác giả được trình bản nháp đến lãnh đạo hợp lệ.")
+        patch = { state: "Đã gửi", submitted: stamp() }
+        action = "Trình kiến nghị"
+      } else if (op.type === "message-receive") {
+        if (
+          last.recipientId !== actor.id ||
+          ![R.analyst, R.worker, R.leader].includes(actor.role as never) ||
+          last.state !== "Đã gửi" ||
+          !message.requiresReceipt ||
+          (message.kind === "Kiến nghị" && actor.role !== R.leader)
+        )
+          throw Error("Chỉ người nhận có trách nhiệm được xác nhận tiếp nhận.")
+        patch = { state: "Đã tiếp nhận", received: stamp() }
+        action = "Tiếp nhận ý kiến"
+      } else {
+        if (
+          actor.role !== R.leader ||
+          last.recipientId !== actor.id ||
+          last.created.by === actor.id ||
+          message.kind !== "Kiến nghị" ||
+          last.state !== "Đã tiếp nhận"
+        )
+          throw Error(
+            "Lãnh đạo được giao phải tiếp nhận trước khi xem xét kiến nghị.",
+          )
+        if (
+          !["Đã duyệt", "Yêu cầu chỉnh sửa", "Không chấp thuận"].includes(
+            op.decision,
+          )
+        )
+          throw Error("Kết quả xem xét không hợp lệ.")
+        const reason =
+          op.decision === "Đã duyệt"
+            ? op.reason.trim()
+            : nonempty(op.reason, "Nhập lý do trả sửa hoặc không chấp thuận.")
+        patch = { state: op.decision, decision: { actor: stamp(), reason } }
+        action = `Xem xét kiến nghị: ${op.decision}`
+      }
+      updateCase({
+        messages: item.messages!.map((m) =>
+          m.id === message.id
+            ? {
+                ...m,
+                versions: m.versions.map((v) =>
+                  v.version === last.version ? { ...v, ...patch } : v,
+                ),
+              }
+            : m,
+        ),
+      })
+      detail = `${message.id}; phiên bản ${last.version}`
+      break
+    }
+
     case "receive": {
       requirePermission("report.receive", report)
       if (!report) throw Error("Không tìm thấy phản ánh.")
@@ -177,7 +438,7 @@ export function applyOperation(
       requirePermission("report.supplement", report)
       action = "Bổ sung phản ánh"
       updateReport({
-        intakeStatus: "Mới tiếp nhận",
+        intakeStatus: report?.intakeReceipt ? "Đang kiểm tra" : "Mới tiếp nhận",
         supplements: [
           ...(report?.supplements || []),
           {
@@ -334,6 +595,7 @@ export function applyOperation(
       const id = `HS-${String(Math.max(0, ...cases.map((c) => Number(c.id.match(/^HS-(\d+)$/)?.[1]) || 0)) + 1).padStart(3, "0")}`
       const c: CaseFile = {
         id,
+        receiptWorkflow: 2,
         name: op.name.trim(),
         unitId: actor.unitId,
         assignedTo: undefined,
@@ -370,7 +632,22 @@ export function applyOperation(
         )
       action = "Phân công cán bộ"
       detail = `${item?.assignedTo || "Chưa phân công"} → ${worker.id}; ưu tiên: ${item?.priority} → ${op.priority}${op.directive.trim() ? `; chỉ đạo: ${op.directive.trim()}` : ""}`
+      const changedAssignee = item?.assignedTo !== worker.id
+      const newAssignment = changedAssignee
+        ? {
+            id: `PC-${item!.id}-${(item!.assignments?.length || 0) + 1}`,
+            assignee: worker.id,
+            assigneeName: worker.name,
+            assigned: stamp(),
+          }
+        : undefined
       updateCase({
+        ...(newAssignment
+          ? {
+              receiptWorkflow: 2,
+              assignments: [...(item!.assignments || []), newAssignment],
+            }
+          : {}),
         assignedTo: worker.id,
         officer: worker.name,
         priority: op.priority,
@@ -430,6 +707,8 @@ export function applyOperation(
             content: detail,
             attachment: false,
             kind: "Yêu cầu xem xét lại",
+            requestId: `YC-${item!.id}-${(item!.workItems?.length || 0) + 1}`,
+            requestState: "Chờ tiếp nhận",
           },
         ],
       })
@@ -440,7 +719,8 @@ export function applyOperation(
         !canReadCase(actor, item) ||
         actor.role !== R.worker ||
         item.assignedTo !== actor.id ||
-        item.status === "Đã đóng"
+        item.status === "Đã đóng" ||
+        !caseReceiptAllowsWork(item)
       )
         throw Error("Chỉ cán bộ được giao mới được lập báo cáo.")
       if (latest?.state === "Chờ xem xét")
@@ -462,6 +742,28 @@ export function applyOperation(
         updated: time,
         content,
         snapshot: snapshot(),
+        ...(!fresh && latest
+          ? {
+              previousSubmissions: [
+                ...(latest.previousSubmissions || []),
+                ...(latest.state === "Yêu cầu chỉnh sửa"
+                  ? [
+                      {
+                        author: latest.author,
+                        content: latest.content,
+                        snapshot: latest.snapshot,
+                        submittedAt: latest.submittedAt,
+                        reviewedAt: latest.reviewedAt,
+                        reviewer: latest.reviewer,
+                        reviewNote: latest.reviewNote,
+                        state: latest.state,
+                        updated: latest.updated,
+                      },
+                    ]
+                  : []),
+              ],
+            }
+          : {}),
       }
       action = fresh ? "Tạo phiên bản báo cáo" : "Lưu bản nháp báo cáo"
       detail = `${v.id}; ${v.snapshot.reports.length} phản ánh; bản duyệt cũ được giữ nguyên.`
@@ -476,6 +778,10 @@ export function applyOperation(
       requirePermission("case.report", item)
       if (!latest || latest.state !== "Bản nháp" || !latest.content.trim())
         throw Error("Cần lưu bản nháp báo cáo trước khi trình.")
+      if (reportSnapshotStale(item!, reports, latest))
+        throw Error(
+          "Hồ sơ hoặc nguồn đã thay đổi sau lần lưu nháp. Kiểm tra và lưu lại bản nháp trước khi trình.",
+        )
       action = "Trình báo cáo"
       detail = latest.id
       updateCase({

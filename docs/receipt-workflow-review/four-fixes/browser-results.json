@@ -1,0 +1,82 @@
+[
+  {
+    "width": 1280,
+    "height": 720,
+    "theme": "dark",
+    "result": "PASS",
+    "checks": [
+      "status phases agree without business writes",
+      "filtered selection retained and empty/zero alerts safe",
+      "view/filter operations preserve business storage",
+      "intentional duplicate confirmation and related-case navigation",
+      "cluster switch clears consent; three-to-four source is a distinct case",
+      "synchronous double-click creates once",
+      "every editable case form warns on reload",
+      "cancel reload/navigation/logout/account switch preserves drafts",
+      "case tabs preserve drafts without autosave",
+      "partial saves retain other forms dirty; clean and saved forms do not warn",
+      "explicit reload acceptance discards only unsaved input",
+      "existing cases and snapshots not overwritten"
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "theme": "light",
+    "result": "PASS",
+    "checks": [
+      "status phases agree without business writes",
+      "filtered selection retained and empty/zero alerts safe",
+      "view/filter operations preserve business storage",
+      "intentional duplicate confirmation and related-case navigation",
+      "cluster switch clears consent; three-to-four source is a distinct case",
+      "synchronous double-click creates once",
+      "every editable case form warns on reload",
+      "cancel reload/navigation/logout/account switch preserves drafts",
+      "case tabs preserve drafts without autosave",
+      "partial saves retain other forms dirty; clean and saved forms do not warn",
+      "explicit reload acceptance discards only unsaved input",
+      "existing cases and snapshots not overwritten"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "theme": "dark",
+    "result": "PASS",
+    "checks": [
+      "status phases agree without business writes",
+      "filtered selection retained and empty/zero alerts safe",
+      "view/filter operations preserve business storage",
+      "intentional duplicate confirmation and related-case navigation",
+      "cluster switch clears consent; three-to-four source is a distinct case",
+      "synchronous double-click creates once",
+      "every editable case form warns on reload",
+      "cancel reload/navigation/logout/account switch preserves drafts",
+      "case tabs preserve drafts without autosave",
+      "partial saves retain other forms dirty; clean and saved forms do not warn",
+      "explicit reload acceptance discards only unsaved input",
+      "existing cases and snapshots not overwritten"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "theme": "light",
+    "result": "PASS",
+    "checks": [
+      "status phases agree without business writes",
+      "filtered selection retained and empty/zero alerts safe",
+      "view/filter operations preserve business storage",
+      "intentional duplicate confirmation and related-case navigation",
+      "cluster switch clears consent; three-to-four source is a distinct case",
+      "synchronous double-click creates once",
+      "every editable case form warns on reload",
+      "cancel reload/navigation/logout/account switch preserves drafts",
+      "case tabs preserve drafts without autosave",
+      "partial saves retain other forms dirty; clean and saved forms do not warn",
+      "explicit reload acceptance discards only unsaved input",
+      "existing cases and snapshots not overwritten"
+    ]
+  }
+]

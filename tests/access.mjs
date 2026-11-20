@@ -28,6 +28,8 @@ assert.equal(state.cases[0].reportIds.length,4);assert.equal(state.cases[0].assi
 const id=state.cases[0].id
 for(const who of ['analyst','reception','worker','supervisor','admin'])denied(who,{type:'assign',id,assignedTo:ids.worker,priority:'Cao',directive:'Sai quyền'})
 op('leader',{type:'assign',id,assignedTo:ids.worker,priority:'Cao',directive:'Xác minh tài liệu'})
+denied('worker',{type:'work',id,note:'Chưa nhận việc',status:'Đang xác minh',content:'',attachment:false})
+op('worker',{type:'case-accept',id})
 denied('other',{type:'work',id,note:'Sai người',status:'Đang xác minh',content:'',attachment:false})
 op('worker',{type:'work',id,note:'Nhận định đã lưu',status:'Đang xác minh',content:'Đối chiếu giao dịch',attachment:true})
 op('worker',{type:'source-request',id,content:'Đề nghị phân tích xem lại số liên hệ'})

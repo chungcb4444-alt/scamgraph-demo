@@ -17,6 +17,14 @@ export default function ReportStatusBadges({
           {detailed ? "Tiếp nhận: " : ""}
           {stage.intake}
         </Badge>
+        {!detailed &&
+          (report.receiptWorkflow === 2 || report.intakeReceipt) && (
+            <small className="receipt-table-note">
+              {report.intakeReceipt
+                ? "Đã xác nhận tiếp nhận"
+                : "Chờ cán bộ xác nhận"}
+            </small>
+          )}
       </span>
       <span aria-label={`Phân tích: ${stage.analysis}`}>
         <Badge tone={stage.analysis === "Đã kiểm tra" ? "green" : "gray"}>

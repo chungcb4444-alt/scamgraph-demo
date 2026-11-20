@@ -25,12 +25,13 @@ Bản preview cục bộ mở tại `http://localhost:8444/`.
 
 ## Chức năng hiện có
 
-- **Phản ánh:** biểu mẫu bốn bước, lưu bản nháp, tìm kiếm/bộ lọc, cột tên người gửi, thông tin người gửi và bên bị phản ánh, yêu cầu bổ sung và bàn giao phân tích.
+- **Phản ánh:** biểu mẫu bốn bước, lưu nháp, tìm kiếm/bộ lọc, thông tin các bên, xác nhận cán bộ tiếp nhận đối với phiếu mới, kiểm tra/bổ sung và bàn giao phân tích.
 - **Thông tin nhạy cảm:** che liên hệ, email, tài khoản và số điện thoại; bấm Xem/Ẩn theo quyền. Thông tin tự che lại sau 45 giây kể từ thao tác mở/đóng gần nhất, khi rời cửa sổ, chuyển tab hoặc nhấn Escape.
 - **Phân tích:** kiểm tra và sửa thông tin trích xuất mô phỏng, ghi nhận định, đối chiếu căn cứ, xác nhận/loại bỏ/khôi phục đề xuất liên kết.
 - **Sơ đồ và cảnh báo:** tra cứu thực thể, xem nguồn phản ánh, nhóm liên kết và căn cứ ưu tiên xác minh. Kết quả hỗ trợ rà soát, không phải kết luận vi phạm.
-- **Hồ sơ:** tạo từ cụm, lãnh đạo phân công và chỉ đạo, cán bộ được giao cập nhật tiến độ, nhận định và tài liệu mẫu.
-- **Báo cáo:** lưu bản nháp, trình xem xét, yêu cầu chỉnh sửa, phê duyệt và tạo phiên bản mới; giữ nguyên phiên bản đã phê duyệt.
+- **Hồ sơ:** tạo từ cụm, phân công và chỉ đạo; phân công mới có bước cán bộ nhận xử lý, lịch sử nhận/giao và điều kiện cập nhật tiến độ, nhận định, tài liệu.
+- **Ý kiến / Yêu cầu:** ghi chú không cần duyệt, yêu cầu nguồn có tiếp nhận/phản hồi/hoàn thành, kiến nghị riêng có bản nháp, người nhận, quyết định và phiên bản.
+- **Báo cáo:** cảnh báo dữ liệu thay đổi sau lưu nháp, chủ động cập nhật trước khi trình, trả sửa/phê duyệt; giữ các lần trình bị trả sửa và bản đã phê duyệt.
 - **Quản trị và nhật ký:** quản lý quyền/đơn vị/trạng thái tài khoản nội bộ, tra cứu thao tác và lịch sử thay đổi trong phạm vi được phép.
 
 Giao diện hỗ trợ sáng/tối. Giao diện login được giữ theo mẫu hiện tại.
@@ -72,18 +73,22 @@ Quyền được kiểm tra ở menu, màn hình, trường nhập và hàm th�
 
 Có hai tài khoản xử lý để kiểm tra phạm vi được giao: **HS-001** ban đầu thuộc **Lê Minh Anh**, **HS-002** thuộc **Trần Quốc Huy**. Hồ sơ mới chưa được tự phân công cho người tạo hoặc người đăng nhập.
 
-Chi tiết: [Bảng quyền, trạng thái và kết quả kiểm tra](docs/ROLE-WORKSPACES.md). Bố cục phản ánh mới, ảnh trước/sau và cách kiểm tra: [Danh sách và chi tiết phản ánh](docs/REPORTS-LAYOUT.md). Các sửa lỗi thao tác mới nhất: [Bốn sửa lỗi nghiệp vụ](docs/FOUR-WORKFLOW-FIXES.md).
+Chi tiết: [Bảng quyền, trạng thái và kết quả kiểm tra](docs/ROLE-WORKSPACES.md). Bố cục phản ánh mới, ảnh trước/sau và cách kiểm tra: [Danh sách và chi tiết phản ánh](docs/REPORTS-LAYOUT.md). Quy trình mới nhất, quyền và tương thích dữ liệu cũ: [Tiếp nhận, nhận việc và xem xét ý kiến](docs/RECEIPT-OPINION-WORKFLOW.md). Các sửa lỗi thao tác trước: [Bốn sửa lỗi nghiệp vụ](docs/FOUR-WORKFLOW-FIXES.md).
 
 ## Luồng review nghiệp vụ
 
 1. **Nguyễn Hoàng Minh** gửi tình huống mẫu PA-013. Có thể tạo phản ánh nhập tay riêng; PA-013 không được tạo sẵn.
-2. **Trần Minh Tuấn** mở phiếu và kiểm tra. Nếu cần, yêu cầu người gửi bổ sung; nội dung bổ sung được lưu riêng, không ghi đè lời khai ban đầu.
+2. **Trần Minh Tuấn** mở tab Xử lý nghiệp vụ, bấm **Xác nhận tiếp nhận** rồi kiểm tra. Nếu cần, yêu cầu người gửi bổ sung; nội dung bổ sung được lưu riêng, không ghi đè lời khai ban đầu.
 3. Cán bộ tiếp nhận ghi chú, chọn **Nguyễn Xuân Sơn** và chuyển phân tích.
 4. **Nguyễn Xuân Sơn** kiểm tra trích xuất, sửa thông tin nếu cần, lưu nhận định và xem căn cứ trước khi xác nhận liên kết CUM-001.
 5. Cán bộ phân tích tạo hồ sơ từ cụm. **Nguyễn Duy Hoàng** phân công cán bộ xử lý, điều chỉnh ưu tiên và ghi chỉ đạo.
-6. Người được giao cập nhật tiến độ/nhận định, lưu bản nháp báo cáo và trình xem xét. **Nguyễn Duy Hoàng** yêu cầu chỉnh sửa hoặc phê duyệt.
+6. Người được giao bấm **Nhận xử lý hồ sơ** cho lần phân công mới, cập nhật tiến độ/nhận định, lưu bản nháp báo cáo và trình xem xét. **Nguyễn Duy Hoàng** yêu cầu chỉnh sửa hoặc phê duyệt.
 7. Sau yêu cầu chỉnh sửa, cán bộ lưu lại bản nháp trước khi trình. Sau phê duyệt, sửa tiếp phải tạo phiên bản mới; bản đã duyệt được giữ nguyên.
 8. **Lê Quốc Bảo** tra cứu nhật ký để đối chiếu người thao tác, vai trò tại thời điểm thực hiện, thời gian và các thay đổi.
+
+Tab **Ý kiến / Yêu cầu** có trao đổi nội bộ, yêu cầu nguồn và kiến nghị riêng. Đã tiếp nhận ý kiến không đồng nghĩa đã duyệt. Lãnh đạo có hàng đợi kiến nghị cần xem xét. Nếu hồ sơ/nguồn đổi sau lưu nháp báo cáo, cần kiểm tra và chủ động lưu lại trước khi trình.
+
+Bản ghi cũ giữ dữ liệu và quyền xử lý cũ, hiển thị rõ nếu chưa có thông tin xác nhận. Chỉ phiếu mới và lần đổi người được giao thực sự sau nâng cấp áp dụng bước nhận mới; không tự dựng lịch sử hoặc buộc làm lại hồ sơ cũ.
 
 Báo cáo đang trình sẽ khóa cập nhật xử lý hồ sơ. Mỗi bản báo cáo lưu dữ liệu nguồn tại lần lưu bản nháp; xem/in phiên bản đã lưu dùng dữ liệu của phiên bản đó.
 
@@ -119,6 +124,7 @@ Kiểm tra mã nguồn và các quy tắc nghiệp vụ:
 ```sh
 pnpm exec tsc --noEmit
 pnpm build
+node tests/receipt-workflow.mjs
 node tests/access.mjs
 node tests/intake-model.mjs
 TZ=America/New_York node tests/time.mjs
@@ -134,6 +140,7 @@ npm install --prefix .test-tools playwright@1.56.1 --no-audit --no-fund
 Chạy `pnpm preview --host 0.0.0.0 --port 8444` ở một terminal. Tại terminal khác, chạy:
 
 ```sh
+DEMO_URL=http://127.0.0.1:8444/ PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/receipt-workflow.cjs
 DEMO_URL=http://127.0.0.1:8444/ PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/roles.cjs
 DEMO_URL=http://127.0.0.1:8444/ PLAYWRIGHT_MODULE="$PWD/.test-tools/node_modules/playwright" node tests/roles-negative.cjs
 ```
@@ -142,6 +149,8 @@ Các lệnh gán biến môi trường trên dùng cú pháp shell Unix như bas
 
 | Script | Nội dung kiểm tra |
 | --- | --- |
+| `tests/receipt-workflow.mjs` | Tiếp nhận, nhận việc, phân công lại, yêu cầu nguồn, ý kiến/phiên bản, bản nháp cũ và dữ liệu cũ |
+| `tests/receipt-workflow.cjs` | Luồng bổ sung, dữ liệu cũ, nháp nhiều biểu mẫu, sáng/tối ở hai kích thước |
 | `tests/access.mjs` | Quyền từng thao tác, phạm vi dữ liệu, bàn giao, phân công, khóa khi trình, phiên bản duyệt và hiệu lực đổi quyền |
 | `tests/intake-model.mjs` | Dành PA-013 cho tình huống mẫu, sinh mã nhập tay duy nhất và tương thích nhãn loại phản ánh cũ |
 | `tests/time.mjs` | Múi giờ Việt Nam, mốc nửa đêm, thống kê bảy ngày và chuyển đổi dữ liệu thời gian |
@@ -176,5 +185,6 @@ Nhánh đang chứa các bản sửa là **`Hệ-Thống-Truy-Vết-Demo`**. Khi
 - Che thông tin là hành vi giao diện; dữ liệu vẫn nằm trong localStorage. Không dùng ứng dụng để tiếp nhận thông tin hoặc chứng cứ thật.
 - Tài liệu đính kèm, trích xuất, VNeID và điểm cảnh báo là mô phỏng.
 - Chưa có quản lý danh mục đơn vị, cấp tài khoản mới, chữ ký số, gửi thông báo hoặc giao việc nhiều cấp.
-- Yêu cầu xem xét lại dữ liệu nguồn được lưu trong hồ sơ; chưa có quy trình đóng yêu cầu riêng. Giám sát hiện chỉ đọc, chưa có biểu mẫu nhận xét riêng.
+- Yêu cầu nguồn và kiến nghị đã có tiếp nhận/xử lý; chưa có thao tác giao lại riêng nội dung đang chờ khi tài khoản nhận bị khóa/đổi vai trò. Giám sát vẫn chỉ đọc.
+- Nháp ý kiến chưa bấm lưu chỉ được giữ trong bộ nhớ; cảnh báo rời trang không thay thế tự lưu.
 - Chưa kiểm tra trực quan Safari/Firefox.

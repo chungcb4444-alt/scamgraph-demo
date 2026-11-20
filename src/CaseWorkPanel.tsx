@@ -3,9 +3,13 @@ import type { CaseFile, StaffAccount, ReportVersion } from "./types"
 import type { Operation } from "./operations"
 import { R, permit } from "./access"
 import { Card, CardHead, Field, Button, Badge } from "./ui"
+import { caseReceiptLabel, currentAssignment } from "./receiptWorkflow"
+import { reportSnapshotStale } from "./reportSnapshot"
+import type { Report } from "./types"
 import { formatDateTime } from "./demoTime"
 export default function CaseWorkPanel({
   item,
+  reports,
   actor,
   accounts,
   onAction,
@@ -13,6 +17,7 @@ export default function CaseWorkPanel({
   onDraftChange,
 }: {
   item: CaseFile
+  reports: Report[]
   actor: StaffAccount
   accounts: StaffAccount[]
   onAction: (op: Operation) => boolean
@@ -67,8 +72,55 @@ export default function CaseWorkPanel({
   useLayoutEffect(() => {
     onDraftChange(isDirty)
   }, [isDirty, onDraftChange])
+  const stale = reportSnapshotStale(item, reports, latest)
+  const assignment = currentAssignment(item)
   return (
     <div className="page-stack case-work">
+      <Card className="role-panel receipt-summary">
+        <b>{caseReceiptLabel(item)}</b>
+        {assignment && (
+          <span>
+            Phân công: {assignment.assigned.name} ·{" "}
+            {formatDateTime(assignment.assigned.at)}
+          </span>
+        )}
+        {assignment?.received && (
+          <span>
+            Người nhận: {assignment.received.name} ·{" "}
+            {formatDateTime(assignment.received.at)}
+          </span>
+        )}
+        {permit(actor, "case.accept", item) && (
+          <>
+            <p>
+              Nhận việc để cập nhật xử lý và lập báo cáo. Việc nhận không xác
+              nhận nội dung nguồn là đúng.
+            </p>
+            <Button
+              onClick={() => onAction({ type: "case-accept", id: item.id })}
+            >
+              Nhận xử lý hồ sơ
+            </Button>
+          </>
+        )}
+        {!!item.assignments?.length && (
+          <details>
+            <summary>Lịch sử phân công và nhận việc</summary>
+            {item.assignments.map((a) => (
+              <p key={a.id}>
+                {a.id} ·{" "}
+                {a.assigneeName ||
+                  accounts.find((x) => x.id === a.assignee)?.name ||
+                  a.assignee}{" "}
+                · {formatDateTime(a.assigned.at)} ·{" "}
+                {a.received
+                  ? `Đã nhận ${formatDateTime(a.received.at)}`
+                  : "Chưa ghi nhận nhận việc"}
+              </p>
+            ))}
+          </details>
+        )}
+      </Card>
       <Card className="role-panel">
         <CardHead
           title={
@@ -250,19 +302,46 @@ export default function CaseWorkPanel({
         />
         <div className="report-versions">
           {item.reportVersions?.map((v) => (
-            <div className="work-queue-row" key={v.id}>
-              <span>
-                <b>Phiên bản {v.version}</b>
-                <small>
-                  {v.author} · {formatDateTime(v.updated)}
-                </small>
-              </span>
-              <Badge tone={v.state === "Đã phê duyệt" ? "green" : "blue"}>
-                {v.state}
-              </Badge>
-              <Button variant="secondary" onClick={() => onPreview(v)}>
-                Xem bản {v.version}
-              </Button>
+            <div key={v.id}>
+              <div className="work-queue-row">
+                <span>
+                  <b>Phiên bản {v.version}</b>
+                  <small>
+                    {v.author} · {formatDateTime(v.updated)}
+                  </small>
+                </span>
+                <Badge tone={v.state === "Đã phê duyệt" ? "green" : "blue"}>
+                  {v.state}
+                </Badge>
+                <Button variant="secondary" onClick={() => onPreview(v)}>
+                  Xem bản {v.version}
+                </Button>
+              </div>
+              {!!v.previousSubmissions?.length && (
+                <details>
+                  <summary>Các lần trình trước của bản {v.version}</summary>
+                  {v.previousSubmissions.map((old, index) => (
+                    <div className="work-queue-row" key={index}>
+                      <span>
+                        Lần trình {index + 1} · {old.state} ·{" "}
+                        {formatDateTime(old.submittedAt)}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          onPreview({
+                            ...v,
+                            ...old,
+                            previousSubmissions: undefined,
+                          })
+                        }
+                      >
+                        Xem lần trình {index + 1} của bản {v.version}
+                      </Button>
+                    </div>
+                  ))}
+                </details>
+              )}
             </div>
           ))}
         </div>
@@ -271,6 +350,17 @@ export default function CaseWorkPanel({
             Chưa có bản báo cáo được lưu. Có thể xem bản tổng hợp hiện tại từ dữ
             liệu hồ sơ.
           </p>
+        )}
+        <p className="role-note">
+          Xem xét kết quả hồ sơ: {latest?.state || "Chưa trình báo cáo"}. Phê
+          duyệt áp dụng cho phiên bản báo cáo, không tự đóng hồ sơ.
+        </p>
+        {latest?.state === "Bản nháp" && stale && (
+          <div className="workflow-warning" role="status">
+            Hồ sơ hoặc nguồn đã thay đổi sau lần lưu nháp. Kiểm tra nội dung rồi
+            bấm “Lưu bản nháp báo cáo” để chủ động cập nhật dữ liệu trước khi
+            trình.
+          </div>
         )}
         {latest?.reviewNote && (
           <p className="role-note">Ý kiến xem xét: {latest.reviewNote}</p>
@@ -307,6 +397,7 @@ export default function CaseWorkPanel({
               {latest && latest.state !== "Đã phê duyệt" && (
                 <Button
                   disabled={
+                    stale ||
                     body !== latest.content ||
                     !body.trim() ||
                     latest.state !== "Bản nháp"
@@ -399,18 +490,20 @@ export default function CaseWorkPanel({
           </Button>
         </Card>
       )}
-      {!!item.workItems?.length && (
+      {!!item.workItems?.some((w) => w.kind === "Tiến độ") && (
         <Card className="role-panel supplement-list">
-          <h2>Tiến độ và yêu cầu đã ghi nhận</h2>
-          {item.workItems.map((w, i) => (
-            <article key={i}>
-              <b>
-                {w.kind} · {w.author} · {formatDateTime(w.time)}
-              </b>
-              <p>{w.content}</p>
-              {w.attachment && <small>01 tài liệu bổ sung giả lập</small>}
-            </article>
-          ))}
+          <h2>Tiến độ đã ghi nhận</h2>
+          {item.workItems
+            .filter((w) => w.kind === "Tiến độ")
+            .map((w, i) => (
+              <article key={i}>
+                <b>
+                  {w.kind} · {w.author} · {formatDateTime(w.time)}
+                </b>
+                <p>{w.content}</p>
+                {w.attachment && <small>01 tài liệu bổ sung giả lập</small>}
+              </article>
+            ))}
         </Card>
       )}
     </div>

@@ -20,3 +20,5 @@ import "./roleWork.css"
 import "./reportsLayout.css"
 
 import "./workflowFixes.css"
+
+import "./receiptWorkflow.css"
