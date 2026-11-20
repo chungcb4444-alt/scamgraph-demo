@@ -47,14 +47,14 @@ fs.mkdirSync(out, { recursive: true })
       await shot("dashboard")
       assert.equal(
         await p.locator("h1").evaluate((e) => getComputedStyle(e).fontSize),
-        "32px",
+        "30px",
       )
       assert.equal(
         await p
           .locator("nav button")
           .first()
           .evaluate((e) => getComputedStyle(e).fontSize),
-        "16px",
+        "15px",
       )
       await nav("Phản ánh")
       await shot("reports")

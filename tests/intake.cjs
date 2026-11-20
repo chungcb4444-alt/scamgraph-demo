@@ -109,12 +109,12 @@ fs.mkdirSync(out, { recursive: true })
       const font = await label("Nội dung sự việc").evaluate(
         (e) => getComputedStyle(e).fontSize,
       )
-      assert.equal(font, "16px")
+      assert.equal(font, "15px")
       assert.equal(
         await page
           .locator(".report-intake h1")
           .evaluate((e) => getComputedStyle(e).fontSize),
-        "32px",
+        "30px",
       )
       assert.equal(await page.locator(".intake-demo:visible").count(), 0)
       assert.equal(await page.locator(".demo-label:visible").count(), 1)
