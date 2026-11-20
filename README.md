@@ -117,3 +117,5 @@ Runner có cùng `DEMO_URL`, `TEST_OUTPUT`, `CHROMIUM_PATH` với các runner tr
 Bản đồng bộ giao diện các trang: xem [hướng dẫn, thay đổi và kiểm thử](docs/UNIFIED-DESIGN.md), cùng [ảnh review](docs/design-review/). Nhánh `feat/unified-workspace-design` kế thừa đầy đủ bản tiếp nhận phản ánh mới nhất.
 
 Thiết kế mới theo mẫu Login.html: [thay đổi, cách chạy và kiểm thử](docs/FLUENT-LOGIN-REDESIGN.md); [ảnh giao diện mới](docs/fluent-review/). Nhánh `feat/fluent-login-refresh` kế thừa bản đồng bộ giao diện trước đó.
+
+Bản giao diện sáng theo ảnh Ravao: [hướng dẫn, thay đổi và kiểm thử](docs/RAVAO-LIGHT-DESIGN.md), [ảnh giao diện](docs/ravao-review/). Nhánh `feat/ravao-light-workspace` giữ nguyên các tệp nghiệp vụ và dữ liệu của bản trước; có bằng chứng đối chiếu trong thư mục review.

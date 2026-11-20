@@ -58,6 +58,50 @@ export default function Login({
     onLogin(demoRoles[selected].role, demoRoles[selected].destination)
   return (
     <div className="access-page">
+      <header className="access-site-header">
+        <a href="#demo-login" className="access-site-brand">
+          <BrandMark />
+          <span>
+            SCAMGRAPH<span>Phân tích & truy vết</span>
+          </span>
+        </a>
+        <a href="#demo-login">Truy cập hệ thống →</a>
+      </header>
+      <section className="access-intro" aria-labelledby="access-intro-title">
+        <span className="access-eyebrow">PHÂN TÍCH & TRUY VẾT</span>
+        <h2 id="access-intro-title">
+          Kết nối dữ liệu.
+          <br />
+          <span>Làm rõ dấu vết.</span>
+        </h2>
+        <p>
+          Tiếp nhận phản ánh, đối chiếu liên kết và theo dõi hồ sơ trong một
+          không gian làm việc thống nhất.
+        </p>
+        <ol className="access-flow" aria-label="Quy trình xử lý phản ánh">
+          <li>
+            <span>01</span>
+            <div>
+              <b>Tiếp nhận phản ánh</b>
+              <p>Lưu nội dung và tài liệu do người gửi cung cấp.</p>
+            </div>
+          </li>
+          <li>
+            <span>02</span>
+            <div>
+              <b>Kiểm tra & liên kết</b>
+              <p>Đối chiếu căn cứ trước khi xác nhận quan hệ.</p>
+            </div>
+          </li>
+          <li>
+            <span>03</span>
+            <div>
+              <b>Theo dõi hồ sơ</b>
+              <p>Phân công, cập nhật nhận định và tổng hợp báo cáo.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
       <svg
         className="access-network"
         viewBox="0 0 1440 900"
@@ -111,7 +155,7 @@ export default function Login({
           strokeDasharray="4 12"
         />
       </svg>
-      <main className="access-card">
+      <main id="demo-login" className="access-card">
         <div className="access-brand">
           <BrandMark />
           <h2>Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao</h2>

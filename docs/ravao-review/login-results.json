@@ -1,0 +1,53 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "login layout and role selector",
+      "no page overflow at login",
+      "password toggle",
+      "forgot demo hint",
+      "invalid sample rejected",
+      "citizen role separate",
+      "VNeID explicitly simulated and Escape",
+      "demo entry works",
+      "password not persisted",
+      "no external requests",
+      "no page errors"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "login layout and role selector",
+      "no page overflow at login",
+      "password toggle",
+      "forgot demo hint",
+      "invalid sample rejected",
+      "citizen role separate",
+      "VNeID explicitly simulated and Escape",
+      "demo entry works",
+      "password not persisted",
+      "no external requests",
+      "no page errors"
+    ]
+  },
+  {
+    "viewport": "390x844",
+    "result": "PASS",
+    "checks": [
+      "login layout and role selector",
+      "no page overflow at login",
+      "password toggle",
+      "forgot demo hint",
+      "invalid sample rejected",
+      "citizen role separate",
+      "VNeID explicitly simulated and Escape",
+      "demo entry works",
+      "password not persisted",
+      "no external requests",
+      "no page errors"
+    ]
+  }
+]

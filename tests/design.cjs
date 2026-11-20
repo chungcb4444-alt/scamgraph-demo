@@ -27,6 +27,7 @@ fs.mkdirSync(out, { recursive: true })
       const shot = async (name) => {
         await p.evaluate(() => scrollTo(0, 0))
         await p.waitForTimeout(200)
+        await p.locator(".toast").waitFor({ state: "hidden", timeout: 6000 })
         assert(
           await p.evaluate(
             () => document.documentElement.scrollWidth <= innerWidth,
