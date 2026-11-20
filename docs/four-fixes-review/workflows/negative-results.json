@@ -1,0 +1,21 @@
+{
+  "result": "PASS",
+  "viewport": "1280x720",
+  "checks": [
+    "foreign unit excluded from lists/graph",
+    "restored unauthorized case blocked without fallback",
+    "admin cannot restore business detail",
+    "citizen cannot see unowned records",
+    "switch cancel retains input",
+    "accepted switch isolates and restores intake drafts",
+    "legacy role overrides take real effect",
+    "legacy records,45m and unknown assignee preserved",
+    "legacy draft migration retains backup",
+    "inactive session blocked",
+    "storage failure rolls back report and audit; retry succeeds",
+    "required fields and negative amount rejected",
+    "manual PA-014 unclassified/no-transfer keeps own subject name and no fake entities",
+    "reset restricted to admin; confirmation required; audit retained",
+    "no browser errors"
+  ]
+}

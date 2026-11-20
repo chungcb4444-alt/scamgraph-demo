@@ -18,3 +18,5 @@ import "./reportPeople.css"
 import "./roleWork.css"
 
 import "./reportsLayout.css"
+
+import "./workflowFixes.css"
