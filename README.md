@@ -72,7 +72,7 @@ Quyền được kiểm tra ở menu, màn hình, trường nhập và hàm th�
 
 Có hai tài khoản xử lý để kiểm tra phạm vi được giao: **HS-001** ban đầu thuộc **Lê Minh Anh**, **HS-002** thuộc **Trần Quốc Huy**. Hồ sơ mới chưa được tự phân công cho người tạo hoặc người đăng nhập.
 
-Chi tiết: [Bảng quyền, trạng thái và kết quả kiểm tra](docs/ROLE-WORKSPACES.md).
+Chi tiết: [Bảng quyền, trạng thái và kết quả kiểm tra](docs/ROLE-WORKSPACES.md). Bố cục phản ánh mới, ảnh trước/sau và cách kiểm tra: [Danh sách và chi tiết phản ánh](docs/REPORTS-LAYOUT.md).
 
 ## Luồng review nghiệp vụ
 
@@ -145,6 +145,7 @@ Các lệnh gán biến môi trường trên dùng cú pháp shell Unix như bas
 | `tests/access.mjs` | Quyền từng thao tác, phạm vi dữ liệu, bàn giao, phân công, khóa khi trình, phiên bản duyệt và hiệu lực đổi quyền |
 | `tests/intake-model.mjs` | Dành PA-013 cho tình huống mẫu, sinh mã nhập tay duy nhất và tương thích nhãn loại phản ánh cũ |
 | `tests/time.mjs` | Múi giờ Việt Nam, mốc nửa đêm, thống kê bảy ngày và chuyển đổi dữ liệu thời gian |
+| `tests/reports-layout.cjs` | Bố cục hai trang phản ánh, bộ lọc nâng cao, tab, giữ biểu mẫu chưa lưu và dữ liệu trình duyệt; cả sáng/tối ở hai kích thước |
 | `tests/roles.cjs` | Luồng xuyên suốt bảy vai trò, báo cáo theo hồ sơ và giao diện 1440 × 900, 1280 × 720 |
 | `tests/roles-negative.cjs` | Ngoài phạm vi, phiên cũ, bản nháp, tài khoản khóa, đầu vào, lỗi lưu/rollback và đặt lại có xác nhận |
 

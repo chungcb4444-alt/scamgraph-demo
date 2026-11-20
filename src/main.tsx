@@ -16,3 +16,5 @@ import "./workspace-polish.css"
 import "./reportPeople.css"
 
 import "./roleWork.css"
+
+import "./reportsLayout.css"

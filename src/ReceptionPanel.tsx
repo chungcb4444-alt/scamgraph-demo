@@ -10,11 +10,13 @@ export default function ReceptionPanel({
   accounts,
   cases,
   onAction,
+  showSupplements = true,
 }: {
   report: Report
   actor: StaffAccount
   accounts: StaffAccount[]
   cases: CaseFile[]
+  showSupplements?: boolean
   onAction: (op: Operation) => boolean
 }) {
   const [note, setNote] = useState(""),
@@ -192,7 +194,7 @@ export default function ReceptionPanel({
           tin đã lưu.
         </p>
       )}
-      {!!report.supplements?.length && (
+      {showSupplements && !!report.supplements?.length && (
         <div className="supplement-list">
           <h3>Thông tin bổ sung</h3>
           {report.supplements.map((s) => (

@@ -61,7 +61,16 @@ fs.mkdirSync(out, { recursive: true })
       const openReport = async (id) => {
         await page.getByPlaceholder("Tìm theo mã hoặc tiêu đề...").fill(id)
         await page.locator("tbody tr").filter({ hasText: id }).first().click()
-        await page.locator(".reception-panel").waitFor()
+        assert.equal(
+          await page
+            .getByRole("tab", { name: "Thông tin phản ánh", exact: true })
+            .getAttribute("aria-selected"),
+          "true",
+        )
+        await page
+          .getByRole("tab", { name: "Xử lý nghiệp vụ", exact: true })
+          .click()
+        await page.locator(".reception-panel").waitFor({ state: "attached" })
       }
       const openCase = async (id) => {
         await nav("Hồ sơ")

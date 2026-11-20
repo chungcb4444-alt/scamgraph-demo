@@ -1,0 +1,78 @@
+[
+  {
+    "width": 1280,
+    "height": 720,
+    "theme": "dark",
+    "result": "PASS",
+    "firstRowY": 499,
+    "checks": [
+      "combined filters and advanced badge",
+      "closed filters retain values",
+      "clear preserves work scope",
+      "all seven columns and correct sender detail",
+      "default information tab, direct processing route and keyboard navigation",
+      "view-only localStorage byte-identical",
+      "analysis and reception drafts stay mounted",
+      "cancel navigation/reload/account change preserves drafts",
+      "explicit reveal logs once; tabs re-mask without logs",
+      "supervisor readonly and report-scoped existing history"
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "theme": "light",
+    "result": "PASS",
+    "firstRowY": 499,
+    "checks": [
+      "combined filters and advanced badge",
+      "closed filters retain values",
+      "clear preserves work scope",
+      "all seven columns and correct sender detail",
+      "default information tab, direct processing route and keyboard navigation",
+      "view-only localStorage byte-identical",
+      "analysis and reception drafts stay mounted",
+      "cancel navigation/reload/account change preserves drafts",
+      "explicit reveal logs once; tabs re-mask without logs",
+      "supervisor readonly and report-scoped existing history"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "theme": "dark",
+    "result": "PASS",
+    "firstRowY": 540,
+    "checks": [
+      "combined filters and advanced badge",
+      "closed filters retain values",
+      "clear preserves work scope",
+      "all seven columns and correct sender detail",
+      "default information tab, direct processing route and keyboard navigation",
+      "view-only localStorage byte-identical",
+      "analysis and reception drafts stay mounted",
+      "cancel navigation/reload/account change preserves drafts",
+      "explicit reveal logs once; tabs re-mask without logs",
+      "supervisor readonly and report-scoped existing history"
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "theme": "light",
+    "result": "PASS",
+    "firstRowY": 540,
+    "checks": [
+      "combined filters and advanced badge",
+      "closed filters retain values",
+      "clear preserves work scope",
+      "all seven columns and correct sender detail",
+      "default information tab, direct processing route and keyboard navigation",
+      "view-only localStorage byte-identical",
+      "analysis and reception drafts stay mounted",
+      "cancel navigation/reload/account change preserves drafts",
+      "explicit reveal logs once; tabs re-mask without logs",
+      "supervisor readonly and report-scoped existing history"
+    ]
+  }
+]
