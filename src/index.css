@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -605,3 +604,129 @@ tbody tr:hover { background: #131e36; }
   .form-layout, .dashboard-grid, .alert-layout, .detail-grid, .case-detail-grid { grid-template-columns: 1fr; }
   .form-side { grid-row: auto; }
 }
+
+/* Review demo: readable navy surfaces and reachable actions at both target sizes. */
+:root { --muted: #a9b6cc; }
+body { font-size: 13px; }
+.content, .main-shell, .page-stack, .detail-grid > *, .dashboard-grid > * { min-width: 0; }
+.nav-item { font-size: 12px; }
+.sidebar-user span { font-size: 10px; white-space: normal; }
+.top-desc, .card-sub, .cell-sub, .field-hint, .table-summary { font-size: 11px; color: #a5b3ca; }
+.btn { font-size: 12px; min-height: 36px; }
+table { font-size: 12px; }
+th { color: #aebbd2; font-size: 10px; white-space: nowrap; }
+td { color: #d0daeb; }
+.cell-title { max-width: 300px; }
+input::placeholder, textarea::placeholder { color: #93a2bb; }
+.top-actions { gap: 8px; }
+.top-actions select { width: 205px; font-size: 11px; }
+.operations-tabs button { font-size: 11px; }
+.login-role-tabs button { font-size: 11px; }
+.login-heading { font-size: clamp(25px,2.5vw,36px); line-height: 1.4; }
+.login-logo { margin-bottom: 55px; }
+.login-feature, .login-copy > p, .login-note p { font-size: 12px; }
+.login-page { align-items: stretch; min-height: 100vh; padding-top: 36px; padding-bottom: 36px; }
+.login-copy { padding: 42px; }
+.login-panel { padding: 36px; }
+.role-help { background: #10182d; border: 1px solid #293650; border-radius: 8px; padding: 14px; }
+summary { color: #b7aaff; cursor: pointer; }
+.role-grid { margin-top: 16px; }
+.candidate { border: 1px solid #33415d; padding: 16px; margin: 12px 0; border-radius: 8px; }
+.candidate p { font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; color: #bfccdf; }
+.candidate > b { color: #b4a6ff; }
+.extraction .btn { margin: 10px 16px; max-width: calc(100% - 32px); }
+.entity-form .btn { margin: 0; max-width: 100%; }
+.citizen-history { padding: 0 20px 16px; }
+.hero-buttons, .cluster-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.detail-hero { gap: 18px; }
+.modal-backdrop { padding: 20px; overflow-y: auto; }
+.modal { max-height: calc(100dvh - 40px); display: flex; flex-direction: column; }
+.modal-body { overflow-y: auto; min-height: 0; }
+.modal-head, .modal-foot { flex-shrink: 0; }
+.modal-foot { flex-wrap: wrap; }
+.toast { z-index: 1000; max-width: calc(100vw - 40px); }
+.graph-workspace { min-width: 0; }
+.graph-canvas { min-width: 0; }
+.graph-node { max-width: 155px; }
+@media (max-width: 1300px) {
+  .topbar { padding: 0 18px; }
+  .top-title { max-width: 250px; }
+  .top-desc { max-width: 280px; }
+  .top-actions { gap: 6px; }
+  .top-actions select { width: 180px; }
+  .login-page { padding-top: 20px; padding-bottom: 20px; }
+  .login-copy { padding: 30px; }
+  .login-panel { padding: 26px; }
+  .login-logo { margin-bottom: 32px; }
+  .graph-workspace { grid-template-columns: minmax(0,1fr) 265px; }
+}
+@media print {
+  body * { visibility: hidden; }
+  .report-doc, .report-doc * { visibility: visible; color: #111 !important; }
+  .report-doc { position: absolute; inset: 0; background: white; }
+  .modal, .modal-body, .modal-backdrop { position: static; overflow: visible; max-height: none; }
+  .modal-head, .modal-foot, .toast { display: none; }
+}
+.cluster-numbers b { color: #eef3ff; }
+.cluster-numbers { border-color: #33415d; }
+.cluster-numbers span, .legend { font-size: 11px; color: #aab8d0; }
+.cluster-summary p, .hero-meta, .detail-code, .section-head p, .privacy-note p { font-size: 11px; }
+.badge { font-size: 10px; }
+.detail-rows span, .detail-rows b, .meta-grid span, .meta-grid b { font-size: 12px; }
+.quote-content { font-size: 13px; }
+.field-label { font-size: 12px; }
+.extraction-note, .simulation-note { font-size: 12px; line-height: 1.6; }
+.graph-node b { font-size: 10px; white-space: normal; overflow-wrap: anywhere; }
+.graph-node small, .info-sub, .info-head, .source-evidence span { font-size: 10px; }
+.graph-node { width: 145px; }
+.source-evidence { grid-template-columns: 55px 1fr auto; }
+.evidence-card > .candidate, .evidence-card > p { margin-left: 18px; margin-right: 18px; }
+.field:has(.field-error) input, .field:has(.field-error) select, .field:has(.field-error) textarea { background: #281723; }
+.table-card td:last-child:has(.btn), .table-card th:last-child { position: sticky; right: 0; background: #10182d; z-index: 1; box-shadow: -5px 0 8px #070d1d55; }
+.table-card th:last-child { background: #0c1428; }
+:focus-visible { outline: 2px solid #a59aff; outline-offset: 3px; }
+.tabs button { font-size: 12px; color: #acb9d0; }
+.role-card p, .role-switcher p, .save-row span, .report-section p { font-size: 12px; }
+/* Six reference layouts: citizen portal, officer workspace, admin console. */
+.login-demo { margin: 0 0 18px; display: inline-block; text-transform: none; }
+.login-divider { margin: 18px 0 10px; color: #a1aec5; text-align: center; font-size: 10px; letter-spacing: 1px; }
+.qr-simulation { font-size: 110px; color: #a995ff; text-align: center; line-height: 1.3; }
+.citizen-shell .sidebar { display: none; }
+.citizen-shell .main-shell { width: 100%; margin-left: 0; }
+.citizen-shell .content { max-width: 1140px; padding-top: 28px; }
+.citizen-shell .topbar { padding-left: max(24px, calc((100vw - 1092px)/2)); padding-right: max(24px, calc((100vw - 1092px)/2)); }
+.citizen-shell .form-main { border-top: 2px solid #8570ff; }
+.citizen-shell .form-layout { grid-template-columns: minmax(0, 1fr) 310px; }
+.citizen-guide ul { margin: 0; padding: 0 20px 0 34px; color: #c4cee1; font-size: 12px; line-height: 1.8; }
+.citizen-guide li { margin-bottom: 10px; }
+.citizen-guide > p { margin: 18px; padding: 12px; background: #0b1327; color: #baacff; font-size: 12px; line-height: 1.6; }
+.admin-shell .brand-mark { background: #24204b; border-color: #7865db; }
+.admin-shell .brand-mark svg circle { fill: #aa91ff; }
+.admin-shell .brand-mark svg line { stroke: #aa91ff; }
+.admin-shell .nav-item.active { background: #211d49; box-shadow: inset 2px 0 #8e72ff; color: #c5b4ff; }
+.account-search { max-width: 500px; padding: 0 20px 18px; }
+.status-tabs { display: flex; gap: 12px; border-bottom: 1px solid #28324b; }
+.status-tabs button { color: #b1bdd3; padding: 12px 10px; font-size: 12px; background: none; border: 0; border-bottom: 2px solid transparent; }
+.status-tabs button.active { color: #b9a8ff; border-bottom-color: #8a70ff; }
+.reports-filter { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.reports-filter .search-wrap { grid-column: 1 / -1; }
+.reports-filter select { font-size: 12px; }
+.candidate .btn { margin-top: 8px; margin-right: 8px; }
+.audit-card { padding: 12px 20px; }
+.audit-card table, .audit-card tbody { display: block; min-width: 0; }
+.audit-card thead { display: none; }
+.audit-card tr { display: grid; grid-template-columns: 165px minmax(120px,1fr) minmax(140px,1fr) 120px; border: 1px solid #26304a; border-radius: 6px; background: #0a1124; margin: 12px 0; padding: 12px; }
+.audit-card td { padding: 4px 8px; border: 0; }
+.audit-card td:nth-child(1) { font-size: 11px; color: #99a9c5; }
+.audit-card td:nth-child(2) { color: #b7a5ff; }
+.audit-card td:nth-child(4) { grid-row: 2; grid-column: 1 / 3; }
+.audit-card td:nth-child(5) { grid-row: 2; grid-column: 3; }
+.audit-card td:nth-child(6) { grid-row: 1 / 3; grid-column: 4; align-self: center; text-align: right; }
+@media (max-width: 1300px) {
+  .login-role-tabs button { font-size: 10px; }
+  .citizen-shell .topbar .top-title { max-width: 290px; }
+}
+.daily-chart { height: 235px; display: flex; gap: 20px; padding: 10px 24px 20px; align-items: stretch; }
+.daily-column { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #bac8de; font-size: 12px; }
+.daily-track { height: 150px; width: 100%; display: flex; align-items: flex-end; border-bottom: 1px solid #33415c; }
+.daily-track span { display: block; width: 100%; background: linear-gradient(#8f6fff,#3975ed); border-radius: 5px 5px 0 0; min-height: 3px; }
