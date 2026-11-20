@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Tích Và Truy Vết Tội Phạm Công Nghệ Cao - SCAMGRAPH</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Be Vietnam Pro đồng bộ 100% với Login.html -->
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Be Vietnam Pro"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#1e3a8a',
+                            light: '#3b82f6',
+                            bg: '#f0f4f8',
+                            darkbg: '#070b14',
+                            darkcard: '#0c1322',
+                            darkborder: '#1e293b'
+                        }
+                    },
+                    boxShadow: {
+                        'glass': '0 25px 50px -12px rgba(30, 58, 138, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Nền đồng nhất hoàn toàn với Login.html */
+        body {
+            background: radial-gradient(circle at 80% 20%, #e0e7ff 0%, #f0f4f8 50%, #ffffff 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.3s ease;
+        }
+        html.dark body {
+            background: radial-gradient(circle at 80% 20%, #131c31 0%, #090e1a 55%, #050811 100%);
+        }
+
+        /* Hiệu ứng kính (Glassmorphism) đồng bộ cho cả Login và các Card trong Dashboard */
+        .glass-board {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 24px;
+            box-shadow: 0 30px 60px rgba(30, 58, 138, 0.1), inset 0 0 0 1px rgba(255,255,255,0.5);
+            animation: float 6s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        html.dark .glass-board {
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.03);
+        }
+
+        .app-card {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        html.dark .app-card {
+            background: rgba(12, 19, 34, 0.82);
+            border: 1px solid rgba(30, 41, 59, 0.85);
+        }
+        .app-card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px -10px rgba(30, 58, 138, 0.15);
+        }
+        html.dark .app-card-hover:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 14px 30px -10px rgba(0, 0, 0, 0.6);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotateX(2deg) rotateY(-2deg); }
+            50% { transform: translateY(-14px) rotateX(4deg) rotateY(0deg); }
+            100% { transform: translateY(0px) rotateX(2deg) rotateY(-2deg); }
+        }
+
+        /* Tia quét (Scanner Line) */
+        .scanner-line {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.6);
+            animation: scan 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            z-index: 10;
+            pointer-events: none;
+        }
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Nút Pill cho trang Login */
+        .btn-pill {
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+        }
+        .btn-pill:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Chuyển cảnh mượt giữa các Tab bên trái */
+        .view-section {
+            animation: viewFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes viewFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Nền chấm lưới trong đồ thị Phân tích liên kết */
+        .graph-dot-grid {
+            background-image: radial-gradient(rgba(59, 130, 246, 0.22) 1px, transparent 1px);
+            background-size: 22px 22px;
+        }
+        html.dark .graph-dot-grid {
+            background-image: radial-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+        }
+
+        /* Đường nối động trên sơ đồ liên kết */
+        .edge-animated {
+            stroke-dasharray: 6 6;
+            animation: dashFlow 1.2s linear infinite;
+        }
+        @keyframes dashFlow {
+            to { stroke-dashoffset: -12; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 9999px; }
+        html.dark ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.7); }
+    </style>
+</head>
+<body class="text-slate-800 dark:text-slate-100 antialiased relative selection:bg-blue-200 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100">
+
+    <!-- ======================================================================= -->
+    <!-- PHẦN 1: MÀN HÌNH ĐĂNG NHẬP (ĐỒNG BỘ 100% VỚI BẢN LOGIN.HTML MẪU)         -->
+    <!-- ======================================================================= -->
+    <div id="login-screen" class="hidden min-h-screen flex-col relative z-30">
+        <!-- Header Login tối giản -->
+        <header class="fixed top-0 left-0 right-0 z-40 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md border-b border-white/40 dark:border-slate-800/50 transition-colors">
+            <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-brand-blue flex items-center justify-center text-white shadow-lg shadow-blue-900/20">
+                        <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                    </div>
+                    <span class="font-bold text-lg text-brand-blue dark:text-blue-400 tracking-tight">SCAMGRAPH</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400 hidden sm:inline-block">Cổng thông tin nghiệp vụ</span>
+                    <button onclick="toggleTheme()" class="p-2.5 rounded-full bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-yellow-400 hover:bg-blue-100 dark:hover:bg-slate-700 transition-all">
+                        <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Login Content -->
+        <main class="min-h-screen pt-20 flex items-center relative z-10">
+            <div class="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Cột Trái: Bảng điều tra dữ liệu mô phỏng (Glassboard) -->
+                <div class="relative w-full aspect-[4/3] flex items-center justify-center lg:justify-start perspective-1000 z-10 order-2 lg:order-1">
+                    <div class="glass-board w-full max-w-[540px] aspect-[4/3] p-4 flex flex-col transform-gpu">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-200/50 dark:border-slate-700/50 pb-3">
+                            <div class="flex gap-2 items-center">
+                                <div class="flex gap-1.5">
+                                    <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                                    <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                                    <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                                </div>
+                                <span class="ml-2 text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider">NETWORK TRACER v2.0</span>
+                            </div>
+                            <div class="text-xs text-blue-600 dark:text-blue-300 font-mono bg-blue-100/50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                                <i data-lucide="activity" class="w-3 h-3 inline mr-1"></i>Live
+                            </div>
+                        </div>
+
+                        <div class="relative flex-1 rounded-xl overflow-hidden bg-slate-50/30 dark:bg-slate-900/40 border border-white/50 dark:border-slate-700/50">
+                            <div class="scanner-line"></div>
+                            <canvas id="tracingCanvas" class="absolute inset-0 w-full h-full"></canvas>
+                            <div class="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
+                                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-white dark:border-slate-700 p-3 rounded-lg shadow-sm">
+                                    <div class="text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase mb-1">Cụm IP đáng ngờ</div>
+                                    <div class="text-sm font-bold text-slate-700 dark:text-slate-200">192.168.1.xxx</div>
+                                </div>
+                                <div class="bg-red-50/90 dark:bg-red-900/80 backdrop-blur border border-red-200 dark:border-red-800 p-2 rounded-lg shadow-sm flex items-center gap-2">
+                                    <span class="relative flex h-2 w-2">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500 dark:bg-red-400"></span>
+                                    </span>
+                                    <span class="text-xs font-semibold text-red-700 dark:text-red-200">Phát hiện liên kết</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-blue-400/20 dark:bg-blue-600/20 blur-3xl rounded-full pointer-events-none z-0"></div>
+                </div>
+
+                <!-- Cột Phải: Thông điệp & Nút bấm -->
+                <div class="max-w-xl z-20 order-1 lg:order-2">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-brand-blue dark:text-blue-300 text-xs font-semibold mb-6 border border-blue-200 dark:border-blue-800/50">
+                        <span class="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse"></span>
+                        Hệ thống trực tuyến 24/7
+                    </div>
+                    
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-brand-blue dark:text-white leading-[1.15] tracking-tight mb-6">
+                        Phân Tích Và Truy Vết<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">Tội Phạm Công Nghệ Cao</span>
+                    </h1>
+                    
+                    <p class="text-lg text-slate-600 dark:text-slate-400 mb-10 leading-relaxed">
+                        Nền tảng chuyên trách hỗ trợ nghiệp vụ điều tra, phân tích mạng lưới liên kết dòng tiền và truy xuất nguồn gốc đối tượng lừa đảo trên không gian mạng.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <button onclick="openLoginModal()" class="btn-pill w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold flex items-center justify-center gap-3 shadow-lg shadow-red-600/20">
+                            <svg viewBox="0 0 24 24" fill="none" class="w-5 h-5">
+                                <path d="M12 2L4 5V11C4 16.5 7.4 21.6 12 23C16.6 21.6 20 16.5 20 11V5L12 2Z" fill="#ffffff" stroke="#fef08a" stroke-width="1"/>
+                                <path d="M12 6.5L13.5 9.8L17 10.3L14.5 12.7L15.1 16.2L12 14.5L8.9 16.2L9.5 12.7L7 10.3L10.5 9.8L12 6.5Z" fill="#facc15"/>
+                            </svg>
+                            Đăng nhập bằng VNeID
+                        </button>
+                        <button onclick="openLoginModal()" class="btn-pill w-full sm:w-auto px-8 py-3.5 bg-white dark:bg-slate-800 text-brand-blue dark:text-blue-100 font-semibold flex items-center justify-center gap-2 border border-blue-100 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-slate-50 dark:hover:bg-slate-700">
+                            <i data-lucide="user-cog" class="w-5 h-5"></i>
+                            Tài khoản Cán bộ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal Đăng nhập căn giữa màn hình -->
+        <div id="modal-login" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-md" onclick="closeLoginModal()"></div>
+            <div class="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 z-10">
+                <div class="h-2 bg-gradient-to-r from-brand-blue to-cyan-500"></div>
+                <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <div class="p-8">
+                    <h3 class="text-xl font-bold text-brand-blue dark:text-white mb-1 text-center">Xác thực hệ thống</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 text-center mb-6">Chọn phương thức đăng nhập để vào bàn làm việc</p>
+                    <div class="space-y-3">
+                        <button onclick="loginToDashboard('phan.tich.demo', 'Cán bộ phân tích')" class="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium flex items-center justify-center gap-2 transition-colors">
+                            Đăng nhập bằng VNeID
+                        </button>
+                        <div class="relative flex py-2 items-center">
+                            <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                            <span class="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase">hoặc</span>
+                            <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                        </div>
+                        <input id="login-username" type="text" value="phan.tich.demo" placeholder="Tài khoản nghiệp vụ" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 text-sm">
+                        <input type="password" value="••••••••" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 text-sm">
+                        <button onclick="loginToDashboard(document.getElementById('login-username').value || 'phan.tich.demo', 'Cán bộ phân tích')" class="w-full py-3 px-4 rounded-xl bg-brand-blue hover:bg-blue-900 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-medium mt-2 transition-colors">
+                            Đăng nhập Cán bộ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ======================================================================= -->
+    <!-- PHẦN 2: HỆ THỐNG DASHBOARD NGHIỆP VỤ (7 PHÂN HỆ TƯƠNG TÁC ĐẦY ĐỦ)       -->
+    <!-- ======================================================================= -->
+    <div id="dashboard-screen" class="flex h-screen overflow-hidden relative z-10">
+
+        <!-- SIDEBAR BÊN TRÁI -->
+        <aside class="w-[260px] flex-shrink-0 bg-white/85 dark:bg-[#080d19]/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col h-full z-20 transition-colors">
+            <!-- Logo Header -->
+            <div class="px-5 py-5 flex items-center gap-3.5 border-b border-slate-200/70 dark:border-slate-800/80">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-sky-950/60 border border-blue-200 dark:border-sky-500/30 flex items-center justify-center text-brand-blue dark:text-sky-400 flex-shrink-0 shadow-sm">
+                    <!-- Logo Khiên Vân Tay đồng bộ -->
+                    <svg viewBox="0 0 64 64" fill="none" class="w-6 h-6">
+                        <path d="M32 6L50 13V30C50 44 32 57 32 57C32 57 14 44 14 30V13L32 6Z" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M32 20C27.5 20 24 23.5 24 28V34" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M32 26V36" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M40 28C40 23.5 36.5 20 32 20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="leading-snug">
+                    <div class="font-bold text-[13px] text-brand-blue dark:text-white">Phân Tích Và Truy Vết</div>
+                    <div class="font-bold text-[13px] text-brand-blue dark:text-white">Tội Phạm Công Nghệ</div>
+                    <div class="font-bold text-[13px] text-brand-blue dark:text-white">Cao</div>
+                </div>
+            </div>
+
+            <!-- 7 Mục Điều Hướng (Click chuyển view tức thì) -->
+            <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1.5" id="sidebar-nav">
+                <button onclick="switchSection('tq')" data-nav="tq" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all">
+                    <span class="nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">TQ</span>
+                    <span class="text-sm font-medium">Tổng quan</span>
+                </button>
+
+                <button onclick="switchSection('pa')" data-nav="pa" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all">
+                    <span class="nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">PA</span>
+                    <span class="text-sm font-medium">Phản ánh</span>
+                </button>
+
+                <button onclick="switchSection('lk')" data-nav="lk" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all">
+                    <span class="nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">LK</span>
+                    <span class="text-sm font-medium">Phân tích liên kết</span>
+                </button>
+
+                <button onclick="switchSection('cb')" data-nav="cb" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all">
+                    <span class="nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">CB</span>
+                    <span class="text-sm font-medium">Cảnh báo</span>
+                </button>
+
+                <button onclick="switchSection('hs')" data-nav="hs" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all">
+                    <span class="nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">HS</span>
+                    <span class="text-sm font-medium">Hồ sơ vụ việc</span>
+                </button>
+
+                <button onclick="switchSection('pq')" data-nav="pq" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all">
+                    <span class="nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">PQ</span>
+                    <span class="text-sm font-medium leading-tight">Tài khoản và phân quyền</span>
+                </button>
+
+                <button onclick="switchSection('nk')" data-nav="nk" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all">
+                    <span class="nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0">NK</span>
+                    <span class="text-sm font-medium">Nhật ký hệ thống</span>
+                </button>
+            </nav>
+
+            <!-- User Profile Footer -->
+            <div class="p-4 border-t border-slate-200/80 dark:border-slate-800/80">
+                <div class="flex items-center gap-3 px-2 py-1.5 rounded-xl">
+                    <div id="sidebar-user-avatar" class="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200 flex-shrink-0">
+                        PT
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p id="sidebar-user-name" class="text-xs font-bold text-slate-900 dark:text-white truncate">phan.tich.demo</p>
+                        <p id="sidebar-user-role" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Cán bộ phân tích</p>
+                    </div>
+                    <button onclick="logoutToLoginScreen()" title="Chuyển sang trang Đăng nhập" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="corner-down-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KHÔNG GIAN LÀM VIỆC CHÍNH BÊN PHẢI -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+
+            <!-- TOP HEADER BAR -->
+            <header class="h-16 px-8 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 bg-white/60 dark:bg-[#080d19]/75 backdrop-blur-md flex-shrink-0 z-10">
+                <div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/60">
+                        Demo — dữ liệu giả lập
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                    <!-- Nút chuyển đổi Sáng / Tối đồng bộ với trang Login -->
+                    <button onclick="toggleTheme()" title="Đổi nền Sáng / Tối" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 text-slate-600 dark:text-yellow-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+                        <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                    </button>
+
+                    <!-- Chọn vai trò mô phỏng -->
+                    <div class="relative">
+                        <select id="header-role-select" onchange="handleRoleSwitch(this.value)" class="appearance-none text-xs font-medium bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 rounded-lg pl-3.5 pr-9 py-2 focus:outline-none focus:border-blue-500 cursor-pointer">
+                            <option value="Cán bộ phân tích">Cán bộ phân tích</option>
+                            <option value="Cán bộ tiếp nhận">Cán bộ tiếp nhận</option>
+                            <option value="Lãnh đạo đơn vị">Lãnh đạo đơn vị</option>
+                            <option value="Quản trị hệ thống">Quản trị hệ thống</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    </div>
+
+                    <button onclick="logoutToLoginScreen()" class="text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#11192c] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        Đăng xuất
+                    </button>
+
+                    <button onclick="resetDemoData()" class="text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-100 dark:bg-[#11192c] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        Đặt lại demo
+                    </button>
+                </div>
+            </header>
+
+            <!-- NỘI DUNG TỪNG PHÂN HỆ (SCROLLABLE) -->
+            <main class="flex-1 overflow-y-auto px-8 py-7">
+                <div class="max-w-[1400px] mx-auto">
+
+                    <!-- =============================================================== -->
+                    <!-- VIEW 1: TQ - TỔNG QUAN CÔNG VIỆC (image_429754.png)             -->
+                    <!-- =============================================================== -->
+                    <section id="view-tq" class="view-section space-y-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1.5">Tổng quan công việc</h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Thống kê tính trực tiếp từ bộ dữ liệu giả lập đang lưu trên trình duyệt</p>
+                            </div>
+                            <button onclick="openNewReportModal()" class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all">
+                                Tiếp nhận phản ánh
+                            </button>
+                        </div>
+
+                        <!-- 4 Thẻ KPI -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div onclick="switchSection('pa')" class="app-card app-card-hover cursor-pointer rounded-xl p-5 border-l-4 !border-l-sky-500">
+                                <div class="text-xs font-medium text-slate-500 dark:text-slate-300 mb-3">Tổng phản ánh</div>
+                                <div id="kpi-total-pa" class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">12</div>
+                                <div class="text-xs font-semibold text-sky-600 dark:text-sky-400">Bộ dữ liệu ban đầu</div>
+                            </div>
+
+                            <div onclick="switchSection('lk')" class="app-card app-card-hover cursor-pointer rounded-xl p-5 border-l-4 !border-l-cyan-500">
+                                <div class="text-xs font-medium text-slate-500 dark:text-slate-300 mb-3">Cụm có liên quan</div>
+                                <div class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">2</div>
+                                <div class="text-xs font-semibold text-cyan-600 dark:text-cyan-400">1 cụm rủi ro cao</div>
+                            </div>
+
+                            <div onclick="switchSection('cb')" class="app-card app-card-hover cursor-pointer rounded-xl p-5 border-l-4 !border-l-rose-500">
+                                <div class="text-xs font-medium text-slate-500 dark:text-slate-300 mb-3">Cảnh báo cần xem</div>
+                                <div class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">3</div>
+                                <div class="text-xs font-semibold text-rose-600 dark:text-rose-400">Cần ưu tiên</div>
+                            </div>
+
+                            <div onclick="switchSection('hs')" class="app-card app-card-hover cursor-pointer rounded-xl p-5 border-l-4 !border-l-amber-500">
+                                <div class="text-xs font-medium text-slate-500 dark:text-slate-300 mb-3">Hồ sơ đang xử lý</div>
+                                <div id="kpi-total-hs" class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">2</div>
+                                <div class="text-xs font-semibold text-amber-600 dark:text-amber-400">1 chờ bổ sung</div>
+                            </div>
+                        </div>
+
+                        <!-- Công việc cần xử lý -->
+                        <div class="app-card rounded-xl p-6">
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-1">Công việc cần xử lý</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">Ưu tiên kiểm tra phản ánh và tiếp tục hồ sơ đang mở</p>
+                            <div class="flex flex-wrap gap-3">
+                                <button onclick="jumpToPendingReports()" class="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#111a2e] hover:border-sky-500/60 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all flex items-center gap-2">
+                                    <span id="btn-pending-count">6 phản ánh chờ kiểm tra</span>
+                                    <span>→</span>
+                                </button>
+                                <button onclick="switchSection('cb')" class="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-[#111a2e] hover:border-sky-500/60 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all flex items-center gap-2">
+                                    <span>3 cảnh báo cần rà soát</span>
+                                    <span>→</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hồ sơ gần đây -->
+                        <div class="app-card rounded-xl p-6">
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-1">Hồ sơ gần đây</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">Theo thời gian cập nhật hồ sơ</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="recent-cases-grid">
+                                <!-- Render động từ danh sách hồ sơ -->
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- =============================================================== -->
+                    <!-- VIEW 2: PA - QUẢN LÝ PHẢN ÁNH (image_42a63f.png)                -->
+                    <!-- =============================================================== -->
+                    <section id="view-pa" class="view-section hidden space-y-6">
+                        <!-- Thanh Sub-tab trên cùng -->
+                        <div class="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold">
+                            <button class="pb-3 border-b-2 border-sky-500 text-sky-600 dark:text-sky-400">Tiếp nhận và xác minh</button>
+                            <button onclick="switchSection('hs')" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Danh sách hồ sơ</button>
+                            <button onclick="openCaseDetailModal('HS-001')" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Chi tiết hồ sơ đang mở</button>
+                        </div>
+
+                        <!-- Tiêu đề & Nút Tiếp nhận -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            
+                            <button onclick="openNewReportModal()" class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all">
+                                Tiếp nhận phản ánh
+                            </button>
+                        </div>
+
+                        <!-- Thanh trạng thái nhanh -->
+                        <div class="flex flex-wrap items-center gap-6 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold" id="pa-status-tabs">
+                            <button onclick="setReportTabFilter('ALL')" data-pa-tab="ALL" class="pa-tab pb-3 border-b-2 border-sky-500 text-sky-600 dark:text-sky-400">Tất cả trạng thái (<span id="count-pa-all">12</span>)</button>
+                            <button onclick="setReportTabFilter('Chờ kiểm tra')" data-pa-tab="Chờ kiểm tra" class="pa-tab pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">Chờ kiểm tra (<span id="count-pa-pending">6</span>)</button>
+                            <button onclick="setReportTabFilter('Đã kiểm tra')" data-pa-tab="Đã kiểm tra" class="pa-tab pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">Đã kiểm tra (<span id="count-pa-verified">6</span>)</button>
+                            <button onclick="setReportTabFilter('Không hợp lệ')" data-pa-tab="Không hợp lệ" class="pa-tab pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">Không hợp lệ (<span id="count-pa-invalid">0</span>)</button>
+                        </div>
+
+                        <!-- Khung bộ lọc tìm kiếm -->
+                        <div class="app-card rounded-xl p-5 space-y-4">
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                                <div class="lg:col-span-6">
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Tìm kiếm</label>
+                                    <div class="relative">
+                                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                        <input id="pa-search-input" oninput="renderReportsTable()" type="text" placeholder="Tìm theo mã hoặc tiêu đề..." class="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                    </div>
+                                </div>
+                                <div class="lg:col-span-3">
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Trạng thái</label>
+                                    <select id="pa-select-status" onchange="setReportTabFilter(this.value)" class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                        <option value="ALL">Tất cả trạng thái</option>
+                                        <option value="Chờ kiểm tra">Chờ kiểm tra</option>
+                                        <option value="Đã kiểm tra">Đã kiểm tra</option>
+                                        <option value="Không hợp lệ">Không hợp lệ</option>
+                                    </select>
+                                </div>
+                                <div class="lg:col-span-3">
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Loại phản ánh</label>
+                                    <select id="pa-select-type" onchange="renderReportsTable()" class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                        <option value="ALL">Tất cả loại phản ánh</option>
+                                        <option value="Giả danh cơ quan nhà nước">Giả danh cơ quan nhà nước</option>
+                                        <option value="Đầu tư tài chính tự xưng">Đầu tư tài chính tự xưng</option>
+                                        <option value="Tuyển cộng tác viên online">Tuyển cộng tác viên online</option>
+                                        <option value="Chiếm đoạt tài khoản mạng xã hội">Chiếm đoạt tài khoản MXH</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Nguồn tiếp nhận</label>
+                                    <select id="pa-select-source" onchange="renderReportsTable()" class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                        <option value="ALL">Mọi nguồn tin</option>
+                                        <option value="Cổng VNeID">Cổng VNeID</option>
+                                        <option value="Trực tiếp tại đơn vị">Trực tiếp tại đơn vị</option>
+                                        <option value="Đường dây nóng">Đường dây nóng</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Địa bàn</label>
+                                    <select id="pa-select-area" onchange="renderReportsTable()" class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                        <option value="ALL">Mọi địa bàn</option>
+                                        <option value="Hà Nội">Hà Nội</option>
+                                        <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                                        <option value="Đà Nẵng">Đà Nẵng</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Tiếp nhận từ ngày</label>
+                                    <input type="date" class="w-full px-3.5 py-2 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Đến ngày</label>
+                                    <input type="date" class="w-full px-3.5 py-2 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bảng danh sách phản ánh -->
+                        <div class="app-card rounded-xl overflow-hidden">
+                            <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                                <span>Hiển thị <strong id="pa-showing-count" class="text-slate-900 dark:text-white">12</strong> phản ánh</span>
+                                <span>Thống kê theo thời gian tiếp nhận · Asia/Ho_Chi_Minh</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50/60 dark:bg-slate-900/40">
+                                            <th class="py-3.5 px-5">Mã phản ánh</th>
+                                            <th class="py-3.5 px-5">Nội dung / Loại phản ánh</th>
+                                            <th class="py-3.5 px-5">Thời gian</th>
+                                            <th class="py-3.5 px-5">Số tiền</th>
+                                            <th class="py-3.5 px-5">Trạng thái</th>
+                                            <th class="py-3.5 px-5 text-right">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pa-table-body" class="divide-y divide-slate-200/70 dark:divide-slate-800/70 text-xs">
+                                        <!-- Render động bằng JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- =============================================================== -->
+                    <!-- VIEW 3: LK - PHÂN TÍCH LIÊN KẾT (image_42a65c.png)              -->
+                    <!-- =============================================================== -->
+                    <section id="view-lk" class="view-section hidden space-y-5">
+                        <div>
+                            <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1.5">Phân tích liên kết</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Khám phá nhóm phản ánh, thực thể và căn cứ quan hệ.</p>
+                        </div>
+
+                        <!-- Banner cụm đang chọn -->
+                        <div class="app-card rounded-xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span id="lk-cluster-code" class="text-xs font-bold text-sky-600 dark:text-sky-400">CUM-002</span>
+                                    <div class="flex gap-1.5 ml-2">
+                                        <button onclick="switchClusterGraph('CUM-002')" id="btn-cluster-2" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/40">CUM-002</button>
+                                        <button onclick="switchClusterGraph('CUM-001')" id="btn-cluster-1" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400">CUM-001</button>
+                                    </div>
+                                </div>
+                                <h2 id="lk-cluster-title" class="text-xl font-bold text-slate-900 dark:text-white mb-1">Giả danh cơ quan nhà nước</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Kết quả hỗ trợ xác minh; không suy diễn danh tính, quyền sở hữu tài khoản hoặc dòng tiền.</p>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-5 border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-200 dark:border-slate-800">
+                                <div class="pl-0 lg:pl-5 lg:border-l border-slate-200 dark:border-slate-800">
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Phản ánh phù hợp</div>
+                                    <div id="lk-cluster-ratio" class="text-sm font-bold text-slate-900 dark:text-white">3/3</div>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Tổng số tiền</div>
+                                    <div id="lk-cluster-amount" class="text-sm font-bold text-slate-900 dark:text-white">25 triệu</div>
+                                </div>
+                                <button onclick="openAlertReasonModal()" class="px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#11192c] hover:border-sky-500 text-xs font-semibold">
+                                    Xem lý do cảnh báo
+                                </button>
+                                <button onclick="createCaseFromCluster()" class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20">
+                                    Tạo hồ sơ từ cụm
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Checkbox thử tải 1.000 phản ánh -->
+                        <label class="inline-flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" id="chk-stress-test" onchange="toggleStressTestMode(this.checked)" class="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-sky-600 focus:ring-sky-500">
+                            <span>Thử tải riêng 1.000 phản ánh · không lưu vào dữ liệu demo, không lập hồ sơ từ thử tải</span>
+                        </label>
+
+                        <!-- Thanh công cụ lọc đồ thị -->
+                        <div class="app-card rounded-xl p-3.5 flex flex-wrap items-center gap-3">
+                            <input id="lk-search-node" oninput="renderLinkGraph()" type="text" placeholder="Tìm tài khoản, điện thoại, website hoặc mã PA..." class="flex-1 min-w-[240px] px-3.5 py-2 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                            
+                            <select id="lk-entity-filter" onchange="renderLinkGraph()" class="px-3.5 py-2 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none">
+                                <option value="ALL">Tất cả thực thể</option>
+                                <option value="Tài khoản">Tài khoản ngân hàng</option>
+                                <option value="Điện thoại">Số điện thoại</option>
+                                <option value="Website">Tên miền / Website</option>
+                            </select>
+
+                            <select class="px-3.5 py-2 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none">
+                                <option>Nhóm theo loại hành vi</option>
+                                <option>Nhóm theo tài khoản đích</option>
+                            </select>
+
+                            <label class="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 px-2 cursor-pointer">
+                                <input type="checkbox" id="chk-show-labels" checked onchange="renderLinkGraph()" class="rounded border-slate-300 dark:border-slate-700 text-sky-600">
+                                <span>Hiện nhãn</span>
+                            </label>
+
+                            <div class="flex items-center gap-1.5 ml-auto">
+                                <button onclick="zoomGraph(0.1)" class="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#11192c] flex items-center justify-center text-sm font-bold hover:border-sky-500">+</button>
+                                <button onclick="zoomGraph(-0.1)" class="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#11192c] flex items-center justify-center text-sm font-bold hover:border-sky-500">−</button>
+                                <button onclick="resetGraphZoom()" class="px-3 h-8 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#11192c] text-xs font-semibold hover:border-sky-500">Vừa màn hình</button>
+                            </div>
+                        </div>
+
+                        <!-- Dòng trạng thái thống kê nút/cạnh -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                            <span id="lk-status-summary">Đang hiển thị 0/3 phản ánh riêng lẻ · 1/1 nhóm · 4 nút / 3 cạnh</span>
+                            <span>Tổng tiền tính trên toàn bộ kết quả phù hợp. Tạo hồ sơ dùng toàn bộ cụm đã xác nhận; nhóm/lọc chỉ để khám phá.</span>
+                        </div>
+
+                        <!-- Khung Đồ thị Liên kết + Panel Chi tiết bên phải -->
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                            <!-- Cột Trái: Sơ đồ nút tương tác -->
+                            <div class="lg:col-span-8 app-card rounded-xl overflow-hidden flex flex-col">
+                                <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                    <div class="grid grid-cols-3 w-full text-xs font-bold tracking-wider uppercase text-sky-600 dark:text-sky-400">
+                                        <span>NHÓM PHẢN ÁNH</span>
+                                        <span>PHẢN ÁNH MỞ RỘNG</span>
+                                        <span>THỰC THỂ</span>
+                                    </div>
+                                </div>
+                                <div class="px-5 py-2.5 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-50/40 dark:bg-slate-900/30">
+                                    <span>Chọn nhóm rồi bấm “Mở rộng nhóm” để xem từng phản ánh.</span>
+                                    <button onclick="toggleExpandClusterGroup()" id="btn-expand-group" class="px-3 py-1 rounded-md bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30 font-semibold hover:bg-sky-500/25 transition-colors">
+                                        Mở rộng nhóm
+                                    </button>
+                                </div>
+
+                                <!-- Vùng vẽ Đồ thị SVG + Node HTML tương tác -->
+                                <div class="relative h-[420px] graph-dot-grid overflow-hidden select-none" id="lk-graph-viewport">
+                                    <div class="scanner-line"></div>
+                                    <div id="lk-graph-stage" class="relative w-full h-full transition-transform duration-200 origin-center">
+                                        <!-- Đường cong Bezier nối các Node -->
+                                        <svg id="lk-edges-svg" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 420" preserveAspectRatio="none"></svg>
+                                        <!-- Các hộp Node tương tác -->
+                                        <div id="lk-nodes-layer" class="absolute inset-0 w-full h-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cột Phải: Tổng quan liên kết -->
+                            <div class="lg:col-span-4 app-card rounded-xl p-6 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Tổng quan liên kết</h3>
+                                    <div id="lk-side-code" class="text-xs font-bold text-sky-600 dark:text-sky-400 mb-1">CUM-002</div>
+                                    <p id="lk-side-desc" class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                                        Chọn nút hoặc đường nối để xem ý nghĩa quan hệ và phản ánh nguồn.
+                                    </p>
+
+                                    <div class="space-y-3.5 text-xs border-t border-slate-200 dark:border-slate-800 pt-4">
+                                        <div class="flex justify-between items-center py-1.5 border-b border-slate-200/60 dark:border-slate-800/60">
+                                            <span class="text-slate-500 dark:text-slate-400">Phản ánh nguồn</span>
+                                            <strong id="lk-side-sources" class="text-slate-900 dark:text-white">3</strong>
+                                        </div>
+                                        <div class="flex justify-between items-center py-1.5 border-b border-slate-200/60 dark:border-slate-800/60">
+                                            <span class="text-slate-500 dark:text-slate-400">Thực thể định danh trùng</span>
+                                            <strong id="lk-side-entities" class="text-slate-900 dark:text-white">3 thực thể</strong>
+                                        </div>
+                                        <div class="flex justify-between items-center py-1.5 border-b border-slate-200/60 dark:border-slate-800/60">
+                                            <span class="text-slate-500 dark:text-slate-400">Tài khoản nhận tiền chính</span>
+                                            <strong id="lk-side-main-acc" class="text-sky-600 dark:text-sky-400 font-mono">DEMO-TK-002</strong>
+                                        </div>
+                                        <div class="flex justify-between items-center py-1.5">
+                                            <span class="text-slate-500 dark:text-slate-400">Tổng giá trị thiệt hại</span>
+                                            <strong id="lk-side-money" class="text-rose-600 dark:text-rose-400">25.000.000 đ</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                                    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Căn cứ liên kết tự động</div>
+                                    <div id="lk-side-evidence" class="text-xs text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-900/70 p-3 rounded-lg border border-slate-200/70 dark:border-slate-800">
+                                        • Cùng trỏ về tài khoản thụ hưởng DEMO-TK-002 trong 3 đơn tố giác độc lập.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- =============================================================== -->
+                    <!-- VIEW 4: CB - CẢNH BÁO CẦN RÀ SOÁT (image_42a678.png)            -->
+                    <!-- =============================================================== -->
+                    <section id="view-cb" class="view-section hidden space-y-6">
+                        <div>
+                            <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1.5">Cảnh báo cần rà soát</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Điểm minh họa dùng để ưu tiên xác minh, không phải kết luận vi phạm.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                            <!-- Cột Trái: Danh sách 3 cảnh báo -->
+                            <div class="lg:col-span-6 app-card rounded-xl overflow-hidden">
+                                <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-900 dark:text-white">3 cảnh báo đang mở</span>
+                                    <select id="cb-filter-level" onchange="renderAlertsList()" class="px-3.5 py-2 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none">
+                                        <option value="ALL">Tất cả mức độ</option>
+                                        <option value="Cao">Mức rủi ro Cao</option>
+                                        <option value="Trung bình">Mức Trung bình</option>
+                                    </select>
+                                </div>
+                                <div id="cb-list-container" class="divide-y divide-slate-200 dark:divide-slate-800">
+                                    <!-- Render động bằng JS -->
+                                </div>
+                            </div>
+
+                            <!-- Cột Phải: Vòng tròn điểm rủi ro & Chi tiết -->
+                            <div class="lg:col-span-6 app-card rounded-xl p-7">
+                                <!-- Vòng tròn SVG Gauge -->
+                                <div class="flex flex-col items-center justify-center mb-6">
+                                    <div class="relative w-36 h-36 flex items-center justify-center">
+                                        <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                                            <circle cx="60" cy="60" r="50" stroke="currentColor" stroke-width="11" class="text-slate-200 dark:text-slate-200" fill="none"/>
+                                            <circle id="cb-gauge-circle" cx="60" cy="60" r="50" stroke="#ef4444" stroke-width="11" fill="none" stroke-dasharray="314.16" stroke-dashoffset="87.96" stroke-linecap="round" class="transition-all duration-700"/>
+                                        </svg>
+                                        <div class="absolute inset-0 flex items-baseline justify-center pt-12">
+                                            <span id="cb-gauge-score" class="text-3xl font-extrabold text-slate-900 dark:text-white">72</span>
+                                            <span class="text-xs text-slate-400 ml-0.5">/100</span>
+                                        </div>
+                                    </div>
+                                    <div id="cb-detail-level" class="text-xs font-bold text-rose-500 mt-2">Mức rủi ro Cao</div>
+                                    <div id="cb-detail-title" class="text-xs text-slate-500 dark:text-slate-300 mt-1">CUM-001 · Cụm có nhiều liên kết chung</div>
+                                </div>
+
+                                <div class="space-y-3.5 text-xs border-t border-slate-200 dark:border-slate-800 pt-4 mb-6">
+                                    <div class="flex justify-between items-center py-2 border-b border-slate-200/60 dark:border-slate-800/60">
+                                        <span id="cb-detail-reason" class="text-slate-500 dark:text-slate-400">Nhiều phản ánh cùng nhắc tới một tài khoản.</span>
+                                        <strong class="text-slate-900 dark:text-white">Đã ghi nhận</strong>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b border-slate-200/60 dark:border-slate-800/60">
+                                        <span class="text-slate-500 dark:text-slate-400">Số phản ánh liên quan</span>
+                                        <strong id="cb-detail-count" class="text-slate-900 dark:text-white">3</strong>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b border-slate-200/60 dark:border-slate-800/60">
+                                        <span class="text-slate-500 dark:text-slate-400">Tổng số tiền phản ánh</span>
+                                        <strong id="cb-detail-money" class="text-slate-900 dark:text-white">45 triệu</strong>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2.5">
+                                    <button onclick="openAlertReasonModal()" class="w-full py-3 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all">
+                                        Xem lý do cảnh báo
+                                    </button>
+                                    <button onclick="switchSection('lk')" class="w-full py-3 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#0f172a] hover:border-sky-500 text-xs font-semibold text-slate-800 dark:text-white transition-all">
+                                        Mở sơ đồ liên kết
+                                    </button>
+                                    <button onclick="createCaseFromCluster()" class="w-full py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-[#11192c]/70 hover:border-sky-500 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all">
+                                        Tạo hồ sơ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- =============================================================== -->
+                    <!-- VIEW 5: HS - HỒ SƠ VỤ VIỆC (image_42a695.png)                   -->
+                    <!-- =============================================================== -->
+                    <section id="view-hs" class="view-section hidden space-y-6">
+                        <!-- Sub-tabs trên cùng -->
+                        <div class="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold">
+                            <button onclick="switchSection('pa')" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Tiếp nhận và xác minh</button>
+                            <button class="pb-3 border-b-2 border-sky-500 text-sky-600 dark:text-sky-400">Danh sách hồ sơ</button>
+                            <button onclick="openCaseDetailModal('HS-001')" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Chi tiết hồ sơ đang mở</button>
+                        </div>
+
+                        <!-- Header & Nút tạo hồ sơ -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1.5">Hồ sơ vụ việc</h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Theo dõi quá trình xác minh và tổng hợp nhận định nghiệp vụ.</p>
+                            </div>
+                            <button onclick="openNewCaseModal()" class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all">
+                                + Tạo hồ sơ phân tích
+                            </button>
+                        </div>
+
+                        <!-- 3 Thẻ chỉ số Hồ sơ -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="app-card rounded-xl p-5">
+                                <div class="text-xs font-medium text-slate-500 dark:text-slate-300 mb-3">Tổng hồ sơ</div>
+                                <div id="hs-stat-total" class="text-3xl font-extrabold text-slate-900 dark:text-white">2</div>
+                            </div>
+                            <div class="app-card rounded-xl p-5">
+                                <div class="text-xs font-medium text-slate-500 dark:text-slate-300 mb-3">Đang xác minh</div>
+                                <div id="hs-stat-active" class="text-3xl font-extrabold text-slate-900 dark:text-white">1</div>
+                            </div>
+                            <div class="app-card rounded-xl p-5">
+                                <div class="text-xs font-medium text-slate-500 dark:text-slate-300 mb-3">Chờ bổ sung</div>
+                                <div id="hs-stat-waiting" class="text-3xl font-extrabold text-slate-900 dark:text-white">1</div>
+                            </div>
+                        </div>
+
+                        <!-- Thanh tìm kiếm Hồ sơ -->
+                        <div class="app-card rounded-xl p-5 grid grid-cols-1 lg:grid-cols-12 gap-4">
+                            <div class="lg:col-span-9">
+                                <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Tìm hồ sơ</label>
+                                <div class="relative">
+                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                    <input id="hs-search-input" oninput="renderCasesTable()" type="text" placeholder="Tìm mã hoặc tên hồ sơ..." class="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                </div>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Trạng thái</label>
+                                <select id="hs-status-filter" onchange="renderCasesTable()" class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none">
+                                    <option value="ALL">Tất cả trạng thái</option>
+                                    <option value="Đang xác minh">Đang xác minh</option>
+                                    <option value="Chờ bổ sung">Chờ bổ sung</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Bảng Hồ sơ vụ việc -->
+                        <div class="app-card rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50/60 dark:bg-slate-900/40">
+                                            <th class="py-3.5 px-5">Mã hồ sơ</th>
+                                            <th class="py-3.5 px-5">Tên hồ sơ</th>
+                                            <th class="py-3.5 px-5">Nhóm hành vi</th>
+                                            <th class="py-3.5 px-5">Tổng tiền phản ánh</th>
+                                            <th class="py-3.5 px-5">Mức ưu tiên</th>
+                                            <th class="py-3.5 px-5">Cán bộ phụ trách</th>
+                                            <th class="py-3.5 px-5">Trạng thái</th>
+                                            <th class="py-3.5 px-5">Ngày cập nhật</th>
+                                            <th class="py-3.5 px-5 text-right">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hs-table-body" class="divide-y divide-slate-200/70 dark:divide-slate-800/70 text-xs">
+                                        <!-- Render động bằng JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- =============================================================== -->
+                    <!-- VIEW 6: PQ - TÀI KHOẢN VÀ PHÂN QUYỀN (image_42a69c.png)         -->
+                    <!-- =============================================================== -->
+                    <section id="view-pq" class="view-section hidden space-y-6">
+                        <div>
+                            <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1.5">Tài khoản và phân quyền</h1>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Quản lý tài khoản và phạm vi thao tác. Phân quyền chỉ mô phỏng trên giao diện.</p>
+                        </div>
+
+                        <div class="app-card rounded-xl overflow-hidden">
+                            <div class="p-6 border-b border-slate-200 dark:border-slate-800 space-y-4">
+                                <div>
+                                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-1">Danh sách tài khoản giả lập</h2>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">07 tài khoản giả lập · Thay đổi quyền chỉ tác động giao diện demo</p>
+                                </div>
+
+                                <div class="max-w-md">
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Tìm tài khoản</label>
+                                    <input id="pq-search-input" oninput="renderAccountsTable()" type="text" placeholder="Tìm tài khoản, vai trò hoặc đơn vị..." class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50/60 dark:bg-slate-900/40">
+                                            <th class="py-3.5 px-6">Tài khoản</th>
+                                            <th class="py-3.5 px-6">Vai trò</th>
+                                            <th class="py-3.5 px-6">Đơn vị mẫu</th>
+                                            <th class="py-3.5 px-6">Trạng thái</th>
+                                            <th class="py-3.5 px-6 text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pq-table-body" class="divide-y divide-slate-200/70 dark:divide-slate-800/70 text-xs">
+                                        <!-- Render động bằng JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- =============================================================== -->
+                    <!-- VIEW 7: NK - NHẬT KÝ HỆ THỐNG (image_42a6b7.png)                -->
+                    <!-- =============================================================== -->
+                    <section id="view-nk" class="view-section hidden space-y-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1.5">Nhật ký hệ thống</h1>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Theo dõi thao tác và thay đổi dữ liệu trong môi trường demo.</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Ghi nhận tự động
+                            </span>
+                        </div>
+
+                        <!-- Bộ lọc Nhật ký -->
+                        <div class="app-card rounded-xl p-5 space-y-4">
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                                <div class="lg:col-span-5">
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Tìm kiếm</label>
+                                    <div class="relative">
+                                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                        <input id="nk-search-input" oninput="renderAuditLogs()" type="text" placeholder="Tìm tài khoản, đối tượng..." class="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-sky-500">
+                                    </div>
+                                </div>
+                                <div class="lg:col-span-3.5">
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Thao tác</label>
+                                    <select id="nk-action-filter" onchange="renderAuditLogs()" class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none">
+                                        <option value="ALL">Tất cả thao tác</option>
+                                        <option value="Đăng nhập mô phỏng">Đăng nhập mô phỏng</option>
+                                        <option value="Đăng xuất">Đăng xuất</option>
+                                        <option value="Tiếp nhận phản ánh">Tiếp nhận phản ánh</option>
+                                        <option value="Tạo hồ sơ">Tạo hồ sơ</option>
+                                        <option value="Đổi vai trò">Đổi vai trò</option>
+                                    </select>
+                                </div>
+                                <div class="lg:col-span-3.5">
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Người thao tác</label>
+                                    <select id="nk-user-filter" onchange="renderAuditLogs()" class="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none">
+                                        <option value="ALL">Tất cả tài khoản</option>
+                                        <option value="phan.tich.demo">phan.tich.demo</option>
+                                        <option value="tiep.nhan.demo">tiep.nhan.demo</option>
+                                        <option value="quan.tri.demo">quan.tri.demo</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Từ ngày</label>
+                                    <input type="date" class="w-full px-3.5 py-2 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Đến ngày</label>
+                                    <input type="date" class="w-full px-3.5 py-2 rounded-lg bg-white dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 text-xs focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Danh sách thẻ Log -->
+                        <div class="app-card rounded-xl p-5 space-y-3" id="nk-logs-container">
+                            <!-- Render động bằng JS -->
+                        </div>
+                    </section>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+
+    <!-- ======================================================================= -->
+    <!-- CÁC HỘP THOẠI MODAL TƯƠNG TÁC NGHIỆP VỤ (CĂN GIỮA MÀN HÌNH)             -->
+    <!-- ======================================================================= -->
+
+    <!-- 1. Modal Tiếp nhận phản ánh mới -->
+    <div id="modal-new-report" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModalById('modal-new-report')"></div>
+        <div class="relative bg-white dark:bg-[#0f172a] w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10">
+            <div class="h-1.5 bg-gradient-to-r from-sky-500 to-blue-600"></div>
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tiếp nhận phản ánh mới</h3>
+                    <button onclick="closeModalById('modal-new-report')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <form onsubmit="submitNewReport(event)" class="space-y-4 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Tiêu đề / Nội dung phản ánh</label>
+                        <input id="new-pa-title" type="text" required placeholder="VD: Giả danh cán bộ Công an yêu cầu cài VNeID giả mạo..." class="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Loại hành vi</label>
+                            <select id="new-pa-type" class="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800">
+                                <option value="Giả danh cơ quan nhà nước">Giả danh cơ quan nhà nước</option>
+                                <option value="Đầu tư tài chính tự xưng">Đầu tư tài chính tự xưng</option>
+                                <option value="Tuyển cộng tác viên online">Tuyển cộng tác viên online</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Số tiền thiệt hại (triệu đ)</label>
+                            <input id="new-pa-amount" type="number" required min="1" value="15" class="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Nguồn tiếp nhận</label>
+                            <select id="new-pa-source" class="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800">
+                                <option value="Cổng VNeID">Cổng VNeID</option>
+                                <option value="Trực tiếp tại đơn vị">Trực tiếp tại đơn vị</option>
+                                <option value="Đường dây nóng">Đường dây nóng</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Địa bàn</label>
+                            <select id="new-pa-area" class="w-full px-3.5 py-2.5 rounded-lg bg-slate-50 dark:bg-[#080e1c] border border-slate-200 dark:border-slate-800">
+                                <option value="Hà Nội">Hà Nội</option>
+                                <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                                <option value="Đà Nẵng">Đà Nẵng</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
+                        <button type="button" onclick="closeModalById('modal-new-report')" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">Hủy</button>
+                        <button type="submit" class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold">Lưu phản ánh</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Modal Xem lý do cảnh báo / Chi tiết Hồ sơ -->
+    <div id="modal-info-box" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModalById('modal-info-box')"></div>
+        <div class="relative bg-white dark:bg-[#0f172a] w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10">
+            <div class="h-1.5 bg-gradient-to-r from-brand-blue to-cyan-500"></div>
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 id="info-modal-title" class="text-base font-bold text-slate-900 dark:text-white">Chi tiết thông tin</h3>
+                    <button onclick="closeModalById('modal-info-box')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="info-modal-body" class="text-xs text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed"></div>
+                <div class="mt-6 flex justify-end">
+                    <button onclick="closeModalById('modal-info-box')" class="px-4 py-2 rounded-lg bg-brand-blue dark:bg-sky-600 text-white text-xs font-semibold">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Thông báo góc dưới phải -->
+    <div id="app-toast" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 dark:bg-slate-800 text-white border border-sky-500/30 shadow-xl text-xs font-medium">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+        <span id="app-toast-text">Đã cập nhật dữ liệu</span>
+    </div>
+
+
+    <!-- ======================================================================= -->
+    <!-- JAVASCRIPT ĐIỀU KHIỂN TOÀN BỘ DỮ LIỆU, ĐỒ THỊ & HIỆU ỨNG ĐỘNG          -->
+    <!-- ======================================================================= -->
+    <script>
+        // -----------------------------------------------------------------
+        // 1. DỮ LIỆU MẪU CHUẨN XÁC THEO 7 ẢNH CHỤP MÀN HÌNH
+        // -----------------------------------------------------------------
+        const INITIAL_REPORTS = [
+            { id: 'PA-001', title: 'Giả danh Công an quận hướng dẫn định danh mức 2 qua link lạ', type: 'Giả danh cơ quan nhà nước', time: '26/10/2026 08:15', amount: 12, status: 'Chờ kiểm tra', source: 'Cổng VNeID', area: 'Hà Nội' },
+            { id: 'PA-002', title: 'Mời tham gia sàn đầu tư vàng quốc tế cam kết lãi 18%/tuần', type: 'Đầu tư tài chính tự xưng', time: '25/10/2026 19:40', amount: 20, status: 'Đã kiểm tra', source: 'Trực tiếp tại đơn vị', area: 'TP. Hồ Chí Minh' },
+            { id: 'PA-003', title: 'Tuyển cộng tác viên thanh toán đơn hàng sàn thương mại điện tử', type: 'Tuyển cộng tác viên online', time: '25/10/2026 15:22', amount: 8, status: 'Chờ kiểm tra', source: 'Cổng VNeID', area: 'Đà Nẵng' },
+            { id: 'PA-004', title: 'Giả danh Viện kiểm sát thông báo tài khoản liên quan vụ án rửa tiền', type: 'Giả danh cơ quan nhà nước', time: '25/10/2026 11:05', amount: 8, status: 'Đã kiểm tra', source: 'Đường dây nóng', area: 'Hà Nội' },
+            { id: 'PA-005', title: 'Nhắn tin mượn tiền qua Facebook sau khi chiếm quyền điều khiển', type: 'Chiếm đoạt tài khoản mạng xã hội', time: '24/10/2026 17:30', amount: 5, status: 'Chờ kiểm tra', source: 'Cổng VNeID', area: 'TP. Hồ Chí Minh' },
+            { id: 'PA-006', title: 'Lừa nạp tiền mở khóa quỹ đầu tư chứng khoán phái sinh', type: 'Đầu tư tài chính tự xưng', time: '24/10/2026 14:10', amount: 15, status: 'Đã kiểm tra', source: 'Trực tiếp tại đơn vị', area: 'Hà Nội' },
+            { id: 'PA-007', title: 'Gọi điện tự xưng Cục Thuế hướng dẫn hoàn thuế thu nhập cá nhân', type: 'Giả danh cơ quan nhà nước', time: '24/10/2026 09:50', amount: 5, status: 'Đã kiểm tra', source: 'Cổng VNeID', area: 'Hà Nội' },
+            { id: 'PA-008', title: 'Làm nhiệm vụ nghe nhạc nhận hoa hồng trên Telegram', type: 'Tuyển cộng tác viên online', time: '23/10/2026 20:15', amount: 10, status: 'Chờ kiểm tra', source: 'Cổng VNeID', area: 'Đà Nẵng' },
+            { id: 'PA-009', title: 'App đầu tư tiền số khóa tính năng rút tiền yêu cầu đóng phí 20%', type: 'Đầu tư tài chính tự xưng', time: '23/10/2026 16:45', amount: 10, status: 'Đã kiểm tra', source: 'Đường dây nóng', area: 'TP. Hồ Chí Minh' },
+            { id: 'PA-010', title: 'Giả mạo trang đăng ký giải chạy marathon để lấy cắp thẻ tín dụng', type: 'Chiếm đoạt tài khoản mạng xã hội', time: '22/10/2026 13:20', amount: 6, status: 'Chờ kiểm tra', source: 'Cổng VNeID', area: 'Hà Nội' },
+            { id: 'PA-011', title: 'Gửi giấy triệu tập giả qua Zalo yêu cầu chuyển tiền tạm giữ', type: 'Giả danh cơ quan nhà nước', time: '21/10/2026 10:12', amount: 9, status: 'Đã kiểm tra', source: 'Trực tiếp tại đơn vị', area: 'TP. Hồ Chí Minh' },
+            { id: 'PA-012', title: 'Tuyển mẫu ảnh nhí tại nhà yêu cầu chuyển khoản phí hồ sơ', type: 'Tuyển cộng tác viên online', time: '20/10/2026 08:30', amount: 4, status: 'Chờ kiểm tra', source: 'Cổng VNeID', area: 'Đà Nẵng' }
+        ];
+
+        const INITIAL_ALERTS = [
+            {
+                id: 'CUM-001',
+                score: 72,
+                level: 'Cao',
+                title: 'CUM-001 · Cụm có nhiều liên kết chung',
+                reason: 'Nhiều phản ánh cùng nhắc tới một tài khoản.',
+                count: 3,
+                money: '45 triệu',
+                latest: '24/10/2026 08:53',
+                status: 'Cần rà soát'
+            },
+            {
+                id: 'CUM-002',
+                score: 61,
+                level: 'Trung bình',
+                title: 'CUM-002 · Thực thể xuất hiện lặp lại',
+                reason: 'Số điện thoại xuất hiện trong nhiều phản ánh.',
+                count: 3,
+                money: '25 triệu',
+                latest: '21/10/2026 09:24',
+                status: 'Cần rà soát'
+            },
+            {
+                id: 'CUM-003',
+                score: 54,
+                level: 'Trung bình',
+                title: 'CUM-003 · Website giả mạo trùng tên miền phụ',
+                reason: 'Tên miền lừa đảo có cấu trúc bản sao cổng dịch vụ công.',
+                count: 2,
+                money: '18 triệu',
+                latest: '19/10/2026 14:15',
+                status: 'Cần rà soát'
+            }
+        ];
+
+        const INITIAL_CASES = [
+            {
+                id: 'HS-001',
+                name: 'Xác minh nhóm giả danh cơ quan nhà nước',
+                group: 'Giả danh cơ quan nhà nước',
+                amount: '25 triệu',
+                priority: 'Cao',
+                officer: 'Lê Minh Anh',
+                status: 'Đang xác minh',
+                updated: '24/10/2026 08:40'
+            },
+            {
+                id: 'HS-002',
+                name: 'Rà soát cụm đầu tư tài chính đa cấp',
+                group: 'Đầu tư tài chính tự xưng',
+                amount: '45 triệu',
+                priority: 'Trung bình',
+                officer: 'Trần Quốc Bảo',
+                status: 'Chờ bổ sung',
+                updated: '23/10/2026 16:20'
+            }
+        ];
+
+        const INITIAL_ACCOUNTS = [
+            { username: 'cong.dan.demo', role: 'Người dân / Tổ chức', unit: 'Cổng phản ánh mẫu', status: 'Đang hoạt động' },
+            { username: 'quan.tri.demo', role: 'Quản trị hệ thống', unit: 'Trung tâm quản trị mẫu', status: 'Đang hoạt động' },
+            { username: 'tiep.nhan.demo', role: 'Cán bộ tiếp nhận', unit: 'Đội tiếp nhận A', status: 'Đang hoạt động' },
+            { username: 'phan.tich.demo', role: 'Cán bộ phân tích', unit: 'Đội phân tích dữ liệu số', status: 'Đang hoạt động' },
+            { username: 'lanh.dao.demo', role: 'Lãnh đạo đơn vị', unit: 'Ban chỉ huy Phòng PA05', status: 'Đang hoạt động' },
+            { username: 'xac.minh.demo', role: 'Cán bộ xác minh', unit: 'Tổ xác minh hiện trường', status: 'Đang hoạt động' },
+            { username: 'giam.sat.demo', role: 'Kiểm soát nội bộ', unit: 'Bộ phận giám sát quy trình', status: 'Đang hoạt động' }
+        ];
+
+        const INITIAL_LOGS = [
+            { time: '26/10/2026 08:32', action: 'Đăng nhập mô phỏng', user: 'phan.tich.demo', role: 'Cán bộ phân tích', target: 'Phiên demo', result: 'Thành công' },
+            { time: '26/10/2026 08:32', action: 'Đăng xuất', user: 'phan.tich.demo', role: 'Cán bộ phân tích', target: 'Cán bộ phân tích', result: 'Thành công' },
+            { time: '25/10/2026 17:15', action: 'Tạo hồ sơ', user: 'phan.tich.demo', role: 'Cán bộ phân tích', target: 'HS-001', result: 'Thành công' },
+            { time: '25/10/2026 11:05', action: 'Tiếp nhận phản ánh', user: 'tiep.nhan.demo', role: 'Cán bộ tiếp nhận', target: 'PA-004', result: 'Thành công' }
+        ];
+
+        // State ứng dụng
+        let reportsData = [...INITIAL_REPORTS];
+        let alertsData = [...INITIAL_ALERTS];
+        let casesData = [...INITIAL_CASES];
+        let accountsData = JSON.parse(JSON.stringify(INITIAL_ACCOUNTS));
+        let logsData = [...INITIAL_LOGS];
+
+        let currentReportTab = 'ALL';
+        let selectedAlertId = 'CUM-001';
+        let currentClusterId = 'CUM-002';
+        let isClusterExpanded = false;
+        let isStressTest = false;
+        let graphScale = 1;
+
+        // -----------------------------------------------------------------
+        // 2. KHỞI TẠO & CHUYỂN ĐỔI SÁNG / TỐI (ĐỒNG BỘ VỚI LOGIN.HTML)
+        // -----------------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+            }
+
+            switchSection('tq');
+            refreshAllViews();
+            initLoginCanvas();
+            lucide.createIcons();
+        });
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            lucide.createIcons();
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('app-toast');
+            document.getElementById('app-toast-text').textContent = message;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 2600);
+        }
+
+        function addSystemLog(action, target) {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const timeStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/2026 ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            const user = document.getElementById('sidebar-user-name').textContent;
+            const role = document.getElementById('sidebar-user-role').textContent;
+            logsData.unshift({ time: timeStr, action, user, role, target, result: 'Thành công' });
+            renderAuditLogs();
+        }
+
+        // -----------------------------------------------------------------
+        // 3. ĐIỀU HƯỚNG SPA 7 PHÂN HỆ BÊN TRÁI (SIDEBAR NAVIGATION)
+        // -----------------------------------------------------------------
+        function switchSection(sectionKey) {
+            const allKeys = ['tq', 'pa', 'lk', 'cb', 'hs', 'pq', 'nk'];
+            allKeys.forEach(key => {
+                const sec = document.getElementById(`view-${key}`);
+                if (sec) {
+                    if (key === sectionKey) {
+                        sec.classList.remove('hidden');
+                    } else {
+                        sec.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Highlight nút menu bên trái đúng chuẩn ảnh mẫu
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const nav = btn.getAttribute('data-nav');
+                const badge = btn.querySelector('.nav-badge');
+                if (nav === sectionKey) {
+                    btn.className = 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all bg-sky-500/15 dark:bg-[#0c2340] border border-sky-500/40 text-sky-700 dark:text-sky-300 shadow-sm';
+                    badge.className = 'nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 bg-sky-500/20 text-sky-600 dark:text-sky-300 border border-sky-400/30';
+                } else {
+                    btn.className = 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-transparent';
+                    badge.className = 'nav-badge w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 bg-slate-100 dark:bg-slate-800/90 text-slate-500 dark:text-slate-300';
+                }
+            });
+
+            if (sectionKey === 'lk') {
+                setTimeout(renderLinkGraph, 40);
+            }
+            lucide.createIcons();
+        }
+
+        function refreshAllViews() {
+            renderOverviewSection();
+            renderReportsTable();
+            renderLinkGraph();
+            renderAlertsList();
+            renderCasesTable();
+            renderAccountsTable();
+            renderAuditLogs();
+        }
+
+        // -----------------------------------------------------------------
+        // 4. PHÂN HỆ 1 (TQ): TỔNG QUAN CÔNG VIỆC
+        // -----------------------------------------------------------------
+        function renderOverviewSection() {
+            const pendingCount = reportsData.filter(r => r.status === 'Chờ kiểm tra').length;
+            document.getElementById('kpi-total-pa').textContent = reportsData.length;
+            document.getElementById('kpi-total-hs').textContent = casesData.length;
+            document.getElementById('btn-pending-count').textContent = `${pendingCount} phản ánh chờ kiểm tra`;
+
+            const grid = document.getElementById('recent-cases-grid');
+            grid.innerHTML = casesData.map(c => `
+                <div onclick="switchSection('hs')" class="cursor-pointer p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#091120] hover:border-sky-500/50 transition-all">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-bold text-sky-600 dark:text-sky-400">${c.id}</span>
+                        <span class="text-[11px] text-slate-400">${c.updated}</span>
+                    </div>
+                    <div class="text-sm font-bold text-slate-900 dark:text-white mb-1">${c.name}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">${c.group} · Tổng tiền: ${c.amount}</div>
+                </div>
+            `).join('');
+        }
+
+        function jumpToPendingReports() {
+            switchSection('pa');
+            setReportTabFilter('Chờ kiểm tra');
+        }
+
+        // -----------------------------------------------------------------
+        // 5. PHÂN HỆ 2 (PA): QUẢN LÝ PHẢN ÁNH
+        // -----------------------------------------------------------------
+        function setReportTabFilter(statusValue) {
+            currentReportTab = statusValue;
+            document.getElementById('pa-select-status').value = statusValue;
+
+            document.querySelectorAll('.pa-tab').forEach(tab => {
+                if (tab.getAttribute('data-pa-tab') === statusValue) {
+                    tab.className = 'pa-tab pb-3 border-b-2 border-sky-500 text-sky-600 dark:text-sky-400';
+                } else {
+                    tab.className = 'pa-tab pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200';
+                }
+            });
+            renderReportsTable();
+        }
+
+        function renderReportsTable() {
+            const q = (document.getElementById('pa-search-input')?.value || '').toLowerCase().trim();
+            const typeFilter = document.getElementById('pa-select-type')?.value || 'ALL';
+            const sourceFilter = document.getElementById('pa-select-source')?.value || 'ALL';
+            const areaFilter = document.getElementById('pa-select-area')?.value || 'ALL';
+
+            // Cập nhật số đếm trên các tab
+            document.getElementById('count-pa-all').textContent = reportsData.length;
+            document.getElementById('count-pa-pending').textContent = reportsData.filter(r => r.status === 'Chờ kiểm tra').length;
+            document.getElementById('count-pa-verified').textContent = reportsData.filter(r => r.status === 'Đã kiểm tra').length;
+            document.getElementById('count-pa-invalid').textContent = reportsData.filter(r => r.status === 'Không hợp lệ').length;
+
+            const filtered = reportsData.filter(r => {
+                const matchStatus = currentReportTab === 'ALL' || r.status === currentReportTab;
+                const matchType = typeFilter === 'ALL' || r.type === typeFilter;
+                const matchSource = sourceFilter === 'ALL' || r.source === sourceFilter;
+                const matchArea = areaFilter === 'ALL' || r.area === areaFilter;
+                const matchQuery = !q || r.id.toLowerCase().includes(q) || r.title.toLowerCase().includes(q);
+                return matchStatus && matchType && matchSource && matchArea && matchQuery;
+            });
+
+            document.getElementById('pa-showing-count').textContent = filtered.length;
+            const tbody = document.getElementById('pa-table-body');
+            tbody.innerHTML = filtered.map(r => {
+                const badgeClass = r.status === 'Đã kiểm tra'
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                    : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30';
+                return `
+                    <tr class="hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="py-3.5 px-5 font-bold text-sky-600 dark:text-sky-400">${r.id}</td>
+                        <td class="py-3.5 px-5">
+                            <div class="font-semibold text-slate-900 dark:text-white mb-0.5">${r.title}</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400">${r.type} · ${r.source} · ${r.area}</div>
+                        </td>
+                        <td class="py-3.5 px-5 text-slate-500 dark:text-slate-400 whitespace-nowrap">${r.time}</td>
+                        <td class="py-3.5 px-5 font-bold text-slate-900 dark:text-white whitespace-nowrap">${r.amount} triệu</td>
+                        <td class="py-3.5 px-5 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badgeClass}">
+                                • ${r.status}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-5 text-right whitespace-nowrap">
+                            <button onclick="toggleVerifyReport('${r.id}')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#11192c] hover:border-sky-500 text-xs font-semibold">
+                                ${r.status === 'Chờ kiểm tra' ? 'Xác minh' : 'Chi tiết'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function toggleVerifyReport(reportId) {
+            const item = reportsData.find(r => r.id === reportId);
+            if (!item) return;
+            if (item.status === 'Chờ kiểm tra') {
+                item.status = 'Đã kiểm tra';
+                addSystemLog('Xác minh phản ánh', reportId);
+                showToast(`Đã xác minh phản ánh ${reportId}`);
+                renderOverviewSection();
+                renderReportsTable();
+            } else {
+                openInfoModal(
+                    `Chi tiết phản ánh ${item.id}`,
+                    `<p><strong>Tiêu đề:</strong> ${item.title}</p>
+                     <p><strong>Nhóm hành vi:</strong> ${item.type}</p>
+                     <p><strong>Nguồn tiếp nhận:</strong> ${item.source} (${item.area})</p>
+                     <p><strong>Số tiền trình báo:</strong> ${item.amount} triệu đồng</p>
+                     <p><strong>Trạng thái:</strong> Đã kiểm tra và trích xuất thực thể vào cụm liên kết.</p>`
+                );
+            }
+        }
+
+        // -----------------------------------------------------------------
+        // 6. PHÂN HỆ 3 (LK): PHÂN TÍCH LIÊN KẾT (ĐỒ THỊ TƯƠNG TÁC ĐỘNG)
+        // -----------------------------------------------------------------
+        const CLUSTER_GRAPH_DATA = {
+            'CUM-002': {
+                code: 'CUM-002',
+                title: 'Giả danh cơ quan nhà nước',
+                ratio: '3/3',
+                amount: '25 triệu',
+                moneyFull: '25.000.000 đ',
+                mainAcc: 'DEMO-TK-002',
+                evidence: '• Cùng nhắc tới tài khoản thụ hưởng DEMO-TK-002 và số điện thoại 0987.xxx.112 trong 3 phản ánh độc lập.',
+                reports: [
+                    { id: 'PA-001', label: 'PA-001 · 12 triệu', sub: 'Giả danh Công an quận' },
+                    { id: 'PA-004', label: 'PA-004 · 8 triệu', sub: 'Giả danh Viện kiểm sát' },
+                    { id: 'PA-007', label: 'PA-007 · 5 triệu', sub: 'Giả danh Cục Thuế' }
+                ],
+                entities: [
+                    { id: 'DEMO-TK-002', type: 'Tài khoản', sub: 'Tài khoản ngân hàng' },
+                    { id: '0987.xxx.112', type: 'Điện thoại', sub: 'Số điện thoại gọi đến' },
+                    { id: 'dichvucong-gia.vn', type: 'Website', sub: 'Tên miền giả mạo' }
+                ]
+            },
+            'CUM-001': {
+                code: 'CUM-001',
+                title: 'Đầu tư tài chính tự xưng',
+                ratio: '3/3',
+                amount: '45 triệu',
+                moneyFull: '45.000.000 đ',
+                mainAcc: 'DEMO-TK-001',
+                evidence: '• 3 nạn nhân cùng chuyển tiền vào tài khoản DEMO-TK-001 qua sàn giao dịch giả mạo.',
+                reports: [
+                    { id: 'PA-002', label: 'PA-002 · 20 triệu', sub: 'Sàn vàng quốc tế' },
+                    { id: 'PA-006', label: 'PA-006 · 15 triệu', sub: 'Chứng khoán phái sinh' },
+                    { id: 'PA-009', label: 'PA-009 · 10 triệu', sub: 'App đầu tư tiền số' }
+                ],
+                entities: [
+                    { id: 'DEMO-TK-001', type: 'Tài khoản', sub: 'Tài khoản thụ hưởng' },
+                    { id: 'fin-global-vip.net', type: 'Website', sub: 'Website sàn tự xưng' }
+                ]
+            }
+        };
+
+        function switchClusterGraph(clusterId) {
+            currentClusterId = clusterId;
+            const c = CLUSTER_GRAPH_DATA[clusterId];
+            document.getElementById('lk-cluster-code').textContent = c.code;
+            document.getElementById('lk-cluster-title').textContent = c.title;
+            document.getElementById('lk-cluster-ratio').textContent = c.ratio;
+            document.getElementById('lk-cluster-amount').textContent = c.amount;
+
+            document.getElementById('lk-side-code').textContent = c.code;
+            document.getElementById('lk-side-main-acc').textContent = c.mainAcc;
+            document.getElementById('lk-side-money').textContent = c.moneyFull;
+            document.getElementById('lk-side-evidence').textContent = c.evidence;
+
+            document.getElementById('btn-cluster-2').className = clusterId === 'CUM-002'
+                ? 'px-2 py-0.5 rounded text-[11px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/40'
+                : 'px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400';
+            document.getElementById('btn-cluster-1').className = clusterId === 'CUM-001'
+                ? 'px-2 py-0.5 rounded text-[11px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/40'
+                : 'px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400';
+
+            renderLinkGraph();
+        }
+
+        function toggleExpandClusterGroup() {
+            isClusterExpanded = !isClusterExpanded;
+            document.getElementById('btn-expand-group').textContent = isClusterExpanded ? 'Thu gọn nhóm' : 'Mở rộng nhóm';
+            renderLinkGraph();
+        }
+
+        function toggleStressTestMode(checked) {
+            isStressTest = checked;
+            if (checked) {
+                document.getElementById('lk-status-summary').textContent = 'Chế độ thử tải: Đang mô phỏng 1.000 phản ánh · 12 cụm · 48 thực thể liên kết';
+                showToast('Đã bật chế độ thử tải 1.000 phản ánh');
+            }
+            renderLinkGraph();
+        }
+
+        function zoomGraph(delta) {
+            graphScale = Math.min(1.35, Math.max(0.75, graphScale + delta));
+            document.getElementById('lk-graph-stage').style.transform = `scale(${graphScale})`;
+        }
+
+        function resetGraphZoom() {
+            graphScale = 1;
+            document.getElementById('lk-graph-stage').style.transform = 'scale(1)';
+        }
+
+        function renderLinkGraph() {
+            const svg = document.getElementById('lk-edges-svg');
+            const nodesLayer = document.getElementById('lk-nodes-layer');
+            if (!svg || !nodesLayer) return;
+
+            const c = CLUSTER_GRAPH_DATA[currentClusterId];
+            const entityFilter = document.getElementById('lk-entity-filter')?.value || 'ALL';
+            const searchVal = (document.getElementById('lk-search-node')?.value || '').toLowerCase().trim();
+            const showLabels = document.getElementById('chk-show-labels')?.checked ?? true;
+
+            const visibleEntities = c.entities.filter(e => {
+                const matchType = entityFilter === 'ALL' || e.type === entityFilter;
+                const matchSearch = !searchVal || e.id.toLowerCase().includes(searchVal) || e.sub.toLowerCase().includes(searchVal);
+                return matchType && matchSearch;
+            });
+
+            if (!isStressTest) {
+                const repCount = isClusterExpanded ? c.reports.length : 0;
+                const nodeCount = 1 + repCount + visibleEntities.length;
+                const edgeCount = isClusterExpanded ? (c.reports.length + visibleEntities.length) : visibleEntities.length;
+                document.getElementById('lk-status-summary').textContent =
+                    `Đang hiển thị ${repCount}/3 phản ánh riêng lẻ · 1/1 nhóm · ${nodeCount} nút / ${edgeCount} cạnh`;
+            }
+
+            let svgPaths = '';
+            let nodesHtml = '';
+
+            // Tọa độ nút Nhóm bên trái
+            const groupX = 28;
+            const groupY = 175;
+            nodesHtml += `
+                <div onclick="selectGraphNode('${c.code}', 'Nhóm hành vi: ${c.title} (${c.ratio} phản ánh · ${c.amount})')"
+                     style="left:${groupX}px; top:${groupY}px; width:210px;"
+                     class="absolute cursor-pointer rounded-xl p-3.5 bg-white/95 dark:bg-[#0d1f38]/95 border-2 border-sky-500 shadow-lg shadow-sky-500/10 transition-all hover:scale-[1.02]">
+                    <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${c.title}</div>
+                    ${showLabels ? `<div class="text-[11px] text-slate-500 dark:text-slate-300 mt-1">3 phản ánh · ${c.amount}</div>` : ''}
+                </div>
+            `;
+
+            const startX = groupX + 210;
+            const startY = groupY + 34;
+
+            // Nếu mở rộng nhóm: Hiển thị cột giữa (3 phản ánh PA)
+            if (isClusterExpanded) {
+                c.reports.forEach((rep, idx) => {
+                    const midX = 305;
+                    const midY = 65 + idx * 115;
+                    const midCenterY = midY + 28;
+
+                    svgPaths += `<path d="M ${startX} ${startY} C ${startX + 40} ${startY}, ${midX - 40} ${midCenterY}, ${midX} ${midCenterY}" stroke="#38bdf8" stroke-width="1.8" fill="none" class="edge-animated" />`;
+
+                    nodesHtml += `
+                        <div onclick="selectGraphNode('${rep.id}', 'Phản ánh mở rộng: ${rep.sub}')"
+                             style="left:${midX}px; top:${midY}px; width:175px;"
+                             class="absolute cursor-pointer rounded-xl p-3 bg-white/95 dark:bg-[#101c30]/95 border border-sky-400/50 hover:border-sky-400 transition-all">
+                            <div class="text-xs font-bold text-sky-600 dark:text-sky-300">${rep.label}</div>
+                            ${showLabels ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${rep.sub}</div>` : ''}
+                        </div>
+                    `;
+
+                    // Nối từ từng PA sang Thực thể bên phải
+                    visibleEntities.forEach((ent, eIdx) => {
+                        const entX = 560;
+                        const entY = 65 + eIdx * 115 + 30;
+                        svgPaths += `<path d="M ${midX + 175} ${midCenterY} C ${midX + 215} ${midCenterY}, ${entX - 40} ${entY}, ${entX} ${entY}" stroke="#60a5fa" stroke-width="1.5" stroke-opacity="0.75" fill="none" />`;
+                    });
+                });
+            } else {
+                // Nối trực tiếp từ Nhóm sang Thực thể bên phải (giống hệt ảnh image_42a65c.png)
+                visibleEntities.forEach((ent, eIdx) => {
+                    const entX = 540;
+                    const entY = 85 + eIdx * 115 + 32;
+                    svgPaths += `<path d="M ${startX} ${startY} C ${startX + 140} ${startY}, ${entX - 130} ${entY}, ${entX} ${entY}" stroke="#93c5fd" stroke-width="1.8" fill="none" class="edge-animated" />`;
+                });
+            }
+
+            // Vẽ các Thực thể bên phải
+            visibleEntities.forEach((ent, eIdx) => {
+                const entX = isClusterExpanded ? 560 : 540;
+                const entY = (isClusterExpanded ? 65 : 85) + eIdx * 115;
+                nodesHtml += `
+                    <div onclick="selectGraphNode('${ent.id}', 'Thực thể liên kết (${ent.type}): Xuất hiện trùng khớp trong cụm ${c.code}')"
+                         style="left:${entX}px; top:${entY}px; width:205px;"
+                         class="absolute cursor-pointer rounded-xl p-3.5 bg-white/95 dark:bg-[#0e1e36]/95 border border-sky-500/50 hover:border-sky-400 shadow-md transition-all hover:scale-[1.02]">
+                        <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${ent.id}</div>
+                        ${showLabels ? `<div class="text-[11px] text-slate-500 dark:text-slate-300 mt-1">${ent.type}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            svg.innerHTML = svgPaths;
+            nodesLayer.innerHTML = nodesHtml;
+        }
+
+        function selectGraphNode(nodeCode, description) {
+            document.getElementById('lk-side-code').textContent = nodeCode;
+            document.getElementById('lk-side-desc').textContent = description;
+            showToast(`Đang xem nút: ${nodeCode}`);
+        }
+
+        // -----------------------------------------------------------------
+        // 7. PHÂN HỆ 4 (CB): CẢNH BÁO CẦN RÀ SOÁT
+        // -----------------------------------------------------------------
+        function renderAlertsList() {
+            const levelFilter = document.getElementById('cb-filter-level')?.value || 'ALL';
+            const list = alertsData.filter(a => levelFilter === 'ALL' || a.level === levelFilter);
+
+            const container = document.getElementById('cb-list-container');
+            container.innerHTML = list.map(a => {
+                const isSelected = a.id === selectedAlertId;
+                const circleClass = a.level === 'Cao'
+                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-200 dark:text-rose-900'
+                    : 'bg-amber-100 text-amber-800 dark:bg-amber-100 dark:text-amber-900';
+                const badgeClass = a.level === 'Cao'
+                    ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                    : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30';
+
+                return `
+                    <div onclick="selectAlertItem('${a.id}')" class="cursor-pointer p-5 transition-all border-l-4 ${isSelected ? '!border-l-rose-500 bg-sky-500/5 dark:bg-[#111c33]' : '!border-l-transparent hover:bg-slate-100/60 dark:hover:bg-slate-800/40'}">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-xs font-extrabold flex-shrink-0 ${circleClass}">
+                                ${a.score}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h3 class="text-xs font-bold text-slate-900 dark:text-white truncate">${a.title}</h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${badgeClass}">• ${a.level}</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 mb-1.5">${a.reason}</p>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">${a.count} phản ánh · ${a.money} đồng</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mb-2.5">Nguồn mới nhất: ${a.latest}</div>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                    • ${a.status}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateAlertDetailPanel();
+        }
+
+        function selectAlertItem(alertId) {
+            selectedAlertId = alertId;
+            renderAlertsList();
+        }
+
+        function updateAlertDetailPanel() {
+            const item = alertsData.find(a => a.id === selectedAlertId) || alertsData[0];
+            const circumference = 314.16;
+            const offset = circumference - (item.score / 100) * circumference;
+
+            const circle = document.getElementById('cb-gauge-circle');
+            circle.style.strokeDashoffset = offset;
+            circle.setAttribute('stroke', item.level === 'Cao' ? '#ef4444' : '#f59e0b');
+
+            document.getElementById('cb-gauge-score').textContent = item.score;
+            document.getElementById('cb-detail-level').textContent = `Mức rủi ro ${item.level}`;
+            document.getElementById('cb-detail-level').className = item.level === 'Cao'
+                ? 'text-xs font-bold text-rose-500 mt-2'
+                : 'text-xs font-bold text-amber-500 mt-2';
+            document.getElementById('cb-detail-title').textContent = item.title;
+            document.getElementById('cb-detail-reason').textContent = item.reason;
+            document.getElementById('cb-detail-count').textContent = item.count;
+            document.getElementById('cb-detail-money').textContent = item.money;
+        }
+
+        function openAlertReasonModal() {
+            const item = alertsData.find(a => a.id === selectedAlertId) || alertsData[0];
+            openInfoModal(
+                `Căn cứ tính điểm ưu tiên · ${item.id}`,
+                `<p><strong>Điểm ưu tiên xác minh:</strong> ${item.score}/100 (${item.level})</p>
+                 <p><strong>Trọng số trùng khớp thực thể:</strong> +45 điểm (Cùng tài khoản ngân hàng / SĐT trong nhiều đơn).</p>
+                 <p><strong>Trọng số tần suất xuất hiện:</strong> +15 điểm (${item.count} phản ánh độc lập trong 72 giờ).</p>
+                 <p><strong>Trọng số quy mô thiệt hại:</strong> +12 điểm (Tổng tiền ${item.money}).</p>`
+            );
+        }
+
+        // -----------------------------------------------------------------
+        // 8. PHÂN HỆ 5 (HS): HỒ SƠ VỤ VIỆC
+        // -----------------------------------------------------------------
+        function renderCasesTable() {
+            const q = (document.getElementById('hs-search-input')?.value || '').toLowerCase().trim();
+            const statusFilter = document.getElementById('hs-status-filter')?.value || 'ALL';
+
+            document.getElementById('hs-stat-total').textContent = casesData.length;
+            document.getElementById('hs-stat-active').textContent = casesData.filter(c => c.status === 'Đang xác minh').length;
+            document.getElementById('hs-stat-waiting').textContent = casesData.filter(c => c.status === 'Chờ bổ sung').length;
+
+            const filtered = casesData.filter(c => {
+                const matchStatus = statusFilter === 'ALL' || c.status === statusFilter;
+                const matchQ = !q || c.id.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
+                return matchStatus && matchQ;
+            });
+
+            const tbody = document.getElementById('hs-table-body');
+            tbody.innerHTML = filtered.map(c => {
+                const priClass = c.priority === 'Cao'
+                    ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                    : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30';
+                const stClass = c.status === 'Đang xác minh'
+                    ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30'
+                    : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30';
+
+                return `
+                    <tr class="hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="py-4 px-5 font-bold text-sky-600 dark:text-sky-400">${c.id}</td>
+                        <td class="py-4 px-5 font-bold text-slate-900 dark:text-white max-w-[220px]">${c.name}</td>
+                        <td class="py-4 px-5 text-slate-600 dark:text-slate-300">${c.group}</td>
+                        <td class="py-4 px-5 font-bold text-slate-900 dark:text-white">${c.amount}</td>
+                        <td class="py-4 px-5">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${priClass}">• ${c.priority}</span>
+                        </td>
+                        <td class="py-4 px-5 text-slate-700 dark:text-slate-300">${c.officer}</td>
+                        <td class="py-4 px-5">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${stClass}">• ${c.status}</span>
+                        </td>
+                        <td class="py-4 px-5 text-slate-500 dark:text-slate-400">${c.updated}</td>
+                        <td class="py-4 px-5 text-right">
+                            <button onclick="openCaseDetailModal('${c.id}')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#11192c] hover:border-sky-500 text-xs font-semibold">
+                                Chi tiết
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function createCaseFromCluster() {
+            const c = CLUSTER_GRAPH_DATA[currentClusterId];
+            const newId = `HS-00${casesData.length + 1}`;
+            casesData.unshift({
+                id: newId,
+                name: `Xác minh cụm ${c.code} (${c.title})`,
+                group: c.title,
+                amount: c.amount,
+                priority: 'Cao',
+                officer: 'Lê Minh Anh',
+                status: 'Đang xác minh',
+                updated: '26/10/2026 08:45'
+            });
+            addSystemLog('Tạo hồ sơ', newId);
+            refreshAllViews();
+            switchSection('hs');
+            showToast(`Đã tạo hồ sơ ${newId} từ cụm ${c.code}`);
+        }
+
+        function openNewCaseModal() {
+            createCaseFromCluster();
+        }
+
+        function openCaseDetailModal(caseId) {
+            const item = casesData.find(c => c.id === caseId) || casesData[0];
+            openInfoModal(
+                `Hồ sơ vụ việc · ${item.id}`,
+                `<p><strong>Tên hồ sơ:</strong> ${item.name}</p>
+                 <p><strong>Nhóm hành vi:</strong> ${item.group}</p>
+                 <p><strong>Cán bộ phụ trách:</strong> ${item.officer}</p>
+                 <p><strong>Tổng tiền phản ánh:</strong> ${item.amount}</p>
+                 <p><strong>Trạng thái hiện tại:</strong> ${item.status} (Cập nhật: ${item.updated})</p>`
+            );
+        }
+
+        // -----------------------------------------------------------------
+        // 9. PHÂN HỆ 6 (PQ): TÀI KHOẢN VÀ PHÂN QUYỀN
+        // -----------------------------------------------------------------
+        function renderAccountsTable() {
+            const q = (document.getElementById('pq-search-input')?.value || '').toLowerCase().trim();
+            const filtered = accountsData.filter(acc =>
+                !q ||
+                acc.username.toLowerCase().includes(q) ||
+                acc.role.toLowerCase().includes(q) ||
+                acc.unit.toLowerCase().includes(q)
+            );
+
+            const tbody = document.getElementById('pq-table-body');
+            tbody.innerHTML = filtered.map((acc, idx) => `
+                <tr class="hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-4 px-6 font-bold text-slate-900 dark:text-white">${acc.username}</td>
+                    <td class="py-4 px-6 text-slate-600 dark:text-slate-300">${acc.role}</td>
+                    <td class="py-4 px-6 text-slate-600 dark:text-slate-300">${acc.unit}</td>
+                    <td class="py-4 px-6">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                            • ${acc.status}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <button onclick="cycleAccountRole('${acc.username}')" class="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#11192c] hover:border-sky-500 text-xs font-semibold">
+                            Sửa vai trò
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function cycleAccountRole(username) {
+            const roles = ['Cán bộ phân tích', 'Cán bộ tiếp nhận', 'Lãnh đạo đơn vị', 'Quản trị hệ thống', 'Người dân / Tổ chức'];
+            const acc = accountsData.find(a => a.username === username);
+            if (!acc) return;
+            const nextIdx = (roles.indexOf(acc.role) + 1) % roles.length;
+            acc.role = roles[nextIdx];
+            addSystemLog('Đổi vai trò', `${username} → ${acc.role}`);
+            renderAccountsTable();
+            showToast(`Đã đổi vai trò ${username} thành: ${acc.role}`);
+        }
+
+        // -----------------------------------------------------------------
+        // 10. PHÂN HỆ 7 (NK): NHẬT KÝ HỆ THỐNG
+        // -----------------------------------------------------------------
+        function renderAuditLogs() {
+            const q = (document.getElementById('nk-search-input')?.value || '').toLowerCase().trim();
+            const actFilter = document.getElementById('nk-action-filter')?.value || 'ALL';
+            const usrFilter = document.getElementById('nk-user-filter')?.value || 'ALL';
+
+            const filtered = logsData.filter(l => {
+                const matchAct = actFilter === 'ALL' || l.action === actFilter;
+                const matchUsr = usrFilter === 'ALL' || l.user === usrFilter;
+                const matchQ = !q || l.user.toLowerCase().includes(q) || l.target.toLowerCase().includes(q) || l.action.toLowerCase().includes(q);
+                return matchAct && matchUsr && matchQ;
+            });
+
+            const container = document.getElementById('nk-logs-container');
+            container.innerHTML = filtered.map(l => `
+                <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#091120] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mb-2">${l.time}</div>
+                            <span class="inline-block px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-200/80 dark:bg-[#152036] text-slate-700 dark:text-slate-300">
+                                ${l.action}
+                            </span>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-sky-600 dark:text-sky-400">${l.user}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-300 mb-1.5">${l.role}</div>
+                            <div class="text-xs font-bold text-sky-600 dark:text-sky-400">${l.target}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                            • ${l.result}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // -----------------------------------------------------------------
+        // 11. CÁC THAO TÁC HEADER, MODAL & CHUYỂN MÀN HÌNH LOGIN <-> DASHBOARD
+        // -----------------------------------------------------------------
+        function handleRoleSwitch(newRole) {
+            const roleMap = {
+                'Cán bộ phân tích': { user: 'phan.tich.demo', code: 'PT' },
+                'Cán bộ tiếp nhận': { user: 'tiep.nhan.demo', code: 'TN' },
+                'Lãnh đạo đơn vị': { user: 'lanh.dao.demo', code: 'LĐ' },
+                'Quản trị hệ thống': { user: 'quan.tri.demo', code: 'QT' }
+            };
+            const info = roleMap[newRole] || roleMap['Cán bộ phân tích'];
+            document.getElementById('sidebar-user-name').textContent = info.user;
+            document.getElementById('sidebar-user-role').textContent = newRole;
+            document.getElementById('sidebar-user-avatar').textContent = info.code;
+            addSystemLog('Đổi vai trò', newRole);
+            showToast(`Đang xem với quyền: ${newRole}`);
+        }
+
+        function resetDemoData() {
+            reportsData = [...INITIAL_REPORTS];
+            alertsData = [...INITIAL_ALERTS];
+            casesData = [...INITIAL_CASES];
+            accountsData = JSON.parse(JSON.stringify(INITIAL_ACCOUNTS));
+            logsData = [...INITIAL_LOGS];
+            currentReportTab = 'ALL';
+            isClusterExpanded = false;
+            isStressTest = false;
+            document.getElementById('chk-stress-test').checked = false;
+            refreshAllViews();
+            showToast('Đã khôi phục toàn bộ dữ liệu giả lập ban đầu');
+        }
+
+        function openNewReportModal() {
+            const m = document.getElementById('modal-new-report');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function submitNewReport(e) {
+            e.preventDefault();
+            const title = document.getElementById('new-pa-title').value.trim();
+            const type = document.getElementById('new-pa-type').value;
+            const amount = Number(document.getElementById('new-pa-amount').value) || 10;
+            const source = document.getElementById('new-pa-source').value;
+            const area = document.getElementById('new-pa-area').value;
+
+            const newId = `PA-0${reportsData.length + 1}`;
+            reportsData.unshift({
+                id: newId,
+                title,
+                type,
+                time: '26/10/2026 08:45',
+                amount,
+                status: 'Chờ kiểm tra',
+                source,
+                area
+            });
+
+            closeModalById('modal-new-report');
+            document.getElementById('new-pa-title').value = '';
+            addSystemLog('Tiếp nhận phản ánh', newId);
+            refreshAllViews();
+            switchSection('pa');
+            showToast(`Đã tiếp nhận phản ánh mới: ${newId}`);
+        }
+
+        function openInfoModal(title, htmlBody) {
+            document.getElementById('info-modal-title').textContent = title;
+            document.getElementById('info-modal-body').innerHTML = htmlBody;
+            const m = document.getElementById('modal-info-box');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeModalById(id) {
+            const m = document.getElementById(id);
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // Chuyển sang màn hình Login tích hợp sẵn
+        function logoutToLoginScreen() {
+            addSystemLog('Đăng xuất', document.getElementById('sidebar-user-role').textContent);
+            document.getElementById('dashboard-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.remove('flex');
+            const loginScr = document.getElementById('login-screen');
+            loginScr.classList.remove('hidden');
+            loginScr.classList.add('flex');
+            setTimeout(() => {
+                if (window._resizeLoginCanvas) window._resizeLoginCanvas();
+            }, 60);
+        }
+
+        function openLoginModal() {
+            const modal = document.getElementById('modal-login');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('modal-login');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        function loginToDashboard(username, roleName) {
+            closeLoginModal();
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('flex');
+            const dash = document.getElementById('dashboard-screen');
+            dash.classList.remove('hidden');
+            dash.classList.add('flex');
+
+            document.getElementById('sidebar-user-name').textContent = username;
+            document.getElementById('sidebar-user-role').textContent = roleName;
+            addSystemLog('Đăng nhập mô phỏng', 'Phiên demo');
+            showToast(`Xin chào ${username}`);
+        }
+
+        // -----------------------------------------------------------------
+        // 12. CANVAS NETWORK GRAPH CHO TRANG LOGIN TÍCH HỢP
+        // -----------------------------------------------------------------
+        function initLoginCanvas() {
+            const canvas = document.getElementById('tracingCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                const parent = canvas.parentElement;
+                if (!parent) return;
+                canvas.width = parent.clientWidth || 480;
+                canvas.height = parent.clientHeight || 340;
+            }
+            window._resizeLoginCanvas = resizeCanvas;
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            const particles = [];
+            for (let i = 0; i < 42; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    radius: Math.random() * 2 + 1.5,
+                    isTarget: Math.random() < 0.12
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const isDark = document.documentElement.classList.contains('dark');
+                const linkColor = isDark ? '96, 165, 250' : '59, 130, 246';
+
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.isTarget ? '#ef4444' : '#3b82f6';
+                    ctx.fill();
+
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const p2 = particles[j];
+                        const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                        if (dist < 85) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(${linkColor}, ${1 - dist / 85})`;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>

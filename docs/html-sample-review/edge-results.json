@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "checks": [
+    "QR-simulation-and-Escape",
+    "required-fields",
+    "negative-amount",
+    "duplicate-submit-disabled",
+    "unmatched-entities-stay-independent",
+    "edited-entity-removes-stale-link",
+    "read-only-role-denied",
+    "case-search-filter",
+    "CUM-002-case-source",
+    "all-case-tabs",
+    "operations-tabs-exact-case",
+    "CUM-002-report-25",
+    "alert-level-filter",
+    "graph-filter-and-source-navigation",
+    "account-search-citizen-separated",
+    "no-external-API-requests",
+    "no-browser-errors"
+  ]
+}

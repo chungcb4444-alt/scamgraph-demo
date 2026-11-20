@@ -30,6 +30,7 @@ fs.mkdirSync(out, { recursive: true })
       await page.goto(process.env.DEMO_URL || "http://127.0.0.1:8444", {
         waitUntil: "networkidle",
       })
+      await page.getByRole("button", {name:"Tài khoản Cán bộ", exact:true}).click()
       assert.equal(await page.locator(".access-card").count(), 1)
       assert.equal(await page.locator(".login-aside").count(), 0)
       assert(
@@ -53,6 +54,7 @@ fs.mkdirSync(out, { recursive: true })
         .click()
       assert((await page.getByRole("dialog").innerText()).includes("demo1234"))
       await page.keyboard.press("Escape")
+      await page.getByRole("button", {name:"Tài khoản Cán bộ", exact:true}).click()
       await page.getByLabel("Mật khẩu", { exact: true }).fill("sai-mat-khau")
       await page.getByRole("button", { name: "Đăng nhập", exact: true }).click()
       assert(await page.getByRole("alert").isVisible())
@@ -64,7 +66,7 @@ fs.mkdirSync(out, { recursive: true })
         await page.getByLabel("Tài khoản", { exact: true }).inputValue(),
         "cong.dan.demo",
       )
-      await page.getByRole("button", { name: /Đăng nhập bằng VNeID/ }).click()
+      await page.getByRole("dialog").getByRole("button", { name: /Đăng nhập bằng VNeID/ }).click()
       assert(
         (await page.getByRole("dialog").innerText()).includes(
           "Không kết nối VNeID",
@@ -72,6 +74,7 @@ fs.mkdirSync(out, { recursive: true })
       )
       await page.screenshot({ path: `${out}/${width}-vneid.png` })
       await page.keyboard.press("Escape")
+      await page.getByRole("button", {name:"Tài khoản Cán bộ",exact:true}).click()
       await page.getByRole("button", { name: "Đăng nhập", exact: true }).click()
       assert.equal(
         await page.locator(".report-intake h1").innerText(),

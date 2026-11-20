@@ -1,0 +1,14 @@
+{
+  "baseline": "381a6af50f8c85d57b276d7f4fa15ac33d54b0b1",
+  "unchanged": [
+    "src/LinkGraph.tsx",
+    "src/ReportIntake.tsx",
+    "src/types.ts",
+    "src/demoTime.ts",
+    "src/intakeModel.ts",
+    "src/ui/Modal.tsx",
+    "package.json",
+    "pnpm-lock.yaml"
+  ],
+  "App_change": "Only import and render AppearanceToggle; existing handlers untouched"
+}
