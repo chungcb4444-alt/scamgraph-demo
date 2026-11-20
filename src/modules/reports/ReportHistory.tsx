@@ -1,6 +1,6 @@
-import type { Report, LogItem } from "./types"
-import { Card, CardHead, Badge } from "./ui"
-import { formatDateTime } from "./demoTime"
+import type { Report, LogItem } from "../../types/types"
+import { Card, CardHead, Badge } from "../../components/common"
+import { formatDateTime } from "../../utils/demoTime"
 
 export default function ReportHistory({
   report,

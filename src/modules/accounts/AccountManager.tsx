@@ -1,8 +1,8 @@
 import { useState } from "react"
-import type { StaffAccount } from "./types"
-import type { Operation } from "./operations"
-import { R } from "./access"
-import { PageHeader, Card, DataTable, Field, Button, Modal, Badge } from "./ui"
+import type { StaffAccount } from "../../types/types"
+import type { Operation } from "../../operations"
+import { R } from "../authentication/access"
+import { PageHeader, Card, DataTable, Field, Button, Modal, Badge } from "../../components/common"
 export default function AccountManager({
   accounts,
   onAction,

@@ -6,19 +6,19 @@ import type {
   ReportVersion,
   ActionStamp,
   CaseMessage,
-} from "./types"
-import { R, UNIT, permit, canReadReport, canReadCase } from "./access.ts"
+} from "./types/types"
+import { R, UNIT, permit, canReadReport, canReadCase } from "./modules/authentication/access.ts"
 import {
   relatedSourceCases,
   sameReportIds,
   duplicateConsentKey,
-} from "./caseSources.ts"
+} from "./modules/cases/caseSources.ts"
 import {
   caseReceiptAllowsWork,
   currentAssignment,
   requestKey,
-} from "./receiptWorkflow.ts"
-import { reportSnapshotStale } from "./reportSnapshot.ts"
+} from "./modules/cases/receiptWorkflow.ts"
+import { reportSnapshotStale } from "./modules/reports/reportSnapshot.ts"
 export type Operation =
   | {
       type: "receive"

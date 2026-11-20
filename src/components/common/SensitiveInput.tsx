@@ -1,4 +1,4 @@
-import { Field } from "./ui"
+import Field from "./Field"
 import { useReportPrivacy } from "./ReportPrivacy"
 
 export default function SensitiveInput({

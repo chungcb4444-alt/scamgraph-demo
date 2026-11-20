@@ -6,13 +6,13 @@ import {
   useRef,
   useState,
 } from "react"
-import type { Report } from "./types"
+import type { Report } from "../../types/types"
 import {
   formatDateTime,
   fromVietnamInput,
   nowISO,
   vietnamInput,
-} from "./demoTime"
+} from "../../utils/demoTime"
 import { REPORT_TYPES, reportTypeLabel } from "./intakeModel"
 import type { IntakePayload, IntakeResult } from "./intakeModel"
 import "./reportIntake.css"

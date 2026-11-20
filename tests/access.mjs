@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { accountSeeds, R, UNIT, migrateCase, migrateReport, permit, canReadCase, canReadReport, visibleLogs } from '../src/access.ts'
+import { accountSeeds, R, UNIT, migrateCase, migrateReport, permit, canReadCase, canReadReport, visibleLogs } from '../src/modules/authentication/access.ts'
 import { applyOperation } from '../src/operations.ts'
 const ids={citizen:'cong.dan.demo',reception:'tiep.nhan.demo',analyst:'phan.tich.demo',worker:'xu.ly.demo',other:'xu.ly.huy',leader:'lanh.dao.demo',supervisor:'giam.sat.demo',admin:'quan.tri.demo'}
 const base=(id,cluster,amount)=>migrateReport({id,title:'Sự việc '+id,content:'Lời khai gốc',senderName:'Người gửi mẫu',source:'Cổng trực tuyến',area:'Hà Nội',status:cluster?'Đã phân tích':'Mới tiếp nhận',behavior:'Giả danh ngân hàng',amount,cluster,account:'DEMO-TK-001',phone:'DEMO-SDT-001',website:'demo.example',submittedBy:ids.citizen})

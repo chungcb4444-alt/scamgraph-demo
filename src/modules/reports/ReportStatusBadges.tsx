@@ -1,5 +1,5 @@
-import type { Report } from "./types"
-import { Badge } from "./ui"
+import type { Report } from "../../types/types"
+import { Badge } from "../../components/common"
 import { reportStages } from "./reportStages"
 
 export default function ReportStatusBadges({

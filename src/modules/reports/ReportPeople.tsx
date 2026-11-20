@@ -1,7 +1,7 @@
-import type { Report } from "./types"
+import type { Report } from "../../types/types"
 import { reportPeople } from "./reportPeople"
-import SensitiveValue from "./SensitiveValue"
-import { useReportPrivacy } from "./ReportPrivacy"
+import SensitiveValue from "../../components/common/SensitiveValue"
+import { useReportPrivacy } from "../../components/common/ReportPrivacy"
 
 export default function ReportPeople({ report }: { report: Report }) {
   const p = reportPeople(report)

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
-import type { Cluster, Report } from "./types"
-import { dayKey, formatDateTime, nowISO, seedTimestamp } from "./demoTime"
+import type { Cluster, Report } from "../../types/types"
+import { dayKey, formatDateTime, nowISO, seedTimestamp } from "../../utils/demoTime"
 import "./linkGraph.css"
-import { Modal, PageHeader } from "./ui"
+import { Modal, PageHeader } from "../../components/common"
 
 type Entity = {
   id: string

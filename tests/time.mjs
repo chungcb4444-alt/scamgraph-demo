@@ -7,7 +7,7 @@ import {
   migrateStoredData,
   seedTimestamp,
   vietnamInput,
-} from "../src/demoTime.ts"
+} from "../src/utils/demoTime.ts"
 
 assert.equal(formatDateTime("2026-10-22T16:59:00Z"), "22/10/2026 23:59")
 assert.equal(formatDateTime("2026-10-22T17:00:00Z"), "23/10/2026 00:00")

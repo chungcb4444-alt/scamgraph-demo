@@ -1,11 +1,11 @@
 import assert from "node:assert/strict"
-import { accountSeeds, R, UNIT, migrateReport } from "../src/access.ts"
-import { reportStages } from "../src/reportStages.ts"
+import { accountSeeds, R, UNIT, migrateReport } from "../src/modules/authentication/access.ts"
+import { reportStages } from "../src/modules/reports/reportStages.ts"
 import {
   relatedSourceCases,
   sameReportIds,
   duplicateConsentKey,
-} from "../src/caseSources.ts"
+} from "../src/modules/cases/caseSources.ts"
 import { applyOperation } from "../src/operations.ts"
 const analyst = accountSeeds.find((a) => a.role === R.analyst),
   worker = accountSeeds.find((a) => a.role === R.worker)

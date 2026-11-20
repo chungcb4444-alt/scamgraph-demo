@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useState } from "react"
-import type { CaseFile, StaffAccount, ReportVersion } from "./types"
-import type { Operation } from "./operations"
-import { R, permit } from "./access"
-import { Card, CardHead, Field, Button, Badge } from "./ui"
+import type { CaseFile, StaffAccount, ReportVersion } from "../../types/types"
+import type { Operation } from "../../operations"
+import { R, permit } from "../authentication/access"
+import { Card, CardHead, Field, Button, Badge } from "../../components/common"
 import { caseReceiptLabel, currentAssignment } from "./receiptWorkflow"
-import { reportSnapshotStale } from "./reportSnapshot"
-import type { Report } from "./types"
-import { formatDateTime } from "./demoTime"
+import { reportSnapshotStale } from "../reports/reportSnapshot"
+import type { Report } from "../../types/types"
+import { formatDateTime } from "../../utils/demoTime"
 export default function CaseWorkPanel({
   item,
   reports,

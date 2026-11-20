@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { nextReportId, reportTypeLabel } from "../src/intakeModel.ts"
+import { nextReportId, reportTypeLabel } from "../src/modules/reports/intakeModel.ts"
 const ids = (list) => list.map((id) => ({ id }))
 assert.equal(nextReportId(ids(["PA-001", "PA-012"])), "PA-014")
 assert.equal(nextReportId(ids(["PA-013"])), "PA-014")

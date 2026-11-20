@@ -1,4 +1,4 @@
-import type { CaseFile, Report, ReportVersion } from "./types"
+import type { CaseFile, Report, ReportVersion } from "../../types/types"
 // Compare meaningful source values, not timestamps, acknowledgements or discussion activity.
 const ordered = (value: unknown): unknown =>
   Array.isArray(value)
