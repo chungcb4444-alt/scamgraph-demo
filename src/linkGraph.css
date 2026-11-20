@@ -1,41 +1,27 @@
-.link-explorer .cluster-summary {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-.link-explorer .cluster-actions {
-  grid-column: 1 / -1;
-  justify-content: flex-end;
-}
 .load-toggle,
 .inline-check {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 12px;
+  font-size: 14px;
   color: #c7d3e6;
 }
+
 .load-toggle input,
 .inline-check input {
   width: 16px;
   height: 16px;
 }
-.explorer-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 14px;
-}
+
 .explorer-toolbar > input {
   flex: 1 1 280px;
 }
-.explorer-toolbar > select {
-  width: auto;
-  max-width: 220px;
-  font-size: 12px;
-}
+
 .zoom-actions {
   display: flex;
   gap: 6px;
 }
+
 .zoom-actions button,
 .map-pagination button {
   color: #dacfff;
@@ -43,120 +29,143 @@
   border: 1px solid #3b4865;
   border-radius: 5px;
   padding: 8px;
-  font-size: 12px;
+  font-size: 14px;
 }
+
 .graph-counts {
   display: flex;
   justify-content: space-between;
   gap: 15px;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: 14px;
   color: #b4c3dc;
 }
+
 .explorer-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   gap: 14px;
   align-items: start;
 }
+
 .explorer-map {
   min-width: 0;
   overflow: hidden;
 }
+
 .map-columns {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   padding: 14px;
   gap: 8px;
-  font-size: 10px;
+  font-size: 14px;
   color: #b6a9ee;
   background: #0c1427;
 }
+
 .map-viewport {
   overflow: auto;
   background:
     radial-gradient(#283653 1px, transparent 1px) 0 0 / 20px 20px,
     #0a1122;
 }
+
 .relationship-map {
   width: 100%;
   height: auto;
-  min-height: 360px;
+  min-height: 500px;
+  min-width: 790px;
   display: block;
 }
+
 .map-node,
 .map-edge {
   cursor: pointer;
   transition: opacity 0.15s;
 }
+
 .map-node rect {
   fill: #17213a;
   stroke: #536084;
   stroke-width: 1.5;
 }
+
 .map-group rect {
   stroke: #7563c9;
   fill: #211d42;
 }
+
 .map-entity rect {
   stroke: #3d8bca;
   fill: #112c43;
 }
+
 .map-node text {
   fill: #f0f3ff;
   font:
-    600 13px system-ui,
+    600 16px system-ui,
     sans-serif;
 }
+
 .map-node text.node-sub {
   fill: #c0cce0;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 400;
 }
+
 .map-node.is-selected rect,
 .map-node:hover rect,
 .map-node:focus-visible rect {
   stroke: #c0a8ff;
   stroke-width: 3;
 }
+
 .map-node.is-dim,
 .map-edge.is-dim {
   opacity: 0.2;
 }
+
 .edge-line {
   stroke: #8597b6;
   stroke-width: 1.7;
   fill: none;
 }
+
 .map-edge.is-direct .edge-line {
   stroke: #a8bdf0;
 }
+
 .edge-hit {
   stroke: transparent;
   stroke-width: 15;
   fill: none;
 }
+
 .map-edge:hover .edge-line,
 .map-edge:focus-visible .edge-line {
   stroke: #dbbaff;
   stroke-width: 3;
 }
+
 .edge-label-card rect {
   fill: #171d36;
   stroke: #596789;
 }
+
 .edge-label-card text {
   fill: #f4edff;
   font:
-    10px system-ui,
+    13px system-ui,
     sans-serif;
 }
+
 .map-hint {
   fill: #9daac3;
   font:
-    12px system-ui,
+    14px system-ui,
     sans-serif;
 }
+
 .map-pagination {
   display: flex;
   align-items: center;
@@ -164,36 +173,43 @@
   flex-wrap: wrap;
   gap: 10px;
   padding: 12px;
-  font-size: 11px;
+  font-size: 14px;
   color: #b9c5da;
 }
+
 .map-pagination button:disabled {
   opacity: 0.4;
   cursor: default;
 }
+
 .explorer-details {
   padding: 18px;
   min-width: 0;
 }
+
 .explorer-details h2 {
-  font-size: 15px;
+  font-size: var(--section-title);
   margin: 0 0 14px;
 }
+
 .explorer-details > strong {
   overflow-wrap: anywhere;
   display: block;
   color: #c2b0ff;
 }
+
 .relation-explanation,
 .load-note {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.7;
   color: #bdcae0;
 }
+
 .explorer-details dl {
-  font-size: 12px;
+  font-size: 14px;
   margin: 14px 0;
 }
+
 .explorer-details dl div {
   display: flex;
   justify-content: space-between;
@@ -201,59 +217,128 @@
   border-top: 1px solid #34405b;
   gap: 8px;
 }
+
 .explorer-details dd {
   font-weight: 700;
 }
+
 .explorer-details input {
   margin: 14px 0 0;
-  font-size: 12px;
+  font-size: 14px;
 }
+
 .explorer-details .source-evidence {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 12px 2px;
 }
+
 .explorer-details .source-evidence span {
-  font-size: 12px;
+  font-size: 14px;
 }
+
 .explorer-details .source-evidence small {
-  font-size: 11px;
+  font-size: 14px;
 }
+
+.link-explorer .cluster-actions {
+  grid-column: auto;
+  justify-content: flex-end;
+}
+
+.map-edge:focus,
+.map-edge:focus-visible {
+  outline: none;
+}
+
+.map-edge:focus-visible .edge-line {
+  stroke: #dbbaff;
+  stroke-width: 4;
+}
+
+.compact-explorer .explorer-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.explorer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: var(--panel-padding);
+}
+
+.explorer-toolbar > select {
+  width: auto;
+  max-width: 300px;
+  font-size: 16px;
+}
+
+.zoom-actions button,
+.map-pagination button {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 15px;
+}
+
+.link-explorer .cluster-summary {
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  gap: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 24px;
+}
+
+.link-explorer .cluster-summary > div:first-child {
+  flex: 1 1 360px;
+}
+
+.cluster-name {
+  font-size: 24px;
+}
+
+.map-node text.node-relation {
+  fill: #d5c1ff;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.modal .explorer-details {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
 @media (max-width: 1300px) {
   .explorer-layout {
     grid-template-columns: minmax(0, 1fr) 280px;
   }
+
   .explorer-toolbar > select {
     max-width: 200px;
   }
 }
+
 @media (max-width: 1000px) {
   .explorer-layout {
     grid-template-columns: 1fr;
   }
 }
-.link-explorer .cluster-summary {
-  grid-template-columns: minmax(220px, 1fr) auto auto;
-  gap: 16px;
-}
-.link-explorer .cluster-actions {
-  grid-column: auto;
-}
-.map-edge:focus,
-.map-edge:focus-visible {
-  outline: none;
-}
-.map-edge:focus-visible .edge-line {
-  stroke: #dbbaff;
-  stroke-width: 4;
-}
+
 @media (max-width: 1100px) {
   .link-explorer .cluster-summary {
     grid-template-columns: 1fr auto;
   }
+
   .link-explorer .cluster-actions {
     grid-column: 1 / -1;
   }
 }
-.map-node text.node-relation { fill:#d5c1ff; font-size:10px; font-weight:400; }
+
+.map-help {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--muted);
+  background: #10182d;
+}

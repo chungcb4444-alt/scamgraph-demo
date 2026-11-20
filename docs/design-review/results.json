@@ -1,0 +1,40 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "page typography",
+      "one demo badge",
+      "single active navigation",
+      "local table overflow only",
+      "report date filter",
+      "log date filter",
+      "account empty state",
+      "graph drawer close and escape",
+      "case tabs",
+      "white print report",
+      "seven role views",
+      "intake preserved",
+      "no page errors"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "page typography",
+      "one demo badge",
+      "single active navigation",
+      "local table overflow only",
+      "report date filter",
+      "log date filter",
+      "account empty state",
+      "graph drawer close and escape",
+      "case tabs",
+      "white print report",
+      "seven role views",
+      "intake preserved",
+      "no page errors"
+    ]
+  }
+]

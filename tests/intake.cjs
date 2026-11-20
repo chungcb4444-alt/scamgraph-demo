@@ -113,10 +113,10 @@ fs.mkdirSync(out, { recursive: true })
         await page
           .locator(".report-intake h1")
           .evaluate((e) => getComputedStyle(e).fontSize),
-        "28px",
+        "32px",
       )
-      assert.equal(await page.locator(".intake-demo:visible").count(), 1)
-      assert.equal(await page.locator(".demo-label:visible").count(), 0)
+      assert.equal(await page.locator(".intake-demo:visible").count(), 0)
+      assert.equal(await page.locator(".demo-label:visible").count(), 1)
       await label("Tài khoản mạng xã hội").fill("tai-khoan-mau-khong-co-that")
       await snap("citizen-incident")
       await button("Tiếp tục").scrollIntoViewIfNeeded()
@@ -147,7 +147,7 @@ fs.mkdirSync(out, { recursive: true })
       assert.equal(await button("Trích xuất thông tin").count(), 0)
       await button("← Xem danh sách phản ánh").click()
       assert.equal(await page.locator("tbody tr").count(), 1)
-      await button("＋ Tạo phản ánh").click()
+      await button("Gửi phản ánh").click()
       await button("Dùng tình huống mẫu").click()
       await button("Tiếp tục").click()
       assert.equal(await label("Số tiền đã chuyển").inputValue(), "15.000.000")
@@ -180,7 +180,7 @@ fs.mkdirSync(out, { recursive: true })
         (await page.locator(".report-intake").innerText()).includes("PA-013"),
       )
       await button("← Xem danh sách phản ánh").click()
-      await button("＋ Tạo phản ánh").click()
+      await button("Gửi phản ánh").click()
       await fillManual("Khác", "Phản ánh loại khác")
       await button("Tiếp tục").click()
       assert((await page.getByRole("alert").innerText()).includes("mô tả ngắn"))
@@ -230,7 +230,7 @@ fs.mkdirSync(out, { recursive: true })
         .getByLabel("Chuyển vai trò demo", { exact: true })
         .selectOption("Cán bộ tiếp nhận")
       await page.locator("nav button").filter({ hasText: "Phản ánh" }).click()
-      await button("＋ Tạo phản ánh").click()
+      await button("Tiếp nhận phản ánh").click()
       assert.equal(
         await page.locator(".report-intake h1").innerText(),
         "Tiếp nhận phản ánh",

@@ -74,7 +74,7 @@ let activePage
         .locator(".filter-card select")
         .first()
         .selectOption({ label: "Tất cả trạng thái" })
-      await button("＋ Tạo phản ánh").click()
+      await button("Tiếp nhận phản ánh").click()
       await snap("02-new-report")
       await button("Dùng tình huống mẫu").click()
       await button("Tiếp tục").click()
