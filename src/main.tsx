@@ -12,3 +12,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 import "./sample-theme.css"
 
 import "./workspace-polish.css"
+
+import "./reportPeople.css"

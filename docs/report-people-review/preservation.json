@@ -1,0 +1,35 @@
+{
+  "baseline": "b65aa06",
+  "unchangedAppFunctions": {
+    "getAlerts": true,
+    "getEntities": true,
+    "OperationsTabs": true,
+    "Dashboard": true,
+    "Alerts": true,
+    "AlertDetail": true,
+    "CreateCaseModal": true,
+    "Cases": true,
+    "CaseDetail": true,
+    "CaseTab": true,
+    "ReportModal": true,
+    "Accounts": true,
+    "Logs": true,
+    "CitizenReportView": true
+  },
+  "unchangedFiles": [
+    "src/Login.tsx",
+    "src/login.css",
+    "src/BrandMark.tsx",
+    "src/AppearanceToggle.tsx",
+    "src/LinkGraph.tsx",
+    "src/linkGraph.css",
+    "src/index.css",
+    "src/sample-theme.css",
+    "src/workspace-polish.css",
+    "src/demoTime.ts",
+    "src/workflow.tsx",
+    "package.json",
+    "pnpm-lock.yaml",
+    "vercel.json"
+  ]
+}

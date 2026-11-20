@@ -12,6 +12,16 @@ export type Report = {
   status: string
   senderName?: string
   senderContact?: string
+  people?: {
+    birthYear?: number
+    residence?: string
+    email?: string
+    capacity?: string
+    subjectName?: string
+    subjectSocial?: string
+    currentSituation?: string
+    followUp?: string
+  }
   submittedBy?: string
   sourceOther?: string
   behaviorOther?: string

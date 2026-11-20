@@ -1,0 +1,32 @@
+[
+  {
+    "viewport": "1440x900",
+    "result": "PASS",
+    "checks": [
+      "sender search and keyboard navigation",
+      "masked contacts, accounts, narrative and extraction inputs",
+      "reveal/hide/45s timeout/window blur/reload",
+      "draft preservation",
+      "new party name persistence and audit",
+      "seed counts, amounts, graph entities unchanged",
+      "legacy metadata without destructive migration",
+      "unknown identities remain unknown",
+      "light and dark layouts without page overflow"
+    ]
+  },
+  {
+    "viewport": "1280x720",
+    "result": "PASS",
+    "checks": [
+      "sender search and keyboard navigation",
+      "masked contacts, accounts, narrative and extraction inputs",
+      "reveal/hide/45s timeout/window blur/reload",
+      "draft preservation",
+      "new party name persistence and audit",
+      "seed counts, amounts, graph entities unchanged",
+      "legacy metadata without destructive migration",
+      "unknown identities remain unknown",
+      "light and dark layouts without page overflow"
+    ]
+  }
+]

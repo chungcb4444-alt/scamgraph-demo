@@ -17,6 +17,12 @@ import AppearanceToggle from "./AppearanceToggle"
 import Login from "./Login"
 import BrandMark from "./BrandMark"
 import ReportIntake from "./ReportIntake"
+import ReportPeople from "./ReportPeople"
+import ReportPrivacy from "./ReportPrivacy"
+import SensitiveValue from "./SensitiveValue"
+import SensitiveInput from "./SensitiveInput"
+import ReportStatement from "./ReportStatement"
+import { reportPeople, reportSearchText, samplePeople } from "./reportPeople"
 import { REPORT_TYPES, reportTypeLabel, nextReportId } from "./intakeModel"
 import type { IntakePayload, IntakeResult } from "./intakeModel"
 
@@ -389,6 +395,7 @@ function makeSampleData(now = new Date()) {
     const receivedAt = seedTimestamp(index, 9, 24, now)
     return {
       ...report,
+      ...samplePeople(report.id),
       time: undefined,
       receivedAt,
       occurredAt: new Date(
@@ -623,6 +630,13 @@ export default function App() {
         ...payload.report,
         id: payload.sample ? "PA-013" : nextReportId(currentReports),
         submittedBy: actorForRole(role),
+        people: {
+          ...(payload.sample &&
+          payload.report.senderName === "Nguyễn Hoàng Minh"
+            ? samplePeople("PA-013")?.people
+            : {}),
+          ...payload.report.people,
+        },
       }
       const nextReports = [report, ...currentReports]
       const nextLogs: LogItem[] = [
@@ -1527,9 +1541,14 @@ function Reports({
   const [area, setArea] = useState("")
   const filtered = reports.filter(
     (r) =>
-      `${r.id} ${r.title} ${r.account || ""} ${r.phone || ""} ${r.website || ""} ${r.area}`
-        .toLowerCase()
-        .includes(query.trim().toLowerCase()) &&
+      reportSearchText(r).includes(
+        query
+          .trim()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/đ/gi, "d")
+          .toLowerCase(),
+      ) &&
       (status.startsWith("Tất cả") ||
         reportWorkflowStatus(r.status) === status) &&
       (behavior.startsWith("Tất cả") ||
@@ -1580,7 +1599,7 @@ function Reports({
         ))}
       </div>
       <Card className="filter-card reports-filter">
-        <FilterField label="Tìm kiếm">
+        <FilterField label="Tìm kiếm · Mã, nội dung, tên người gửi">
           <div className="search-wrap">
             <span>⌕</span>
             <input
@@ -1674,16 +1693,17 @@ function ReportTable({
   compact?: boolean
 }) {
   return (
-    <div className="table-scroll">
+    <div className={`table-scroll ${!compact ? "reports-table-scroll" : ""}`}>
       <DataTable>
         <thead>
           <tr>
-            <th>Mã phản ánh</th>
-            <th>Nội dung / Loại phản ánh</th>
-            <th>Thời gian</th>
-            <th>Số tiền</th>
-            <th>Trạng thái</th>
-            {!compact && <th>Thao tác</th>}
+            <th scope="col">Mã phản ánh</th>
+            {!compact && <th scope="col">Người gửi phản ánh</th>}
+            <th scope="col">Nội dung / Loại phản ánh</th>
+            <th scope="col">Thời gian</th>
+            <th scope="col">Số tiền</th>
+            <th scope="col">Trạng thái</th>
+            {!compact && <th scope="col">Thao tác</th>}
           </tr>
         </thead>
         <tbody>
@@ -1692,6 +1712,36 @@ function ReportTable({
               <td>
                 <b className="id-link">{r.id}</b>
               </td>
+              {!compact && (
+                <td className="sender-cell">
+                  <button
+                    type="button"
+                    className="sender-link"
+                    aria-label={`Xem người gửi ${r.id}: ${reportPeople(r).senderName}`}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onOpen(r.id)
+                    }}
+                  >
+                    <span className="sender-avatar" aria-hidden="true">
+                      {reportPeople(r)
+                        .senderName.split(" ")
+                        .slice(-2)
+                        .map((part) => part[0])
+                        .join("")}
+                    </span>
+                    <span>
+                      <strong>{reportPeople(r).senderName}</strong>
+                      <small>
+                        {reportPeople(r).birthYear
+                          ? `${reportPeople(r).birthYear} · `
+                          : ""}
+                        {reportPeople(r).residence || r.area}
+                      </small>
+                    </span>
+                  </button>
+                </td>
+              )}
               <td>
                 <div className="cell-title" title={r.title}>
                   {r.title}
@@ -1758,6 +1808,9 @@ function ReportDetail({
   const [extracted, setExtracted] = useState(report.extracted ?? true)
   const [preview, setPreview] = useState(false)
   const [draft, setDraft] = useState({
+    subjectName: reportPeople(report).subjectName || "",
+    socialAccount:
+      report.socialAccount || reportPeople(report).subjectSocial || "",
     account: report.account || "",
     bank: report.bank || "",
     phone: report.phone || "",
@@ -1768,6 +1821,9 @@ function ReportDetail({
   })
   const [dirty, setDirty] = useState(false)
   const [error, setError] = useState("")
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
   const evidence = clusters
     .map((cluster) => ({
       cluster,
@@ -1790,9 +1846,20 @@ function ReportDetail({
       return setError("Số tiền phải là số không âm.")
     if (draft.behavior === "Khác" && !draft.behaviorOther.trim())
       return setError("Nhập mô tả loại phản ánh khác trước khi lưu.")
+    const { subjectName, ...checkedDraft } = draft
+    const {
+      senderName: _senderName,
+      senderContact: _senderContact,
+      ...people
+    } = reportPeople(report)
     const next = {
       ...report,
-      ...draft,
+      ...checkedDraft,
+      people: {
+        ...people,
+        subjectName: subjectName.trim(),
+        subjectSocial: draft.socialAccount.trim(),
+      },
       behaviorOther:
         draft.behavior === "Khác" ? draft.behaviorOther.trim() : undefined,
       initialBehavior: report.initialBehavior || report.behavior,
@@ -1812,6 +1879,16 @@ function ReportDetail({
       next.status = "Đã kiểm tra"
     }
     onUpdate(next)
+    if (
+      subjectName !== (reportPeople(report).subjectName || "") ||
+      draft.socialAccount !==
+        (report.socialAccount || reportPeople(report).subjectSocial || "")
+    )
+      onLog(
+        "Cập nhật bên bị phản ánh",
+        report.id,
+        "Đã điều chỉnh tên tự xưng hoặc tài khoản mạng xã hội. Chưa xác minh danh tính.",
+      )
     if (
       report.behavior !== next.behavior ||
       report.behaviorOther !== next.behaviorOther
@@ -1839,310 +1916,387 @@ function ReportDetail({
     notify("Đã lưu thông tin đã kiểm tra")
   }
   return (
-    <div className="page-stack">
-      <button className="back-link" onClick={onBack}>
-        ← Quay lại danh sách phản ánh
-      </button>
-      <div className="detail-hero">
-        <div>
-          <div className="detail-code">{report.id}</div>
-          <h1 className="page-heading">{report.title}</h1>
-          <div className="hero-meta">
-            <WorkflowBadge value={report.status} />
-            <span>
-              {report.source} · Tiếp nhận {formatDateTime(report.receivedAt)}
-            </span>
+    <ReportPrivacy
+      onReveal={(label) =>
+        onLog(
+          "Xem thông tin đã che",
+          report.id,
+          `Trường: ${label}. Không ghi giá trị cá nhân vào nhật ký.`,
+        )
+      }
+    >
+      <div className="page-stack report-detail-page">
+        <button className="back-link" onClick={onBack}>
+          ← Quay lại danh sách phản ánh
+        </button>
+        <div className="detail-hero">
+          <div>
+            <div className="detail-code">{report.id}</div>
+            <h1 className="page-heading">{report.title}</h1>
+            <div className="hero-meta">
+              <WorkflowBadge value={report.status} />
+              <span>
+                {report.source} · Tiếp nhận {formatDateTime(report.receivedAt)}
+              </span>
+            </div>
           </div>
+          {report.cluster && (
+            <Button onClick={onGraph}>Xem sơ đồ {report.cluster} →</Button>
+          )}
         </div>
-        {report.cluster && (
-          <Button onClick={onGraph}>Xem sơ đồ {report.cluster} →</Button>
-        )}
-      </div>
-      <div className="detail-grid">
-        <div className="page-stack">
-          <Card className="detail-card">
-            <CardHead
-              title="Nội dung gốc"
-              sub="Dữ liệu giả lập do người gửi cung cấp"
-            />
-            <div className="quote-content">{report.content}</div>
-          </Card>
-          <Card className="detail-card">
-            <CardHead title="Thông tin chung" />
-            {report.initialBehavior &&
-              (report.initialBehavior !== report.behavior ||
-                (report.initialBehaviorOther || "") !==
-                  (report.behaviorOther || "")) && (
-                <p className="classification-note">
-                  Phân loại đã được cán bộ cập nhật; phân loại ban đầu của người
-                  gửi được giữ ở thông tin bên dưới.
-                </p>
-              )}
-            <DetailRows
-              rows={[
-                [
-                  "Phát sinh sự việc",
-                  report.occurredTimeUnknown
-                    ? "Không nhớ chính xác"
-                    : formatDateTime(report.occurredAt),
-                ],
-                ["Tiếp nhận phản ánh", formatDateTime(report.receivedAt)],
-                ["Địa bàn", report.area],
-                ["Người gửi", report.senderName || "Người gửi mẫu"],
-                ["Liên hệ", report.senderContact || "Chưa cung cấp"],
-                [
-                  "Số tiền",
-                  report.transferStatus === "Không"
-                    ? "Không phát sinh chuyển tiền"
-                    : report.transferStatus === "Chưa rõ"
-                      ? "Chưa xác định"
-                      : `${report.amount} triệu đồng`,
-                ],
-                [
-                  "Loại phản ánh",
-                  reportTypeLabel(report.behavior) +
-                    (report.behaviorOther ? ": " + report.behaviorOther : ""),
-                ],
-                [
-                  "Phân loại ban đầu",
-                  reportTypeLabel(report.initialBehavior || report.behavior) +
-                    (report.initialBehaviorOther
-                      ? ": " + report.initialBehaviorOther
-                      : ""),
-                ],
-                [
-                  "Kênh tiếp nhận",
-                  report.source +
-                    (report.sourceOther ? ": " + report.sourceOther : ""),
-                ],
-                ["Mạng xã hội", report.socialAccount || "Chưa cung cấp"],
-              ]}
-            />
-          </Card>
-          <Card className="detail-card">
-            <CardHead title="Tài liệu đính kèm" />
-            {report.attachment ? (
-              <div className="file-row">
-                <b>anh-chuyen-khoan-mau.png</b>
-                <Button variant="secondary" onClick={() => setPreview(true)}>
-                  Xem trước
-                </Button>
-              </div>
-            ) : (
-              <div className="empty">Không có tài liệu đính kèm.</div>
-            )}
-          </Card>
-          {extracted && report.reviewed && !dirty && (
-            <Card className="detail-card evidence-card">
+        <ReportPeople report={report} />
+        <div className="detail-grid">
+          <div className="page-stack">
+            <Card className="detail-card">
               <CardHead
-                title="Căn cứ liên kết mô phỏng"
-                sub="Đối chiếu chính xác thực thể đã lưu; cần cán bộ xác nhận, không tự động gán cụm."
+                title="Nội dung gốc"
+                sub="Dữ liệu giả lập do người gửi cung cấp"
               />
-              {evidence.map(({ cluster, matches }) => (
-                <div className="candidate" key={cluster.id}>
-                  <b>
-                    {cluster.id} · {cluster.name}
-                  </b>
-                  {matches.map((match) => (
-                    <p key={match.report.id}>
-                      <strong>{match.report.id}</strong> ·{" "}
-                      {match.fields
-                        .map(
-                          (key) =>
-                            `${{ account: "Tài khoản", phone: "Điện thoại", website: "Website" }[key]}: ${report[key]}`,
-                        )
-                        .join("; ")}
-                    </p>
-                  ))}
-                  {report.cluster === cluster.id ? (
-                    <Badge tone="green">Đã xác nhận liên kết</Badge>
-                  ) : report.rejectedClusters?.includes(cluster.id) ? (
-                    <>
-                      <Badge tone="gray">Đã loại bỏ đề xuất</Badge>
-                      <Button
-                        variant="ghost"
-                        disabled={!canEdit}
-                        onClick={() => {
-                          onUpdate({
-                            ...report,
-                            rejectedClusters: report.rejectedClusters?.filter(
-                              (id) => id !== cluster.id,
-                            ),
-                          })
-                          onLog(
-                            "Khôi phục đề xuất",
-                            report.id,
-                            `Trước: loại bỏ ${cluster.id}; sau: chờ xem xét`,
-                          )
-                        }}
-                      >
-                        Xem xét lại {cluster.id}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        disabled={!canEdit || !report.reviewed || dirty}
-                        onClick={() => {
-                          onUpdate({
-                            ...report,
-                            cluster: cluster.id,
-                            updatedAt: nowISO(),
-                            status: "Có liên quan",
-                          })
-                          onLog(
-                            "Xác nhận liên kết",
-                            report.id,
-                            `Trước: ${report.cluster || "chưa liên kết"}; sau: ${cluster.id}; căn cứ ${matches.map((m) => m.report.id).join(", ")}`,
-                          )
-                          notify(`Đã xác nhận ${report.id} vào ${cluster.id}`)
-                        }}
-                      >
-                        Xác nhận liên kết {cluster.id}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        disabled={!canEdit}
-                        onClick={() => {
-                          onUpdate({
-                            ...report,
-                            rejectedClusters: [
-                              ...(report.rejectedClusters || []),
-                              cluster.id,
-                            ],
-                          })
-                          onLog(
-                            "Loại bỏ đề xuất liên kết",
-                            report.id,
-                            `Trước: đề xuất ${cluster.id}; sau: loại bỏ. Không thay đổi thành viên cụm.`,
-                          )
-                          notify(`Đã loại bỏ đề xuất ${cluster.id}`)
-                        }}
-                      >
-                        Loại bỏ đề xuất {cluster.id}
-                      </Button>
-                    </>
-                  )}
+              <ReportStatement report={report} />
+            </Card>
+            <Card className="detail-card">
+              <CardHead title="Thông tin chung" />
+              {report.initialBehavior &&
+                (report.initialBehavior !== report.behavior ||
+                  (report.initialBehaviorOther || "") !==
+                    (report.behaviorOther || "")) && (
+                  <p className="classification-note">
+                    Phân loại đã được cán bộ cập nhật; phân loại ban đầu của
+                    người gửi được giữ ở thông tin bên dưới.
+                  </p>
+                )}
+              <DetailRows
+                rows={[
+                  [
+                    "Phát sinh sự việc",
+                    report.occurredTimeUnknown
+                      ? "Không nhớ chính xác"
+                      : formatDateTime(report.occurredAt),
+                  ],
+                  ["Tiếp nhận phản ánh", formatDateTime(report.receivedAt)],
+                  ["Địa bàn", report.area],
+                  [
+                    "Tình trạng theo lời khai",
+                    report.transferStatus === "Không"
+                      ? "Chưa phát sinh chuyển tiền"
+                      : reportPeople(report).currentSituation ||
+                        "Chưa cung cấp",
+                  ],
+                  [
+                    "Số tiền",
+                    report.transferStatus === "Không"
+                      ? "Không phát sinh chuyển tiền"
+                      : report.transferStatus === "Chưa rõ"
+                        ? "Chưa xác định"
+                        : `${report.amount} triệu đồng`,
+                  ],
+                  [
+                    "Loại phản ánh",
+                    reportTypeLabel(report.behavior) +
+                      (report.behaviorOther ? ": " + report.behaviorOther : ""),
+                  ],
+                  [
+                    "Phân loại ban đầu",
+                    reportTypeLabel(report.initialBehavior || report.behavior) +
+                      (report.initialBehaviorOther
+                        ? ": " + report.initialBehaviorOther
+                        : ""),
+                  ],
+                  [
+                    "Kênh tiếp nhận",
+                    report.source +
+                      (report.sourceOther ? ": " + report.sourceOther : ""),
+                  ],
+                ]}
+              />
+            </Card>
+            <Card className="detail-card">
+              <CardHead title="Tài liệu đính kèm" />
+              {report.attachment ? (
+                <div className="file-row">
+                  <b>anh-chuyen-khoan-mau.png</b>
+                  <Button variant="secondary" onClick={() => setPreview(true)}>
+                    Xem trước
+                  </Button>
                 </div>
-              ))}
-              {!evidence.length && (
-                <p className="muted">
-                  Chưa có thực thể trùng khớp. Phản ánh được theo dõi độc lập.
-                </p>
-              )}
-              {(!report.reviewed || dirty) && (
-                <p className="extraction-note">
-                  Lưu thông tin đã kiểm tra trước khi xác nhận liên kết.
-                </p>
+              ) : (
+                <div className="empty">Không có tài liệu đính kèm.</div>
               )}
             </Card>
-          )}
-        </div>
-        <Card className="extraction">
-          <CardHead
-            title="Thông tin trích xuất"
-            sub="Mô phỏng theo kịch bản mẫu, không sử dụng OCR/AI hay API."
-          />
-          {!extracted ? (
-            <Button
-              disabled={!canEdit}
-              onClick={() => {
-                setExtracted(true)
-                onUpdate({ ...report, extracted: true })
-                onLog("Trích xuất mô phỏng", report.id)
-                notify("Đã trích xuất theo kịch bản mẫu")
-              }}
-            >
-              Trích xuất thông tin
-            </Button>
-          ) : (
-            <div className="entity-form">
-              <Field label="Loại phản ánh">
-                <select
-                  value={draft.behavior}
-                  disabled={!canEdit}
-                  onChange={(e) => {
-                    setDraft({ ...draft, behavior: e.target.value })
+            {extracted && report.reviewed && !dirty && (
+              <Card className="detail-card evidence-card">
+                <CardHead
+                  title="Căn cứ liên kết mô phỏng"
+                  sub="Đối chiếu chính xác thực thể đã lưu; cần cán bộ xác nhận, không tự động gán cụm."
+                />
+                {evidence.map(({ cluster, matches }) => (
+                  <div className="candidate" key={cluster.id}>
+                    <b>
+                      {cluster.id} · {cluster.name}
+                    </b>
+                    {matches.map((match) => (
+                      <p key={match.report.id}>
+                        <strong>{match.report.id}</strong> ·{" "}
+                        {match.fields.map((key) => (
+                          <span className="evidence-field" key={key}>
+                            {
+                              {
+                                account: "Tài khoản",
+                                phone: "Điện thoại",
+                                website: "Website",
+                              }[key]
+                            }
+                            :{" "}
+                            {key === "website" ? (
+                              report[key]
+                            ) : (
+                              <SensitiveValue
+                                value={report[key]}
+                                label={`${key === "account" ? "tài khoản" : "điện thoại"} trong căn cứ liên kết`}
+                                name={key}
+                                inline
+                              />
+                            )}
+                          </span>
+                        ))}
+                      </p>
+                    ))}
+                    {report.cluster === cluster.id ? (
+                      <Badge tone="green">Đã xác nhận liên kết</Badge>
+                    ) : report.rejectedClusters?.includes(cluster.id) ? (
+                      <>
+                        <Badge tone="gray">Đã loại bỏ đề xuất</Badge>
+                        <Button
+                          variant="ghost"
+                          disabled={!canEdit}
+                          onClick={() => {
+                            onUpdate({
+                              ...report,
+                              rejectedClusters: report.rejectedClusters?.filter(
+                                (id) => id !== cluster.id,
+                              ),
+                            })
+                            onLog(
+                              "Khôi phục đề xuất",
+                              report.id,
+                              `Trước: loại bỏ ${cluster.id}; sau: chờ xem xét`,
+                            )
+                          }}
+                        >
+                          Xem xét lại {cluster.id}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          disabled={!canEdit || !report.reviewed || dirty}
+                          onClick={() => {
+                            onUpdate({
+                              ...report,
+                              cluster: cluster.id,
+                              updatedAt: nowISO(),
+                              status: "Có liên quan",
+                            })
+                            onLog(
+                              "Xác nhận liên kết",
+                              report.id,
+                              `Trước: ${report.cluster || "chưa liên kết"}; sau: ${cluster.id}; căn cứ ${matches.map((m) => m.report.id).join(", ")}`,
+                            )
+                            notify(`Đã xác nhận ${report.id} vào ${cluster.id}`)
+                          }}
+                        >
+                          Xác nhận liên kết {cluster.id}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          disabled={!canEdit}
+                          onClick={() => {
+                            onUpdate({
+                              ...report,
+                              rejectedClusters: [
+                                ...(report.rejectedClusters || []),
+                                cluster.id,
+                              ],
+                            })
+                            onLog(
+                              "Loại bỏ đề xuất liên kết",
+                              report.id,
+                              `Trước: đề xuất ${cluster.id}; sau: loại bỏ. Không thay đổi thành viên cụm.`,
+                            )
+                            notify(`Đã loại bỏ đề xuất ${cluster.id}`)
+                          }}
+                        >
+                          Loại bỏ đề xuất {cluster.id}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ))}
+                {!evidence.length && (
+                  <p className="muted">
+                    Chưa có thực thể trùng khớp. Phản ánh được theo dõi độc lập.
+                  </p>
+                )}
+                {(!report.reviewed || dirty) && (
+                  <p className="extraction-note">
+                    Lưu thông tin đã kiểm tra trước khi xác nhận liên kết.
+                  </p>
+                )}
+              </Card>
+            )}
+          </div>
+          <Card className="extraction">
+            <CardHead
+              title="Thông tin trích xuất"
+              sub="Mô phỏng theo kịch bản mẫu, không sử dụng OCR/AI hay API."
+            />
+            {!extracted ? (
+              <Button
+                disabled={!canEdit}
+                onClick={() => {
+                  setExtracted(true)
+                  onUpdate({ ...report, extracted: true })
+                  onLog("Trích xuất mô phỏng", report.id)
+                  notify("Đã trích xuất theo kịch bản mẫu")
+                }}
+              >
+                Trích xuất thông tin
+              </Button>
+            ) : (
+              <div className="entity-form">
+                <p className="people-privacy-note">
+                  Bấm Xem ở tài khoản / số điện thoại trước khi kiểm tra hoặc
+                  sửa.
+                </p>
+                <Field label="Tên / danh xưng bên bị phản ánh">
+                  <input
+                    value={draft.subjectName}
+                    readOnly={!canEdit}
+                    onChange={(e) => {
+                      setDraft({ ...draft, subjectName: e.target.value })
+                      setDirty(true)
+                    }}
+                  />
+                </Field>
+                <SensitiveInput
+                  label="Mạng xã hội bên bị phản ánh"
+                  name="subjectSocial"
+                  value={draft.socialAccount}
+                  canEdit={canEdit}
+                  onChange={(value) => {
+                    setDraft({ ...draft, socialAccount: value })
                     setDirty(true)
                   }}
-                >
-                  {Array.from(new Set([...REPORT_TYPES, draft.behavior])).map(
-                    (type) => (
-                      <option key={type}>{type}</option>
-                    ),
-                  )}
-                </select>
-              </Field>
-              {draft.behavior === "Khác" && (
-                <Field label="Mô tả loại phản ánh">
-                  <input
-                    value={draft.behaviorOther}
-                    readOnly={!canEdit}
+                />
+                <Field label="Loại phản ánh">
+                  <select
+                    value={draft.behavior}
+                    disabled={!canEdit}
                     onChange={(e) => {
-                      setDraft({ ...draft, behaviorOther: e.target.value })
+                      setDraft({ ...draft, behavior: e.target.value })
                       setDirty(true)
                     }}
-                  />
+                  >
+                    {Array.from(new Set([...REPORT_TYPES, draft.behavior])).map(
+                      (type) => (
+                        <option key={type}>{type}</option>
+                      ),
+                    )}
+                  </select>
                 </Field>
-              )}
-              {(
-                [
-                  ["account", "Tài khoản ngân hàng"],
-                  ["bank", "Ngân hàng"],
-                  ["phone", "Số điện thoại"],
-                  ["website", "Website"],
-                  ["amount", "Số tiền (triệu đồng)"],
-                ] as const
-              ).map(([key, label]) => (
-                <Field label={label} key={key}>
-                  <input
-                    type={key === "amount" ? "number" : "text"}
-                    min={key === "amount" ? 0 : undefined}
-                    step={key === "amount" ? "any" : undefined}
-                    value={draft[key]}
-                    readOnly={!canEdit}
-                    onChange={(e) => {
-                      setDraft({ ...draft, [key]: e.target.value })
-                      setDirty(true)
-                    }}
-                  />
-                </Field>
-              ))}
-              {error && (
-                <div role="alert" className="error-box">
-                  {error}
-                </div>
-              )}
-              <p className="extraction-note">
-                Lưu thông tin đã kiểm tra để xem đề xuất liên kết. Kết quả chỉ
-                hỗ trợ xác minh; không phải kết luận vi phạm.
+                {draft.behavior === "Khác" && (
+                  <Field label="Mô tả loại phản ánh">
+                    <input
+                      value={draft.behaviorOther}
+                      readOnly={!canEdit}
+                      onChange={(e) => {
+                        setDraft({ ...draft, behaviorOther: e.target.value })
+                        setDirty(true)
+                      }}
+                    />
+                  </Field>
+                )}
+                {(
+                  [
+                    ["account", "Tài khoản ngân hàng"],
+                    ["bank", "Ngân hàng"],
+                    ["phone", "Số điện thoại"],
+                    ["website", "Website"],
+                    ["amount", "Số tiền (triệu đồng)"],
+                  ] as const
+                ).map(([key, label]) =>
+                  key === "account" || key === "phone" ? (
+                    <SensitiveInput
+                      key={key}
+                      name={key}
+                      label={label}
+                      value={draft[key]}
+                      canEdit={canEdit}
+                      onChange={(value) => {
+                        setDraft({ ...draft, [key]: value })
+                        setDirty(true)
+                      }}
+                    />
+                  ) : (
+                    <Field label={label} key={key}>
+                      <input
+                        type={key === "amount" ? "number" : "text"}
+                        min={key === "amount" ? 0 : undefined}
+                        step={key === "amount" ? "any" : undefined}
+                        value={draft[key]}
+                        readOnly={!canEdit}
+                        onChange={(e) => {
+                          setDraft({ ...draft, [key]: e.target.value })
+                          setDirty(true)
+                        }}
+                      />
+                    </Field>
+                  ),
+                )}
+                {error && (
+                  <div role="alert" className="error-box">
+                    {error}
+                  </div>
+                )}
+                <p className="extraction-note">
+                  Lưu thông tin đã kiểm tra để xem đề xuất liên kết. Kết quả chỉ
+                  hỗ trợ xác minh; không phải kết luận vi phạm.
+                </p>
+                <Button disabled={!canEdit} onClick={save}>
+                  Lưu thông tin đã kiểm tra
+                </Button>
+              </div>
+            )}
+          </Card>
+        </div>
+        {preview && (
+          <Modal
+            title="Bằng chứng giao dịch mô phỏng"
+            onClose={() => setPreview(false)}
+          >
+            <div className="receipt-preview">
+              <b>{report.bank || "NGÂN HÀNG MẪU"}</b>
+              <div className="receipt-amount">
+                {(report.amount * 1000000).toLocaleString("vi-VN")} đ
+              </div>
+              <p>
+                <SensitiveValue
+                  value={report.account}
+                  label="tài khoản trên tài liệu mẫu"
+                  name="account"
+                  inline
+                />{" "}
+                ·{" "}
+                {report.occurredTimeUnknown
+                  ? "Không nhớ chính xác"
+                  : formatDateTime(report.occurredAt)}
               </p>
-              <Button disabled={!canEdit} onClick={save}>
-                Lưu thông tin đã kiểm tra
-              </Button>
+              <div className="watermark">TÀI LIỆU GIẢ LẬP</div>
             </div>
-          )}
-        </Card>
+          </Modal>
+        )}
       </div>
-      {preview && (
-        <Modal
-          title="Bằng chứng giao dịch mô phỏng"
-          onClose={() => setPreview(false)}
-        >
-          <div className="receipt-preview">
-            <b>NGÂN HÀNG MẪU A</b>
-            <div className="receipt-amount">15.000.000 đ</div>
-            <p>
-              DEMO-TK-001 ·{" "}
-              {report.occurredTimeUnknown
-                ? "Không nhớ chính xác"
-                : formatDateTime(report.occurredAt)}
-            </p>
-            <div className="watermark">TÀI LIỆU GIẢ LẬP</div>
-          </div>
-        </Modal>
-      )}
-    </div>
+    </ReportPrivacy>
   )
 }
 
