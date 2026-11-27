@@ -192,7 +192,7 @@ const fs = require("node:fs")
     await page
       .getByLabel("Loại thực thể", { exact: true })
       .selectOption("phone")
-    assert.equal(await page.locator(".map-report").count(), 0)
+    assert((await page.locator(".map-report").count()) > 0)
     await page
       .getByRole("button", { name: "Điện thoại DEMO-SDT-002", exact: true })
       .click()

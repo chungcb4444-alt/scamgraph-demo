@@ -8,10 +8,11 @@
   --g-account: #2563eb;
   --g-phone: #0f9488;
   --g-website: #6d5fd6;
+  --g-name: #b45309;
   --g-edge: #93a9c7;
   --g-edge-confirmed: #1e4c9a;
-  --g-label-fill: #ffffff;
-  --g-label-stroke: #b9cbe4;
+  --g-label-fill: #fbfcff;
+  --g-label-stroke: #dfe6f0;
 }
 
 .load-toggle,
@@ -154,6 +155,10 @@
   background: var(--g-website);
 }
 
+.dot-name {
+  background: var(--g-name);
+}
+
 .legend-item .line {
   width: 22px;
   height: 0;
@@ -234,12 +239,6 @@
   fill: var(--g-phone);
 }
 
-.map-node text.node-relation {
-  font-size: 12px;
-  font-weight: 400;
-  fill: var(--g-sub);
-}
-
 .map-node .node-dot {
   fill: #64748b;
 }
@@ -267,6 +266,14 @@
 
 .map-node.t-website .node-box {
   stroke: #b0a6ea;
+}
+
+.map-node.t-name .node-dot {
+  fill: var(--g-name);
+}
+
+.map-node.t-name .node-box {
+  stroke: #ddb083;
 }
 
 .map-node.is-selected .node-box,
@@ -335,9 +342,17 @@
 
 .edge-label-card text {
   font:
-    12px system-ui,
+    11px system-ui,
     sans-serif;
   fill: var(--g-title);
+}
+
+.arrow-suggested {
+  fill: var(--g-edge);
+}
+
+.arrow-confirmed {
+  fill: var(--g-edge-confirmed);
 }
 
 .map-hint {
@@ -528,10 +543,11 @@
   --g-account: #6ea8fe;
   --g-phone: #2dd4bf;
   --g-website: #a5a0f5;
+  --g-name: #f0b35c;
   --g-edge: #5f789c;
   --g-edge-confirmed: #9db9ea;
-  --g-label-fill: #182640;
-  --g-label-stroke: #46608c;
+  --g-label-fill: #0b1221;
+  --g-label-stroke: #26354d;
 }
 
 :root[data-theme="dark"] .link-explorer .graph-legend {
@@ -559,6 +575,10 @@
 
 :root[data-theme="dark"] .link-explorer .map-node.t-website .node-box {
   stroke: #5b5390;
+}
+
+:root[data-theme="dark"] .link-explorer .map-node.t-name .node-box {
+  stroke: #8a6a3a;
 }
 
 :root[data-theme="dark"] .link-explorer .map-node.map-group .node-box {

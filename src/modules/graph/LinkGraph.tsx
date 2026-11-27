@@ -10,7 +10,7 @@ import {
 import "./linkGraph.css"
 import { Badge, Button, Modal, PageHeader } from "../../components/common"
 
-type EntityKey = "account" | "phone" | "website"
+type EntityKey = "account" | "phone" | "website" | "name"
 type Entity = {
   id: string
   value: string
@@ -18,6 +18,7 @@ type Entity = {
   label: string
   relation: string
   tag: string
+  bank?: string
 }
 type NodeKind = "group" | "report" | "entity"
 type GraphNode = {
@@ -44,36 +45,45 @@ type GraphEdge = {
 }
 type View = { x: number; y: number; w: number; h: number }
 
-const ENTITY_KEYS: EntityKey[] = ["account", "phone", "website"]
+const LINK_KEYS = ["account", "phone", "website"] as const
 const PAGE_SIZE = 5
 const GROUP_SIZE = 3
 const NODE_W = 208
 const GROUP_W = 224
-const ROW_H = 96
-const COL = { group: 32, report: 396, entity: 752 }
+const ROW_H = 100
+const COL = { group: 32, report: 400, entity: 772 }
 const CANVAS_H = 560
 
 // Fit labels by measured width while retaining full text in the accessible title and drawer.
 const labelMeasure = document.createElement("canvas").getContext("2d")
-function fitLabel(value: string, font: string, max = 168) {
-  if (!labelMeasure) return value.slice(0, 18)
+function textWidth(value: string, font: string) {
+  if (!labelMeasure) return value.length * 7
   labelMeasure.font = font
-  if (labelMeasure.measureText(value).width <= max) return value
+  return labelMeasure.measureText(value).width
+}
+function fitLabel(value: string, font: string, max = 168) {
+  if (textWidth(value, font) <= max) return value
   let short = value
-  while (short.length && labelMeasure.measureText(short + "…").width > max)
+  while (short.length && textWidth(short + "…", font) > max)
     short = short.slice(0, -1)
   return short + "…"
 }
+function entityValue(r: Report, type: EntityKey) {
+  return type === "name" ? r.people?.subjectName : r[type]
+}
 function entitiesOf(reports: Report[]): Entity[] {
   const definitions = [
-    ["account", "Tài khoản", "Ghi nhận chuyển tiền đến", "TK"],
-    ["phone", "Điện thoại", "Liên hệ qua", "SĐT"],
-    ["website", "Website", "Nhắc đến", "WEB"],
+    ["account", "Tài khoản", "chuyển tiền đến", "TK"],
+    ["phone", "Điện thoại", "gọi điện/liên hệ", "SĐT"],
+    ["website", "Website", "truy cập", "WEB"],
+    ["name", "Tên đối tượng", "đứng tên/nhắc đến", "TÊN"],
   ] as const
   return definitions.flatMap(([type, label, relation, tag]) =>
     Array.from(
       new Set(
-        reports.map((r) => r[type]).filter((v): v is string => Boolean(v)),
+        reports
+          .map((r) => entityValue(r, type))
+          .filter((v): v is string => Boolean(v)),
       ),
     ).map((value) => ({
       id: `${type}:${value}`,
@@ -82,6 +92,10 @@ function entitiesOf(reports: Report[]): Entity[] {
       label,
       relation,
       tag,
+      bank:
+        type === "account"
+          ? reports.find((r) => r.account === value && r.bank)?.bank
+          : undefined,
     })),
   )
 }
@@ -145,14 +159,13 @@ export default function LinkGraph({
   const [grouping, setGrouping] = useState("behavior")
   const [groupPage, setGroupPage] = useState(0)
   const [entityPage, setEntityPage] = useState(0)
-  const [expanded, setExpanded] = useState<string | null>(null)
   const [reportPage, setReportPage] = useState(0)
   const [sourcePage, setSourcePage] = useState(0)
   const [sourceQuery, setSourceQuery] = useState("")
   const [selected, setSelected] = useState("")
   const [hover, setHover] = useState("")
   const [isolate, setIsolate] = useState(false)
-  const [showLabels, setShowLabels] = useState(false)
+  const [showLabels, setShowLabels] = useState(true)
   const [offsets, setOffsets] = useState<Record<string, { x: number; y: number }>>({})
   const [view, setView] = useState<View>({ x: 0, y: 0, w: 1000, h: CANVAS_H })
   const [size, setSize] = useState({ w: 1000, h: CANVAS_H })
@@ -185,10 +198,11 @@ export default function LinkGraph({
   const matchingReports = useMemo(
     () =>
       data.filter((r) => {
-        const typeMatch = type === "all" || Boolean(r[type as EntityKey])
+        const typeMatch =
+          type === "all" || Boolean(entityValue(r, type as EntityKey))
         const searchMatch =
           !needle ||
-          `${r.id} ${r.title} ${r.account || ""} ${r.phone || ""} ${r.website || ""}`
+          `${r.id} ${r.title} ${r.people?.subjectName || ""} ${r.account || ""} ${r.phone || ""} ${r.website || ""}`
             .toLowerCase()
             .includes(needle)
         return typeMatch && searchMatch
@@ -216,12 +230,13 @@ export default function LinkGraph({
     groupPage * GROUP_SIZE,
     groupPage * GROUP_SIZE + GROUP_SIZE,
   )
-  const expandedGroup = shownGroups.find((g) => g.id === expanded)
-  const drawnReports =
-    expandedGroup?.items.slice(
-      reportPage * PAGE_SIZE,
-      reportPage * PAGE_SIZE + PAGE_SIZE,
-    ) || []
+  const groupReports = shownGroups.flatMap((g) => g.items)
+  const reportPages = Math.max(1, Math.ceil(groupReports.length / PAGE_SIZE))
+  const reportPageSafe = Math.min(reportPage, reportPages - 1)
+  const drawnReports = groupReports.slice(
+    reportPageSafe * PAGE_SIZE,
+    reportPageSafe * PAGE_SIZE + PAGE_SIZE,
+  )
   const shownEntities = filteredEntities.slice(
     entityPage * PAGE_SIZE,
     entityPage * PAGE_SIZE + PAGE_SIZE,
@@ -236,7 +251,7 @@ export default function LinkGraph({
           : g.key,
       sub: `${g.items.length} phản ánh · ${g.items.reduce((s, r) => s + r.amount, 0)} triệu`,
       x: COL.group,
-      y: 32 + i * (ROW_H + 40),
+      y: 32 + i * (ROW_H + 60),
       w: GROUP_W,
       h: 74,
       reports: g.items,
@@ -258,63 +273,50 @@ export default function LinkGraph({
       id: e.id,
       kind: "entity" as const,
       title: e.value,
-      sub: `${e.tag} · ${e.label}`,
+      sub:
+        e.type === "account"
+          ? e.bank || "Tài khoản ngân hàng"
+          : e.type === "name"
+            ? "TÊN · danh xưng chưa xác minh"
+            : `${e.tag} · ${e.label}`,
       x: COL.entity,
       y: 32 + i * ROW_H,
       w: NODE_W,
-      h: showLabels ? 80 : 62,
-      reports: matchingReports.filter((r) => sameValue(r[e.type], e.value)),
+      h: 62,
+      reports: matchingReports.filter((r) =>
+        sameValue(entityValue(r, e.type), e.value),
+      ),
       entity: e,
       confirmed: matchingReports
-        .filter((r) => sameValue(r[e.type], e.value))
+        .filter((r) => sameValue(entityValue(r, e.type), e.value))
         .some((r) => r.cluster === cluster.id),
     })),
   ]
   const edges: GraphEdge[] = []
   nodes
-    .filter((n) => n.kind === "group")
-    .forEach((group) => {
-      if (group.id === expanded) {
-        nodes
-          .filter((n) => n.kind === "report")
-          .forEach((report) =>
-            edges.push({
-              id: `${group.id}->${report.id}`,
-              from: group,
-              to: report,
-              relation: "Thuộc nhóm khám phá",
-              reports: report.reports,
-              status: "structure",
-            }),
-          )
-      } else {
-        nodes
-          .filter((n) => n.entity)
-          .forEach((entity) => {
-            const sources = group.reports.filter((r) =>
-              sameValue(r[entity.entity!.type], entity.entity!.value),
-            )
-            if (sources.length)
-              edges.push({
-                id: `${group.id}->${entity.id}`,
-                from: group,
-                to: entity,
-                relation: entity.entity!.relation,
-                reports: sources,
-                status: sources.every((r) => r.cluster === cluster.id)
-                  ? "confirmed"
-                  : "suggested",
-              })
-          })
-      }
-    })
-  nodes
     .filter((n) => n.kind === "report")
-    .forEach((report) =>
+    .forEach((report) => {
+      const group = nodes.find(
+        (n) => n.kind === "group" && n.reports.some((r) => r.id === report.id),
+      )
+      if (group)
+        edges.push({
+          id: `${group.id}->${report.id}`,
+          from: group,
+          to: report,
+          relation: "Thuộc nhóm khám phá",
+          reports: report.reports,
+          status: "structure",
+        })
       nodes
         .filter((n) => n.entity)
         .forEach((entity) => {
-          if (sameValue(report.reports[0][entity.entity!.type], entity.entity!.value))
+          if (
+            sameValue(
+              entityValue(report.reports[0], entity.entity!.type),
+              entity.entity!.value,
+            )
+          )
             edges.push({
               id: `${report.id}->${entity.id}`,
               from: report,
@@ -323,8 +325,8 @@ export default function LinkGraph({
               reports: report.reports,
               status: report.confirmed ? "confirmed" : "suggested",
             })
-        }),
-    )
+        })
+    })
   const positions = new Map(
     nodes.map((n) => [
       n.id,
@@ -358,7 +360,7 @@ export default function LinkGraph({
       (o) =>
         o.id !== r.id &&
         o.cluster === cluster.id &&
-        ENTITY_KEYS.some((k) => sameValue(r[k], o[k])),
+        LINK_KEYS.some((k) => sameValue(r[k], o[k])),
     )
   const choose = (id: string) => {
     if (id) setDetailsOpen(true)
@@ -373,7 +375,6 @@ export default function LinkGraph({
     setIsolate(false)
     setGroupPage(0)
     setEntityPage(0)
-    setExpanded(null)
     setReportPage(0)
     setSourcePage(0)
     setSourceQuery("")
@@ -462,7 +463,7 @@ export default function LinkGraph({
     return () => cancelAnimationFrame(frame)
     // Refit when the drawn layout changes; dragging and selection keep the viewport.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grouping, type, query, loadMode, groupPage, entityPage, expanded, reportPage, size])
+  }, [grouping, type, query, loadMode, groupPage, entityPage, reportPage, size])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return
@@ -522,9 +523,11 @@ export default function LinkGraph({
       </div>
       <p className="relation-explanation">
         {chosenEdge
-          ? chosenEdge.relation
+          ? `${chosenEdge.from.title} ${chosenEdge.relation} ${chosenEdge.to.title}`
           : chosenNode?.entity
-            ? chosenNode.entity.relation
+            ? chosenNode.entity.type === "name"
+              ? "Tên/danh xưng do bên bị phản ánh tự giới thiệu, chưa xác minh danh tính."
+              : `${chosenNode.entity.relation} · ${chosenNode.entity.label}`
             : chosenNode?.kind === "group"
               ? "Nhóm khám phá theo tiêu chí đang chọn. Không phải xác nhận liên kết."
               : "Chọn nút hoặc đường nối để xem ý nghĩa quan hệ và phản ánh nguồn."}
@@ -543,16 +546,6 @@ export default function LinkGraph({
           <dd>{sourceTotal} triệu đồng</dd>
         </div>
       </dl>
-      {chosenNode?.kind === "group" && (
-        <Button
-          onClick={() => {
-            setExpanded(expanded === chosenNode.id ? null : chosenNode.id)
-            setReportPage(0)
-          }}
-        >
-          {expanded === chosenNode.id ? "Thu gọn nhóm" : "Mở rộng nhóm"}
-        </Button>
-      )}
       <p className="muted">
         Chỉ phản ánh những gì nguồn dữ liệu ghi nhận. Không xác nhận quyền sở
         hữu tài khoản hay danh tính.
@@ -736,7 +729,7 @@ export default function LinkGraph({
       <div className="explorer-toolbar card graph-toolbar">
         <input
           aria-label="Tìm thực thể hoặc phản ánh"
-          placeholder="Tìm tài khoản, điện thoại, website hoặc mã PA..."
+          placeholder="Tìm tài khoản, điện thoại, website, tên hoặc mã PA..."
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
@@ -755,6 +748,7 @@ export default function LinkGraph({
           <option value="account">Tài khoản ngân hàng</option>
           <option value="phone">Số điện thoại</option>
           <option value="website">Website</option>
+          <option value="name">Tên đối tượng</option>
         </select>
         <select
           aria-label="Gom nhóm phản ánh"
@@ -796,14 +790,14 @@ export default function LinkGraph({
       </div>
       <div className="graph-counts">
         <span>
-          {shownGroups.length}/{groups.length} nhóm · {drawnReports.length} phản
-          ánh mở rộng · {shownEntities.length}/{filteredEntities.length} thực
-          thể · {nodes.length} nút / {edges.length} cạnh
+          {shownGroups.length}/{groups.length} nhóm · {drawnReports.length}/
+          {groupReports.length} phản ánh · {shownEntities.length}/
+          {filteredEntities.length} thực thể · {nodes.length} nút / {edges.length}{" "}
+          cạnh
         </span>
         <span>
           Nét liền đậm: cán bộ đã xác nhận · Nét đứt: hệ thống gợi ý. Kéo nút để
-          sắp xếp, kéo nền để di chuyển, cuộn để thu phóng, rê lên cạnh để xem
-          nhãn quan hệ.
+          sắp xếp, kéo nền để di chuyển, cuộn để thu phóng.
         </span>
       </div>
       <div className="explorer-layout">
@@ -823,6 +817,9 @@ export default function LinkGraph({
             </span>
             <span className="legend-item">
               <i className="dot dot-website" /> Website
+            </span>
+            <span className="legend-item">
+              <i className="dot dot-name" /> Tên đối tượng
             </span>
             <span className="legend-item legend-line">
               <i className="line line-confirmed" /> Đã xác nhận
@@ -864,20 +861,47 @@ export default function LinkGraph({
                 choose("")
               }}
             >
+              <defs>
+                <marker
+                  id="arrow-suggested"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto-start-reverse"
+                >
+                  <path className="arrow-suggested" d="M0,1 L9,5 L0,9 z" />
+                </marker>
+                <marker
+                  id="arrow-confirmed"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto-start-reverse"
+                >
+                  <path className="arrow-confirmed" d="M0,1 L9,5 L0,9 z" />
+                </marker>
+              </defs>
               <g>
                 {edges.map((edge) => {
                   const a = positions.get(edge.from.id)!
                   const b = positions.get(edge.to.id)!
                   const x1 = a.x + edge.from.w
                   const y1 = a.y + edge.from.h / 2
-                  const x2 = b.x
+                  const x2 = b.x - (edge.status === "structure" ? 0 : 8)
                   const y2 = b.y + edge.to.h / 2
                   const dx = Math.max(48, Math.abs(x2 - x1) / 2)
                   const d = `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`
                   const active = !dimming || directEdges.includes(edge)
                   const midX = (x1 + x2) / 2
                   const midY = (y1 + y2) / 2
-                  const labelVisible = hover === edge.id || selected === edge.id
+                  const label = fitLabel(edge.relation, "400 11px system-ui", 150)
+                  const labelW = textWidth(label, "400 11px system-ui") + 16
+                  const labelVisible =
+                    showLabels && edge.status !== "structure" && active
                   return (
                     <g
                       key={edge.id}
@@ -901,26 +925,35 @@ export default function LinkGraph({
                       onMouseLeave={() => setHover("")}
                     >
                       <path className="edge-hit" d={d} />
-                      <path className="edge-line" d={d} />
+                      <path
+                        className="edge-line"
+                        d={d}
+                        markerEnd={
+                          edge.status === "structure"
+                            ? undefined
+                            : `url(#arrow-${edge.status})`
+                        }
+                      />
                       <title>
-                        {edge.relation} · {edge.reports.length} phản ánh nguồn ·{" "}
+                        {edge.from.title} {edge.relation} {edge.to.title} ·{" "}
+                        {edge.reports.length} phản ánh nguồn ·{" "}
                         {edge.status === "confirmed"
                           ? "Cán bộ đã xác nhận"
                           : edge.status === "suggested"
                             ? "Hệ thống gợi ý"
                             : "Quan hệ nhóm"}
                       </title>
-                      {labelVisible && active && (
+                      {labelVisible && (
                         <g className="edge-label-card" pointerEvents="none">
                           <rect
-                            x={midX - 78}
-                            y={midY - 12}
-                            width="156"
-                            height="24"
-                            rx="4"
+                            x={midX - labelW / 2}
+                            y={midY - 10}
+                            width={labelW}
+                            height="20"
+                            rx="10"
                           />
                           <text x={midX} y={midY + 4} textAnchor="middle">
-                            {fitLabel(edge.relation, "400 12px system-ui", 146)}
+                            {label}
                           </text>
                         </g>
                       )}
@@ -982,15 +1015,6 @@ export default function LinkGraph({
                       <text className="node-sub" x="29" y="46">
                         {fitLabel(node.sub, "400 12px system-ui", node.w - 42)}
                       </text>
-                      {node.entity && showLabels && (
-                        <text className="node-relation" x="29" y="65">
-                          {fitLabel(
-                            node.entity.relation,
-                            "400 12px system-ui",
-                            node.w - 42,
-                          )}
-                        </text>
-                      )}
                       {node.kind !== "group" && node.confirmed && (
                         <text
                           className="node-check"
@@ -1020,7 +1044,7 @@ export default function LinkGraph({
               disabled={groupPage === 0}
               onClick={() => {
                 setGroupPage((v) => v - 1)
-                setExpanded(null)
+                setReportPage(0)
                 choose("")
               }}
             >
@@ -1034,12 +1058,42 @@ export default function LinkGraph({
               disabled={(groupPage + 1) * GROUP_SIZE >= groups.length}
               onClick={() => {
                 setGroupPage((v) => v + 1)
-                setExpanded(null)
+                setReportPage(0)
                 choose("")
               }}
             >
               Nhóm sau
             </button>
+            {groupReports.length > PAGE_SIZE && (
+              <>
+                <button
+                  disabled={reportPageSafe === 0}
+                  onClick={() => {
+                    setReportPage((v) => v - 1)
+                    choose("")
+                  }}
+                >
+                  Phản ánh trước
+                </button>
+                <span>
+                  {reportPageSafe * PAGE_SIZE + 1}–
+                  {Math.min(
+                    (reportPageSafe + 1) * PAGE_SIZE,
+                    groupReports.length,
+                  )}
+                  /{groupReports.length} phản ánh
+                </span>
+                <button
+                  disabled={reportPageSafe + 1 >= reportPages}
+                  onClick={() => {
+                    setReportPage((v) => v + 1)
+                    choose("")
+                  }}
+                >
+                  Phản ánh sau
+                </button>
+              </>
+            )}
             {filteredEntities.length > PAGE_SIZE && (
               <>
                 <button
@@ -1063,51 +1117,6 @@ export default function LinkGraph({
                   }}
                 >
                   Thực thể sau
-                </button>
-              </>
-            )}
-            {expandedGroup && (
-              <>
-                <button
-                  disabled={reportPage === 0}
-                  onClick={() => {
-                    setReportPage((v) => v - 1)
-                    choose(expandedGroup.id)
-                  }}
-                >
-                  Phản ánh trước
-                </button>
-                <span>
-                  {Math.min(
-                    reportPage * PAGE_SIZE + 1,
-                    expandedGroup.items.length,
-                  )}
-                  –
-                  {Math.min(
-                    (reportPage + 1) * PAGE_SIZE,
-                    expandedGroup.items.length,
-                  )}
-                  /{expandedGroup.items.length} trong nhóm
-                </span>
-                <button
-                  disabled={
-                    (reportPage + 1) * PAGE_SIZE >= expandedGroup.items.length
-                  }
-                  onClick={() => {
-                    setReportPage((v) => v + 1)
-                    choose(expandedGroup.id)
-                  }}
-                >
-                  Phản ánh sau
-                </button>
-                <button
-                  onClick={() => {
-                    setExpanded(null)
-                    setReportPage(0)
-                    choose(expandedGroup.id)
-                  }}
-                >
-                  Thu gọn nhóm
                 </button>
               </>
             )}
