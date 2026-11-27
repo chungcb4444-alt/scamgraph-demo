@@ -149,12 +149,11 @@ const results = []
           "64 triệu",
         ),
       )
+      assert.equal(await page.locator(".map-report").count(), 4)
       await page.locator(".map-group").first().click()
       assert(
         (await page.locator(".explorer-details").innerText()).includes("4"),
       )
-      await btn("Mở rộng nhóm").click()
-      assert.equal(await page.locator(".map-report").count(), 4)
       await page.keyboard.press("Escape")
       await page
         .getByLabel("Loại thực thể", { exact: true })
@@ -162,7 +161,7 @@ const results = []
       await page.locator(".map-entity").first().click()
       assert(
         (await page.locator(".explorer-details").innerText()).includes(
-          "Ghi nhận chuyển tiền đến",
+          "chuyển tiền đến",
         ),
       )
       assert(
@@ -201,16 +200,15 @@ const results = []
         ),
       )
       await page.keyboard.press("Escape")
+      assert((await page.locator(".edge-label-card").count()) > 0)
+      await page
+        .getByRole("checkbox", { name: "Hiện nhãn", exact: true })
+        .uncheck()
+      assert.equal(await page.locator(".edge-label-card").count(), 0)
       await page
         .getByRole("checkbox", { name: "Hiện nhãn", exact: true })
         .check()
-      assert.equal(
-        await page.locator(".node-relation").count(),
-        await page.locator(".map-entity").count(),
-      )
-      if ((await page.locator(".map-edge").count()) > 1)
-        await page.locator(".map-edge").nth(1).hover()
-      assert((await page.locator(".edge-label-card").count()) <= 1)
+      assert((await page.locator(".edge-label-card").count()) > 0)
       await page.evaluate(() => scrollTo(0, 400))
       assert((await page.locator(".topbar").boundingBox()).y < 0)
       await shot("structured-graph-small")
@@ -290,7 +288,6 @@ const results = []
         ),
       )
       await page.locator(".map-group").first().click()
-      await btn("Mở rộng nhóm").click()
       const nodeCount = Number(
         await page.locator(".relationship-map").getAttribute("data-node-count"),
       )
@@ -328,14 +325,13 @@ const results = []
       assert(
         (await page.locator(".map-pagination").allTextContents())
           .join(" ")
-          .includes("6–10/250"),
+          .includes("6–10/750"),
       )
       await page.keyboard.press("Escape")
       assert(await btn("Tạo hồ sơ từ cụm").isDisabled())
       await shot("stress-1000-bounded")
-      await btn("Thu gọn nhóm").first().click()
       await page.keyboard.press("Escape")
-      assert.equal(await page.locator(".map-report").count(), 0)
+      assert.equal(await page.locator(".map-report").count(), 5)
       await page.getByRole("checkbox", { name: /Thử tải riêng/ }).uncheck()
       assert.deepEqual(
         {

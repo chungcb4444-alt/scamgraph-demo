@@ -13,12 +13,12 @@ import "./sample-theme.css"
 
 import "./workspace-polish.css"
 
-import "./reportPeople.css"
+import "./modules/reports/reportPeople.css"
 
 import "./roleWork.css"
 
-import "./reportsLayout.css"
+import "./modules/reports/reportsLayout.css"
 
 import "./workflowFixes.css"
 
-import "./receiptWorkflow.css"
+import "./modules/cases/receiptWorkflow.css"

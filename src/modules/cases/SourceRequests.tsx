@@ -1,10 +1,10 @@
 import { useLayoutEffect, useState } from "react"
-import type { CaseFile, StaffAccount } from "./types"
-import type { Operation } from "./operations"
-import { permit } from "./access"
+import type { CaseFile, StaffAccount } from "../../types/types"
+import type { Operation } from "../../operations"
+import { permit } from "../authentication/access"
 import { requestKey } from "./receiptWorkflow"
-import { formatDateTime } from "./demoTime"
-import { Card, CardHead, Field, Button, Badge } from "./ui"
+import { formatDateTime } from "../../utils/demoTime"
+import { Card, CardHead, Field, Button, Badge } from "../../components/common"
 export default function SourceRequests({
   item,
   actor,

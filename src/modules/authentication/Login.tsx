@@ -1,7 +1,7 @@
 import { useState } from "react"
-import AppearanceToggle from "./AppearanceToggle"
-import BrandMark from "./BrandMark"
-import { Button, Field, Modal } from "./ui"
+import AppearanceToggle from "../../components/common/AppearanceToggle"
+import BrandMark from "../../components/common/BrandMark"
+import { Button, Field, Modal } from "../../components/common"
 import "./login.css"
 
 type Destination = "dashboard" | "new-report" | "accounts"

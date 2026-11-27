@@ -1,5 +1,5 @@
-import type { StaffAccount, Report, CaseFile, LogItem } from "./types"
-import { caseReceiptAllowsWork, currentAssignment } from "./receiptWorkflow.ts"
+import type { StaffAccount, Report, CaseFile, LogItem } from "../../types/types"
+import { caseReceiptAllowsWork, currentAssignment } from "../cases/receiptWorkflow.ts"
 export const R = {
   citizen: "Người dân / Tổ chức",
   reception: "Cán bộ tiếp nhận",

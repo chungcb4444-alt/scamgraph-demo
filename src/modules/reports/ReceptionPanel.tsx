@@ -1,10 +1,10 @@
 import { useState } from "react"
-import type { Report, StaffAccount, CaseFile } from "./types"
-import type { Operation } from "./operations"
-import { R, permit } from "./access"
-import { Card, CardHead, Field, Button, Badge } from "./ui"
-import { reportReceiptLabel } from "./receiptWorkflow"
-import { formatDateTime } from "./demoTime"
+import type { Report, StaffAccount, CaseFile } from "../../types/types"
+import type { Operation } from "../../operations"
+import { R, permit } from "../authentication/access"
+import { Card, CardHead, Field, Button, Badge } from "../../components/common"
+import { reportReceiptLabel } from "../cases/receiptWorkflow"
+import { formatDateTime } from "../../utils/demoTime"
 export default function ReceptionPanel({
   report,
   actor,

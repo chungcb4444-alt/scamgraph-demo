@@ -1,4 +1,4 @@
-import type { Report, CaseFile, CaseMessage, CaseMessageVersion } from "./types"
+import type { Report, CaseFile, CaseMessage, CaseMessageVersion } from "../../types/types"
 export const currentAssignment = (item: CaseFile) => {
   const last = item.assignments?.at(-1)
   return last?.assignee === item.assignedTo ? last : undefined

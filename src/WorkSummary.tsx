@@ -1,10 +1,10 @@
-import type { StaffAccount, Report, CaseFile } from "./types"
+import type { StaffAccount, Report, CaseFile } from "./types/types"
 import {
   openSourceRequests,
   pendingOpinions,
   caseReceiptLabel,
-} from "./receiptWorkflow"
-import { R } from "./access"
+} from "./modules/cases/receiptWorkflow"
+import { R } from "./modules/authentication/access"
 export default function WorkSummary({
   actor,
   reports,

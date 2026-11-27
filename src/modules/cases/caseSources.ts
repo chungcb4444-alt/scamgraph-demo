@@ -1,5 +1,5 @@
-import type { CaseFile, StaffAccount } from "./types"
-import { canReadCase } from "./access.ts"
+import type { CaseFile, StaffAccount } from "../../types/types"
+import { canReadCase } from "../authentication/access.ts"
 
 export const sortedReportIds = (ids: string[]) => [...new Set(ids)].sort()
 export const sameReportIds = (left: string[], right: string[]) =>

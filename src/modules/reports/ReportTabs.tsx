@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from "react"
-import { useReportPrivacy } from "./ReportPrivacy"
+import { useReportPrivacy } from "../../components/common/ReportPrivacy"
 
 export type ReportSection = "information" | "processing" | "history"
 const sections: [ReportSection, string][] = [

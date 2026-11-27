@@ -6,7 +6,7 @@ import {
   migrateReport,
   migrateCase,
   permit,
-} from "../src/access.ts"
+} from "../src/modules/authentication/access.ts"
 import { applyOperation } from "../src/operations.ts"
 import {
   caseReceiptAllowsWork,
@@ -16,8 +16,8 @@ import {
   openSourceRequests,
   requestKey,
   visibleMessageVersions,
-} from "../src/receiptWorkflow.ts"
-import { reportSnapshotStale } from "../src/reportSnapshot.ts"
+} from "../src/modules/cases/receiptWorkflow.ts"
+import { reportSnapshotStale } from "../src/modules/reports/reportSnapshot.ts"
 const ids = {
   citizen: "cong.dan.demo",
   reception: "tiep.nhan.demo",

@@ -1,4 +1,4 @@
-import type { Report } from "./types"
+import type { Report } from "../../types/types"
 export const REPORT_TYPES = [
   "Giả danh ngân hàng",
   "Giả danh cơ quan nhà nước",

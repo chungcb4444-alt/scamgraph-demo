@@ -1,4 +1,4 @@
-import type { Report } from "./types"
+import type { Report } from "../../types/types"
 import samples from "./reportPeopleSamples.json"
 
 // Only recognize original seed titles. A manually created report with the same

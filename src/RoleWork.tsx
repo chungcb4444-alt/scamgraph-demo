@@ -1,7 +1,7 @@
-import type { StaffAccount, Report, CaseFile } from "./types"
-import { pendingOpinions, caseReceiptLabel } from "./receiptWorkflow"
-import { R, roleTask } from "./access"
-import { Card, PageHeader, Badge, Button, EmptyState } from "./ui"
+import type { StaffAccount, Report, CaseFile } from "./types/types"
+import { pendingOpinions, caseReceiptLabel } from "./modules/cases/receiptWorkflow"
+import { R, roleTask } from "./modules/authentication/access"
+import { Card, PageHeader, Badge, Button, EmptyState } from "./components/common"
 export default function RoleWork({
   actor,
   reports,

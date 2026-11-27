@@ -6,19 +6,19 @@ import type {
   ReportVersion,
   ActionStamp,
   CaseMessage,
-} from "./types"
-import { R, UNIT, permit, canReadReport, canReadCase } from "./access.ts"
+} from "./types/types"
+import { R, UNIT, permit, canReadReport, canReadCase } from "./modules/authentication/access.ts"
 import {
   relatedSourceCases,
   sameReportIds,
   duplicateConsentKey,
-} from "./caseSources.ts"
+} from "./modules/cases/caseSources.ts"
 import {
   caseReceiptAllowsWork,
   currentAssignment,
   requestKey,
-} from "./receiptWorkflow.ts"
-import { reportSnapshotStale } from "./reportSnapshot.ts"
+} from "./modules/cases/receiptWorkflow.ts"
+import { reportSnapshotStale } from "./modules/reports/reportSnapshot.ts"
 export type Operation =
   | {
       type: "receive"
@@ -58,6 +58,7 @@ export type Operation =
   | { type: "extract-start"; id: string }
   | { type: "extract-save"; id: string; patch: Partial<Report> }
   | { type: "link"; id: string; clusterId: string }
+  | { type: "unlink"; id: string; clusterId: string }
   | { type: "proposal"; id: string; clusterId: string; restore: boolean }
   | {
       type: "create-case"
@@ -545,6 +546,19 @@ export function applyOperation(
       action = "Xác nhận liên kết"
       detail = `${report.cluster || "Chưa liên kết"} → ${op.clusterId}; căn cứ: ${matches.map((r) => r.id).join(", ")}`
       updateReport({ cluster: op.clusterId, status: "Có liên quan" })
+      break
+    }
+    case "unlink": {
+      requirePermission("report.link", report)
+      if (!report) throw Error("Không tìm thấy phản ánh.")
+      if (report.cluster !== op.clusterId)
+        throw Error("Phản ánh chưa được xác nhận liên kết với cụm này.")
+      action = "Hủy xác nhận liên kết"
+      detail = `${op.clusterId} → chưa liên kết; thực thể trùng khớp được giữ nguyên`
+      updateReport({
+        cluster: undefined,
+        status: report.reviewed ? "Đã kiểm tra" : "Đã phân tích",
+      })
       break
     }
     case "proposal":

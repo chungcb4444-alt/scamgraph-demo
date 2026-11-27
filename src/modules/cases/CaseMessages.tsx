@@ -1,10 +1,10 @@
 import { useLayoutEffect, useState } from "react"
-import type { CaseFile, StaffAccount, CaseMessage } from "./types"
-import type { Operation } from "./operations"
-import { R, permit, canReadCase } from "./access"
+import type { CaseFile, StaffAccount, CaseMessage } from "../../types/types"
+import type { Operation } from "../../operations"
+import { R, permit, canReadCase } from "../authentication/access"
 import { visibleMessageVersions } from "./receiptWorkflow"
-import { formatDateTime } from "./demoTime"
-import { Card, CardHead, Field, Button, Badge } from "./ui"
+import { formatDateTime } from "../../utils/demoTime"
+import { Card, CardHead, Field, Button, Badge } from "../../components/common"
 type Editor = {
   kind: CaseMessage["kind"]
   recipientId: string

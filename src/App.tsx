@@ -12,19 +12,19 @@ import {
   Card,
   Tabs,
   DataTable,
-} from "./ui"
-import AppearanceToggle from "./AppearanceToggle"
-import Login from "./Login"
-import BrandMark from "./BrandMark"
-import ReportIntake from "./ReportIntake"
-import ReportPeople from "./ReportPeople"
-import ReportPrivacy from "./ReportPrivacy"
-import SensitiveValue from "./SensitiveValue"
-import SensitiveInput from "./SensitiveInput"
-import ReportStatement from "./ReportStatement"
-import { reportPeople, reportSearchText, samplePeople } from "./reportPeople"
-import { REPORT_TYPES, reportTypeLabel, nextReportId } from "./intakeModel"
-import type { IntakePayload, IntakeResult } from "./intakeModel"
+} from "./components/common"
+import AppearanceToggle from "./components/common/AppearanceToggle"
+import Login from "./modules/authentication/Login"
+import BrandMark from "./components/common/BrandMark"
+import ReportIntake from "./modules/reports/ReportIntake"
+import ReportPeople from "./modules/reports/ReportPeople"
+import ReportPrivacy from "./components/common/ReportPrivacy"
+import SensitiveValue from "./components/common/SensitiveValue"
+import SensitiveInput from "./components/common/SensitiveInput"
+import ReportStatement from "./modules/reports/ReportStatement"
+import { reportPeople, reportSearchText, samplePeople } from "./modules/reports/reportPeople"
+import { REPORT_TYPES, reportTypeLabel, nextReportId } from "./modules/reports/intakeModel"
+import type { IntakePayload, IntakeResult } from "./modules/reports/intakeModel"
 
 import type {
   Report,
@@ -34,7 +34,7 @@ import type {
   AlertItem,
   StaffAccount,
   ReportVersion,
-} from "./types"
+} from "./types/types"
 import {
   dayKey,
   formatDateTime,
@@ -44,15 +44,15 @@ import {
   nowISO,
   seedTimestamp,
   vietnamInput,
-} from "./demoTime"
-import LinkGraph from "./LinkGraph"
-import ReportStatusBadges from "./ReportStatusBadges"
-import { reportStages } from "./reportStages"
+} from "./utils/demoTime"
+import LinkGraph from "./modules/graph/LinkGraph"
+import ReportStatusBadges from "./modules/reports/ReportStatusBadges"
+import { reportStages } from "./modules/reports/reportStages"
 import {
   relatedSourceCases,
   sameReportIds,
   duplicateConsentKey,
-} from "./caseSources"
+} from "./modules/cases/caseSources"
 
 import {
   R,
@@ -70,24 +70,24 @@ import {
   permit,
   visibleLogs,
   roleTask,
-} from "./access"
-import type { Screen } from "./access"
+} from "./modules/authentication/access"
+import type { Screen } from "./modules/authentication/access"
 import { applyOperation } from "./operations"
 import type { Operation } from "./operations"
-import ReceptionPanel from "./ReceptionPanel"
+import ReceptionPanel from "./modules/reports/ReceptionPanel"
 import RoleWork from "./RoleWork"
 import WorkSummary from "./WorkSummary"
-import CaseWorkPanel from "./CaseWorkPanel"
-import CaseMessages from "./CaseMessages"
-import SourceRequests from "./SourceRequests"
+import CaseWorkPanel from "./modules/cases/CaseWorkPanel"
+import CaseMessages from "./modules/cases/CaseMessages"
+import SourceRequests from "./modules/cases/SourceRequests"
 import {
   caseReceiptLabel,
   openSourceRequests,
   pendingOpinions,
-} from "./receiptWorkflow"
-import AccountManager from "./AccountManager"
-import ReportTabs, { type ReportSection } from "./ReportTabs"
-import ReportHistory from "./ReportHistory"
+} from "./modules/cases/receiptWorkflow"
+import AccountManager from "./modules/accounts/AccountManager"
+import ReportTabs, { type ReportSection } from "./modules/reports/ReportTabs"
+import ReportHistory from "./modules/reports/ReportHistory"
 
 const reportTemplates: Report[] = [
   {
@@ -1306,6 +1306,18 @@ export default function App() {
                 total={clusterTotal}
                 hasNew={clusterReports.some((r) => r.id === "PA-013")}
                 allowCreate={permit(actor, "case.create")}
+                canLink={(r: Report) =>
+                  actor.role === R.analyst &&
+                  !!r.reviewed &&
+                  permit(actor, "report.link", r, cases)
+                }
+                onLink={(id, confirm) =>
+                  run({
+                    type: confirm ? "link" : "unlink",
+                    id,
+                    clusterId: activeCluster.id,
+                  })
+                }
                 onReport={openReport}
                 onAlert={() => {
                   const a = alerts.find((a) => a.clusterId === activeCluster.id)
