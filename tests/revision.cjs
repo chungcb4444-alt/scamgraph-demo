@@ -200,6 +200,8 @@ const results = []
         ),
       )
       await page.keyboard.press("Escape")
+      assert.equal(await page.locator(".edge-label-card").count(), 0)
+      await page.locator(".map-report").first().click()
       assert((await page.locator(".edge-label-card").count()) > 0)
       await page
         .getByRole("checkbox", { name: "Hiện nhãn", exact: true })
@@ -209,6 +211,7 @@ const results = []
         .getByRole("checkbox", { name: "Hiện nhãn", exact: true })
         .check()
       assert((await page.locator(".edge-label-card").count()) > 0)
+      await page.keyboard.press("Escape")
       await page.evaluate(() => scrollTo(0, 400))
       assert((await page.locator(".topbar").boundingBox()).y < 0)
       await shot("structured-graph-small")

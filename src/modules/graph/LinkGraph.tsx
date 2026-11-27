@@ -374,7 +374,10 @@ export default function LinkGraph({
   // Stack visible labels with a minimum vertical gap so they never overlap.
   let lastLabelY = Number.NEGATIVE_INFINITY
   edgeViews
-    .filter((v) => showLabels && v.edge.status !== "structure" && v.active)
+    .filter(
+      (v) =>
+        showLabels && dimming && v.edge.status !== "structure" && v.active,
+    )
     .sort((a, b) => a.midY - b.midY)
     .forEach((v) => {
       v.labelY = Math.max(v.midY, lastLabelY + 26)
@@ -831,8 +834,9 @@ export default function LinkGraph({
           cạnh
         </span>
         <span>
-          Nét liền đậm: cán bộ đã xác nhận · Nét đứt: hệ thống gợi ý. Kéo nút để
-          sắp xếp, kéo nền để di chuyển, cuộn để thu phóng.
+          Nét liền đậm: cán bộ đã xác nhận · Nét đứt: hệ thống gợi ý. Rê hoặc
+          chọn một nút để hiện nhãn và làm nổi nhánh; kéo nút để sắp xếp, kéo
+          nền để di chuyển, cuộn để thu phóng.
         </span>
       </div>
       <div className="explorer-layout">
@@ -924,14 +928,17 @@ export default function LinkGraph({
                 {edgeViews.map(
                   ({ edge, d, active, midX, label, labelW, labelY }) => {
                     const labelVisible =
-                      showLabels && edge.status !== "structure" && active
+                      showLabels &&
+                      dimming &&
+                      edge.status !== "structure" &&
+                      active
                     return (
                     <g
                       key={edge.id}
                       tabIndex={0}
                       role="button"
                       aria-label={`Quan hệ ${edge.from.title} → ${edge.to.title}: ${edge.relation}`}
-                      className={`map-edge is-${edge.status} ${active ? "is-direct" : "is-dim"} ${selected === edge.id ? "is-selected" : ""}`}
+                      className={`map-edge is-${edge.status} ${dimming ? "" : "is-quiet"} ${active ? "is-direct" : "is-dim"} ${selected === edge.id ? "is-selected" : ""}`}
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation()
