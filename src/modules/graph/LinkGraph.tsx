@@ -237,9 +237,19 @@ export default function LinkGraph({
     reportPageSafe * PAGE_SIZE,
     reportPageSafe * PAGE_SIZE + PAGE_SIZE,
   )
-  const shownEntities = filteredEntities.slice(
+  const pageEntities = filteredEntities.slice(
     entityPage * PAGE_SIZE,
     entityPage * PAGE_SIZE + PAGE_SIZE,
+  )
+  // Order entities by their first connected report so edges cross less.
+  const entityScore = (e: Entity) =>
+    drawnReports.reduce(
+      (best, r, i) =>
+        i < best && sameValue(entityValue(r, e.type), e.value) ? i : best,
+      Number.POSITIVE_INFINITY,
+    )
+  const shownEntities = [...pageEntities].sort(
+    (a, b) => entityScore(a) - entityScore(b),
   )
   const nodes: GraphNode[] = [
     ...shownGroups.map((g, i) => ({
@@ -345,6 +355,31 @@ export default function LinkGraph({
     ...directEdges.flatMap((e) => [e.from.id, e.to.id]),
   ])
   const dimming = Boolean(base)
+  const edgeViews = edges.map((edge) => {
+    const a = positions.get(edge.from.id)!
+    const b = positions.get(edge.to.id)!
+    const x1 = a.x + edge.from.w
+    const y1 = a.y + edge.from.h / 2
+    const x2 = b.x - (edge.status === "structure" ? 0 : 8)
+    const y2 = b.y + edge.to.h / 2
+    const dx = Math.max(48, Math.abs(x2 - x1) / 2)
+    const d = `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`
+    const active = !dimming || directEdges.includes(edge)
+    const midX = (x1 + x2) / 2
+    const midY = (y1 + y2) / 2
+    const label = fitLabel(edge.relation, "400 11px system-ui", 150)
+    const labelW = textWidth(label, "400 11px system-ui") + 16
+    return { edge, d, active, midX, midY, label, labelW, labelY: midY }
+  })
+  // Stack visible labels with a minimum vertical gap so they never overlap.
+  let lastLabelY = Number.NEGATIVE_INFINITY
+  edgeViews
+    .filter((v) => showLabels && v.edge.status !== "structure" && v.active)
+    .sort((a, b) => a.midY - b.midY)
+    .forEach((v) => {
+      v.labelY = Math.max(v.midY, lastLabelY + 26)
+      lastLabelY = v.labelY
+    })
   const sources = chosenEdge?.reports || chosenNode?.reports || matchingReports
   const sourceFiltered = sources.filter((r) =>
     `${r.id} ${r.title} ${r.content}`
@@ -886,23 +921,11 @@ export default function LinkGraph({
                 </marker>
               </defs>
               <g>
-                {edges.map((edge) => {
-                  const a = positions.get(edge.from.id)!
-                  const b = positions.get(edge.to.id)!
-                  const x1 = a.x + edge.from.w
-                  const y1 = a.y + edge.from.h / 2
-                  const x2 = b.x - (edge.status === "structure" ? 0 : 8)
-                  const y2 = b.y + edge.to.h / 2
-                  const dx = Math.max(48, Math.abs(x2 - x1) / 2)
-                  const d = `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`
-                  const active = !dimming || directEdges.includes(edge)
-                  const midX = (x1 + x2) / 2
-                  const midY = (y1 + y2) / 2
-                  const label = fitLabel(edge.relation, "400 11px system-ui", 150)
-                  const labelW = textWidth(label, "400 11px system-ui") + 16
-                  const labelVisible =
-                    showLabels && edge.status !== "structure" && active
-                  return (
+                {edgeViews.map(
+                  ({ edge, d, active, midX, label, labelW, labelY }) => {
+                    const labelVisible =
+                      showLabels && edge.status !== "structure" && active
+                    return (
                     <g
                       key={edge.id}
                       tabIndex={0}
@@ -947,12 +970,12 @@ export default function LinkGraph({
                         <g className="edge-label-card" pointerEvents="none">
                           <rect
                             x={midX - labelW / 2}
-                            y={midY - 10}
+                            y={labelY - 10}
                             width={labelW}
                             height="20"
                             rx="10"
                           />
-                          <text x={midX} y={midY + 4} textAnchor="middle">
+                          <text x={midX} y={labelY + 4} textAnchor="middle">
                             {label}
                           </text>
                         </g>
