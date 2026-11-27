@@ -1306,6 +1306,18 @@ export default function App() {
                 total={clusterTotal}
                 hasNew={clusterReports.some((r) => r.id === "PA-013")}
                 allowCreate={permit(actor, "case.create")}
+                canLink={(r: Report) =>
+                  actor.role === R.analyst &&
+                  !!r.reviewed &&
+                  permit(actor, "report.link", r, cases)
+                }
+                onLink={(id, confirm) =>
+                  run({
+                    type: confirm ? "link" : "unlink",
+                    id,
+                    clusterId: activeCluster.id,
+                  })
+                }
                 onReport={openReport}
                 onAlert={() => {
                   const a = alerts.find((a) => a.clusterId === activeCluster.id)
